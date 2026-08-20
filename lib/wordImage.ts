@@ -187,7 +187,8 @@ async function searchOpenverseClear(query: string): Promise<string | null> {
       query,
     ];
 
-    let best: { score: number; url: string } | null = null;
+    let bestUrl: string | null = null;
+    let bestScore = -1;
 
     for (const q of queries) {
       for (const category of ["illustration", "photograph", ""] as const) {
@@ -197,13 +198,16 @@ async function searchOpenverseClear(query: string): Promise<string | null> {
           if (score < 12) continue;
           const url = r.url || r.thumbnail;
           if (!url) continue;
-          if (!best || score > best.score) best = { score, url };
+          if (score > bestScore) {
+            bestScore = score;
+            bestUrl = url;
+          }
         }
-        if (best && best.score >= 18) return best.url;
+        if (bestScore >= 18 && bestUrl) return bestUrl;
       }
     }
 
-    return best ? best.url : null;
+    return bestUrl;
   } catch {
     return null;
   }
