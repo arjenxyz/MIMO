@@ -8,7 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 import { xpInCurrentLevel } from "@/lib/srs";
 import type { Profile } from "@/types";
 
-const HIDDEN_PATHS = ["/login", "/register", "/onboarding", "/auth"];
+const HIDDEN_PATHS = ["/login", "/register", "/onboarding", "/auth", "/sounds/practice"];
 
 export function Navbar() {
   const pathname = usePathname();
@@ -54,7 +54,7 @@ export function Navbar() {
   async function signOut() {
     const supabase = createClient();
     await supabase.auth.signOut();
-    router.replace("/onboarding");
+    router.replace("/login");
     router.refresh();
   }
 
@@ -96,6 +96,12 @@ export function Navbar() {
             className="rounded-xl bg-duo-purple px-3 py-2 text-sm font-extrabold text-[#3b0764] shadow-duo-purple active:translate-y-1 active:shadow-none"
           >
             Gramer
+          </Link>
+          <Link
+            href="/sounds"
+            className="rounded-xl bg-[#1cb0f6] px-3 py-2 text-sm font-extrabold text-white shadow-[0_3px_0_#1899d6] active:translate-y-1 active:shadow-none"
+          >
+            Sesler
           </Link>
           <Link
             href="/reading"

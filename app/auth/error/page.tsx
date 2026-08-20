@@ -77,8 +77,8 @@ function ErrorContent() {
         >
           Tekrar dene
         </Link>
-        <Link href="/onboarding" className="text-sm font-extrabold text-[#6b7280]">
-          Tanışmaya dön
+        <Link href="/login" className="text-sm font-extrabold text-[#6b7280]">
+          Girişe dön
         </Link>
       </div>
     </AuthShell>

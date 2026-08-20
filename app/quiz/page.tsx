@@ -13,17 +13,9 @@ import {
   updateWordProgress,
 } from "@/lib/db";
 import { answersMatch, calculateXP } from "@/lib/srs";
+import { speak } from "@/lib/speak";
 import { createClient } from "@/lib/supabase/client";
 import type { DueWordItem, Quality } from "@/types";
-
-function speak(text: string) {
-  if (typeof window === "undefined" || !window.speechSynthesis) return;
-  window.speechSynthesis.cancel();
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = "en-US";
-  utterance.rate = 0.9;
-  window.speechSynthesis.speak(utterance);
-}
 
 export default function WordQuizPage() {
   const router = useRouter();

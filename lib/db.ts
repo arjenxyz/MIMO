@@ -6,6 +6,9 @@ import type {
   DueWordItem,
   Profile,
   Quality,
+  Sound,
+  SoundSessionQuestion,
+  SoundWithProgress,
   Story,
 } from "@/types";
 import { calculateSM2, calculateXP, checkLevelUp } from "@/lib/srs";
@@ -273,6 +276,14 @@ export async function getDailyQuests(
 
   if (storiesError) throw storiesError;
 
+  const { data: sounds, error: soundsError } = await supabase
+    .from("user_sounds")
+    .select("id")
+    .eq("user_id", profile.id)
+    .eq("last_answered", today);
+
+  if (soundsError) throw soundsError;
+
   const wordsDone = (words ?? []).filter(
     (row) => row.correct_count + row.wrong_count > 0
   ).length;
@@ -280,10 +291,12 @@ export async function getDailyQuests(
     (row) => row.correct_count + row.wrong_count > 0
   ).length;
   const storiesDone = (stories ?? []).length;
+  const soundsDone = (sounds ?? []).length > 0 ? 1 : 0;
 
   const wordsTarget = 5;
   const grammarTarget = 3;
   const storiesTarget = 1;
+  const soundsTarget = 1;
 
   return {
     wordsDone: Math.min(wordsDone, wordsTarget),
@@ -292,10 +305,13 @@ export async function getDailyQuests(
     grammarTarget,
     storiesDone: Math.min(storiesDone, storiesTarget),
     storiesTarget,
+    soundsDone,
+    soundsTarget,
     allComplete:
       wordsDone >= wordsTarget &&
       grammarDone >= grammarTarget &&
-      storiesDone >= storiesTarget,
+      storiesDone >= storiesTarget &&
+      soundsDone >= soundsTarget,
     bonusClaimed: profile.daily_quest_bonus_date === today,
   };
 }
@@ -359,6 +375,139 @@ export async function saveStoryResult(
   });
 
   if (error) throw error;
+}
+
+export async function getSoundsWithProgress(
+  supabase: SupabaseClient,
+  userId: string
+): Promise<SoundWithProgress[]> {
+  const { data: sounds, error } = await supabase
+    .from("sounds")
+    .select("*")
+    .order("sort_order", { ascending: true });
+
+  if (error) throw error;
+
+  const { data: progress, error: progressError } = await supabase
+    .from("user_sounds")
+    .select("sound_id, mastery")
+    .eq("user_id", userId);
+
+  if (progressError) throw progressError;
+
+  const masteryById = new Map(
+    (progress ?? []).map((row) => [row.sound_id as number, row.mastery as number])
+  );
+
+  return ((sounds ?? []) as Sound[]).map((sound) => ({
+    ...sound,
+    mastery: masteryById.get(sound.id) ?? 0,
+  }));
+}
+
+function shuffle<T>(items: T[]): T[] {
+  const copy = [...items];
+  for (let i = copy.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
+export async function getSoundSession(
+  supabase: SupabaseClient,
+  count = 8
+): Promise<SoundSessionQuestion[]> {
+  const { data, error } = await supabase
+    .from("sound_pairs")
+    .select("id, sound_id, word_a, word_b, correct, sounds(ipa)");
+
+  if (error) throw error;
+
+  const rows = (data ?? []) as Array<{
+    id: number;
+    sound_id: number;
+    word_a: string;
+    word_b: string;
+    correct: "a" | "b";
+    sounds: { ipa: string } | { ipa: string }[] | null;
+  }>;
+
+  const questions: SoundSessionQuestion[] = rows.map((row) => {
+    const sound = Array.isArray(row.sounds) ? row.sounds[0] : row.sounds;
+    const playWord = row.correct === "a" ? row.word_a : row.word_b;
+    const options = shuffle([row.word_a, row.word_b]) as [string, string];
+    return {
+      id: row.id,
+      soundId: row.sound_id,
+      ipa: sound?.ipa ?? "",
+      playWord,
+      options,
+      correct: playWord,
+    };
+  });
+
+  return shuffle(questions).slice(0, Math.max(1, Math.min(count, questions.length)));
+}
+
+export async function recordSoundAnswer(
+  supabase: SupabaseClient,
+  userId: string,
+  soundId: number,
+  isCorrect: boolean
+): Promise<{ mastery: number }> {
+  const today = todayISO();
+  const { data: existing, error: existingError } = await supabase
+    .from("user_sounds")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("sound_id", soundId)
+    .maybeSingle();
+
+  if (existingError) throw existingError;
+
+  if (!existing) {
+    const mastery = isCorrect ? 20 : 5;
+    const { data, error } = await supabase
+      .from("user_sounds")
+      .insert({
+        user_id: userId,
+        sound_id: soundId,
+        mastery,
+        correct_count: isCorrect ? 1 : 0,
+        seen_count: 1,
+        last_answered: today,
+      })
+      .select("mastery")
+      .single();
+    if (error) throw error;
+    return { mastery: data.mastery as number };
+  }
+
+  const delta = isCorrect ? 12 : -6;
+  const mastery = Math.max(0, Math.min(100, (existing.mastery as number) + delta));
+  const { data, error } = await supabase
+    .from("user_sounds")
+    .update({
+      mastery,
+      correct_count: (existing.correct_count as number) + (isCorrect ? 1 : 0),
+      seen_count: (existing.seen_count as number) + 1,
+      last_answered: today,
+    })
+    .eq("id", existing.id)
+    .select("mastery")
+    .single();
+
+  if (error) throw error;
+  return { mastery: data.mastery as number };
+}
+
+export async function awardSoundSessionXp(
+  supabase: SupabaseClient,
+  profile: Profile,
+  amount = 10
+): Promise<{ profile: Profile; leveledUp: boolean; previousLevel: number }> {
+  return updateProfileXP(supabase, profile, amount);
 }
 
 export { calculateXP };

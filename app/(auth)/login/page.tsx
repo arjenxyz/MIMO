@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 import { SocialAuthButtons } from "@/app/components/SocialAuthButtons";
 
 function Decor() {
@@ -49,12 +48,6 @@ export default function LoginPage() {
           <div className="mt-8">
             <SocialAuthButtons />
           </div>
-          <p className="mt-8 text-sm font-bold text-[#6b7280]">
-            İlk kez mi buradasın?{" "}
-            <Link href="/onboarding" className="text-[#fd860a]">
-              Tanışmaya dön
-            </Link>
-          </p>
         </section>
       </div>
 
@@ -95,13 +88,6 @@ export default function LoginPage() {
           <div className="mt-8">
             <SocialAuthButtons />
           </div>
-
-          <p className="mt-8 text-center text-sm font-bold text-[#6b7280]">
-            İlk kez mi buradasın?{" "}
-            <Link href="/onboarding" className="text-[#fd860a]">
-              Tanışmaya dön
-            </Link>
-          </p>
         </section>
       </div>
     </main>

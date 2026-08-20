@@ -18,7 +18,7 @@ export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    redirect("/onboarding");
+    redirect("/login");
   }
 
   const supabase = await createClient();
@@ -27,12 +27,12 @@ export default async function DashboardPage() {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect("/onboarding");
+    redirect("/login");
   }
 
   let profile = await getProfile(supabase, user.id);
   if (!profile) {
-    redirect("/onboarding");
+    redirect("/login");
   }
 
   profile = await syncDailyStreak(supabase, profile);
@@ -74,7 +74,7 @@ export default async function DashboardPage() {
         </div>
       </section>
 
-      <div className="mb-6 grid gap-4 sm:grid-cols-2">
+      <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <Link
           href="/quiz"
           className="rounded-3xl border-2 border-duo-blue bg-duo-card p-5 shadow-duo-blue"
@@ -90,6 +90,14 @@ export default async function DashboardPage() {
           <p className="text-sm font-extrabold text-duo-purple">GRAMER</p>
           <p className="mt-2 text-3xl font-black">{dueGrammar.length}</p>
           <p className="font-bold text-duo-muted">Bugün bekleyen gramer</p>
+        </Link>
+        <Link
+          href="/sounds"
+          className="rounded-3xl border-2 border-[#1cb0f6] bg-duo-card p-5 shadow-[0_4px_0_#1899d6] sm:col-span-2 lg:col-span-1"
+        >
+          <p className="text-sm font-extrabold text-[#1cb0f6]">SESLER</p>
+          <p className="mt-2 text-3xl font-black">IPA</p>
+          <p className="font-bold text-duo-muted">Dinle ve ayırt et</p>
         </Link>
       </div>
 

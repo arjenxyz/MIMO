@@ -36,7 +36,7 @@ function StepDots({
           aria-label={`Adım ${index + 1}`}
           onClick={() => onSelect?.(index)}
           className={`h-2.5 rounded-full transition-all ${
-            index === step ? "w-7 bg-white" : "w-2.5 bg-white/45"
+            index === step ? "w-7 bg-[#fd860a]" : "w-2.5 bg-[#fd860a]/30"
           }`}
         />
       ))}
@@ -54,37 +54,37 @@ export default function OnboardingPage() {
   }
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#fd860a] text-white">
-      {/* Soft pattern */}
-      <div className="pointer-events-none absolute inset-0 opacity-20">
-        <div className="absolute left-[8%] top-[18%] h-20 w-20 rounded-full bg-white/50 blur-sm" />
-        <div className="absolute right-[18%] top-[12%] h-12 w-12 rotate-12 bg-white/40 [clip-path:polygon(50%_0,61%_35%,98%_35%,68%_57%,79%_91%,50%_70%,21%_91%,32%_57%,2%_35%,39%_35%)]" />
-        <div className="absolute left-[40%] top-[30%] text-5xl text-white/30">🐾</div>
-        <div className="absolute bottom-[35%] right-[8%] text-4xl text-white/25">✦</div>
+    <main className="relative min-h-screen overflow-hidden bg-[#fff8f1] text-[#1f2937]">
+      <div className="pointer-events-none absolute -left-16 -top-10 h-56 w-56 rounded-full bg-[#d8f5c8]/70" />
+      <div className="pointer-events-none absolute -right-10 top-8 h-44 w-44 rounded-full bg-[#ffe8a3]/80" />
+      <div className="pointer-events-none absolute -bottom-16 -left-8 h-52 w-52 rounded-full bg-[#c9f0e3]/70" />
+      <div className="pointer-events-none absolute -bottom-20 -right-12 h-64 w-64 rounded-full bg-[#ffd0df]/70" />
+      <div className="pointer-events-none absolute left-10 top-28 text-2xl text-[#9be06a] lg:left-16 lg:top-16 lg:text-4xl">
+        ✦
+      </div>
+      <div className="pointer-events-none absolute right-16 top-40 text-xl text-[#c4b5fd] lg:right-24 lg:top-28 lg:text-3xl">
+        ✦
+      </div>
+      <div className="pointer-events-none absolute bottom-10 left-6 text-3xl text-[#fbbf24]/70 lg:bottom-12 lg:left-10 lg:text-5xl">
+        🐾
       </div>
 
-      {/* Desktop hills */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 hidden h-36 bg-[#f07800] lg:block">
-        <div className="absolute -top-10 inset-x-0 h-16 rounded-[100%] bg-[#fd860a]" />
-        <div className="absolute inset-x-0 bottom-0 h-24 bg-[#e86f00]/80" />
-      </div>
-
-      {/* ===== MOBILE: stacked ===== */}
+      {/* ===== MOBILE ===== */}
       <div className="relative z-10 flex min-h-screen flex-col lg:hidden">
         <div className="flex flex-1 flex-col items-center justify-center px-6 pt-10 text-center">
-          <h1 className="text-5xl font-black tracking-tight">
+          <h1 className="text-5xl font-black tracking-tight text-[#1f2937]">
             {current.title}
-            <span className="ml-1 inline-block text-3xl">♡</span>
+            <span className="ml-1 inline-block text-3xl text-[#fd860a]">♡</span>
           </h1>
-          <p className="mt-3 text-lg font-bold text-white/90">{current.subtitle}</p>
+          <p className="mt-3 text-lg font-bold text-[#6b7280]">{current.subtitle}</p>
           <div className="relative mt-8 w-full max-w-md">
             <Image
               src="/mimo.png"
               alt="Mimo maskotu"
               width={720}
               height={720}
-            priority
-            className="mx-auto h-auto w-[88%] select-none"
+              priority
+              className="mx-auto h-auto w-[88%] select-none rounded-[2rem]"
             />
           </div>
         </div>
@@ -96,31 +96,31 @@ export default function OnboardingPage() {
           <button
             type="button"
             onClick={next}
-            className="mx-auto flex w-full max-w-md items-center justify-center gap-2 rounded-full bg-white px-6 py-4 text-lg font-black text-[#fd860a] shadow-[0_5px_0_#d66f08] transition active:translate-y-1 active:shadow-none"
+            className="mx-auto flex w-full max-w-md items-center justify-center gap-2 rounded-full bg-[#fd860a] px-6 py-4 text-lg font-black text-white shadow-[0_5px_0_#d66f08] transition active:translate-y-1 active:shadow-none"
           >
             Başlayalım!
             <span aria-hidden>›</span>
           </button>
-          <p className="mt-4 text-center text-sm font-bold text-white/85">
+          <p className="mt-4 text-center text-sm font-bold text-[#6b7280]">
             Zaten hesabın var mı?{" "}
-            <Link href="/login" className="underline underline-offset-2">
+            <Link href="/login" className="text-[#fd860a] underline underline-offset-2">
               Giriş yap
             </Link>
           </p>
         </div>
       </div>
 
-      {/* ===== DESKTOP: split hero ===== */}
+      {/* ===== DESKTOP ===== */}
       <div className="relative z-10 mx-auto hidden min-h-screen max-w-7xl grid-cols-2 items-center gap-8 px-10 py-12 lg:grid xl:px-16">
         <div className="flex max-w-xl flex-col items-start text-left">
-          <p className="mb-3 rounded-full bg-white/15 px-4 py-1 text-sm font-extrabold tracking-wide">
+          <p className="mb-3 rounded-full bg-[#fd860a]/15 px-4 py-1 text-sm font-extrabold tracking-wide text-[#fd860a]">
             MIMO
           </p>
-          <h1 className="text-6xl font-black leading-none tracking-tight xl:text-7xl">
+          <h1 className="text-6xl font-black leading-none tracking-tight text-[#1f2937] xl:text-7xl">
             {current.title}
-            <span className="ml-2 inline-block text-4xl align-top">♡</span>
+            <span className="ml-2 inline-block text-4xl align-top text-[#fd860a]">♡</span>
           </h1>
-          <p className="mt-5 max-w-md text-2xl font-bold leading-snug text-white/92">
+          <p className="mt-5 max-w-md text-2xl font-bold leading-snug text-[#6b7280]">
             {current.subtitle}
           </p>
 
@@ -132,29 +132,29 @@ export default function OnboardingPage() {
             <button
               type="button"
               onClick={next}
-              className="flex items-center justify-center gap-2 rounded-full bg-white px-8 py-4 text-lg font-black text-[#fd860a] shadow-[0_5px_0_#d66f08] transition hover:brightness-105 active:translate-y-1 active:shadow-none"
+              className="flex items-center justify-center gap-2 rounded-full bg-[#fd860a] px-8 py-4 text-lg font-black text-white shadow-[0_5px_0_#d66f08] transition hover:brightness-105 active:translate-y-1 active:shadow-none"
             >
               Başlayalım!
               <span aria-hidden>›</span>
             </button>
-            <p className="text-sm font-bold text-white/85">
+            <p className="text-sm font-bold text-[#6b7280]">
               Zaten hesabın var mı?{" "}
-              <Link href="/login" className="underline underline-offset-2">
+              <Link href="/login" className="text-[#fd860a] underline underline-offset-2">
                 Giriş yap
               </Link>
             </p>
           </div>
         </div>
 
-        <div className="relative flex items-end justify-center self-end pb-8">
-          <div className="absolute -bottom-6 h-28 w-[85%] rounded-[100%] bg-[#c45f00]/35 blur-xl" />
+        <div className="relative flex items-center justify-center">
+          <div className="absolute h-72 w-72 rounded-full bg-[#fd860a]/10 blur-3xl" />
           <Image
             src="/mimo.png"
             alt="Mimo maskotu"
             width={900}
             height={900}
             priority
-            className="relative z-10 h-auto w-[min(100%,520px)] select-none"
+            className="relative z-10 h-auto w-[min(100%,520px)] select-none rounded-[2.5rem]"
           />
         </div>
       </div>

@@ -40,7 +40,7 @@ export async function updateSession(request: NextRequest) {
 
   if (!user && !isPublic) {
     const redirectUrl = request.nextUrl.clone();
-    redirectUrl.pathname = "/onboarding";
+    redirectUrl.pathname = "/login";
     return NextResponse.redirect(redirectUrl);
   }
 
@@ -50,7 +50,13 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
-  // Logged-in users who land on waiting page can continue to dashboard
+  // Skip onboarding — always go to login
+  if (!user && pathname === "/onboarding") {
+    const redirectUrl = request.nextUrl.clone();
+    redirectUrl.pathname = "/login";
+    return NextResponse.redirect(redirectUrl);
+  }
+
   if (user && pathname === "/auth/pending") {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = "/";

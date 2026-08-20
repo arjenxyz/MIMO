@@ -26,6 +26,13 @@ const ITEMS = [
     xp: "+20 XP",
     color: "border-duo-orange",
   },
+  {
+    key: "sounds" as const,
+    title: "1 ses oturumu yap",
+    href: "/sounds",
+    xp: "+10 XP",
+    color: "border-[#1cb0f6]",
+  },
 ];
 
 export function DailyQuests({
@@ -47,12 +54,14 @@ export function DailyQuests({
     words: `${quests.wordsDone}/${quests.wordsTarget}`,
     grammar: `${quests.grammarDone}/${quests.grammarTarget}`,
     stories: `${quests.storiesDone}/${quests.storiesTarget}`,
+    sounds: `${quests.soundsDone}/${quests.soundsTarget}`,
   };
 
   const done = {
     words: quests.wordsDone >= quests.wordsTarget,
     grammar: quests.grammarDone >= quests.grammarTarget,
     stories: quests.storiesDone >= quests.storiesTarget,
+    sounds: quests.soundsDone >= quests.soundsTarget,
   };
 
   return (
