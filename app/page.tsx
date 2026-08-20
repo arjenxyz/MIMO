@@ -166,6 +166,19 @@ export default async function DashboardPage() {
             </Link>
           </section>
 
+          <section className="overflow-hidden rounded-[1.75rem] border-2 border-[#fd860a]/40 bg-gradient-to-br from-[#fd860a]/15 via-duo-card to-duo-card p-5">
+            <p className="text-base font-black text-white">🖼️ Görsel Betimleme</p>
+            <p className="mt-1 text-sm font-semibold text-duo-muted">
+              Fotoğrafı yazarak veya konuşarak anlat; Gemini B2 seviyesini değerlendirsin.
+            </p>
+            <Link
+              href="/photo-practice"
+              className="mt-4 flex w-full items-center justify-center rounded-2xl bg-[#fd860a] px-4 py-3 text-sm font-black uppercase tracking-wide text-[#2a1600] shadow-[0_4px_0_#e07800] transition active:translate-y-1 active:shadow-none"
+            >
+              Başla
+            </Link>
+          </section>
+
           {showAddWord && <AddWordForm />}
 
           <section className="grid grid-cols-2 gap-3">
