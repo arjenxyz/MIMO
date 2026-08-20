@@ -110,7 +110,7 @@ export function Navbar() {
           )}
         </Link>
 
-        <div className="flex items-center gap-1 sm:gap-2">
+        <div className="flex items-center gap-2">
           <div
             className="flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 font-black text-[#ff9600]"
             title="Günlük seri"
@@ -120,44 +120,44 @@ export function Navbar() {
             </span>
             <span className="text-sm tabular-nums">{profile.daily_streak}</span>
           </div>
-          <div
-            className="flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 font-black text-[#ce82ff]"
-            title="Seviye"
-          >
-            <span className="text-sm">Lv</span>
-            <span className="text-sm tabular-nums">{profile.level}</span>
-          </div>
 
           <div className="relative ml-1">
             <button
               type="button"
               aria-label="Profil menüsü"
               aria-expanded={menuOpen}
-              onClick={() => setMenuOpen((o) => !o)}
-              className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full ring-2 ring-[#fd860a]/50 transition hover:ring-[#fd860a]"
+              onClick={(event) => {
+                event.stopPropagation();
+                setMenuOpen((open) => !open);
+              }}
+              className="relative z-[70] flex h-10 w-10 items-center justify-center overflow-hidden rounded-full ring-2 ring-[#fd860a]/50 transition hover:ring-[#fd860a]"
             >
               <Image
                 src="/mimo-avatar.png"
-                alt=""
+                alt="Profil"
                 width={40}
                 height={40}
-                className="h-full w-full object-cover"
+                className="pointer-events-none h-full w-full object-cover"
               />
             </button>
             {menuOpen && (
               <>
-                <button
-                  type="button"
-                  aria-label="Menüyü kapat"
-                  className="fixed inset-0 z-40 cursor-default"
-                  onClick={() => setMenuOpen(false)}
+                <div
+                  aria-hidden
+                  className="fixed inset-0 z-[60]"
+                  onPointerDown={() => setMenuOpen(false)}
                 />
-                <div className="absolute right-0 top-12 z-50 w-48 overflow-hidden rounded-2xl border-2 border-duo-border bg-duo-card shadow-xl">
+                <div
+                  role="menu"
+                  className="absolute right-0 top-12 z-[70] w-48 overflow-hidden rounded-2xl border-2 border-duo-border bg-duo-card shadow-xl"
+                  onPointerDown={(event) => event.stopPropagation()}
+                >
                   <p className="border-b border-duo-border px-4 py-3 text-sm font-extrabold text-duo-muted">
                     {profile.username || "Öğrenci"}
                   </p>
                   <button
                     type="button"
+                    role="menuitem"
                     onClick={signOut}
                     className="w-full px-4 py-3 text-left text-sm font-extrabold text-[#ff4b4b] hover:bg-white/5"
                   >
