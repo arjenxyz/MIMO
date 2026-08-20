@@ -32,7 +32,7 @@ type Board = {
 const SESSION_SECONDS = 120;
 const BOARD_PAIRS = 5;
 const MILESTONES = [5, 10, 35];
-const SHUFFLE_EVERY_SEC = 10;
+const SHUFFLE_EVERY_SEC = 30;
 const SHUFFLE_DURATION_MS = 2500;
 const SHUFFLE_STEPS = 7;
 
@@ -349,7 +349,7 @@ export function MatchPairsGame({ words }: { words: MatchWord[] }) {
             <PracticeExamEyebrow>Hızlı Eşleştir</PracticeExamEyebrow>
             <h1 className="mt-3 text-2xl font-black text-[#1e3a5f]">Eşleşen çiftlere dokun</h1>
             <p className="mt-2 text-sm font-semibold text-[#64748b]">
-              Sol İngilizce, sağ Türkçe. Her 10 saniyede tahta karışır — süre durur, kombon kalır.
+              Sol İngilizce, sağ Türkçe. Her 30 saniyede tahta karışır — süre durur, kombon kalır.
             </p>
             <p className="mt-3 text-xs font-bold text-[#94a3b8]">Havuz: {pool.length} kelime</p>
             <div className="mt-6 flex flex-col items-center gap-2">
