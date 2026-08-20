@@ -1,9 +1,10 @@
-import { redirect } from "next/navigation";
 import Link from "next/link";
+import { headers } from "next/headers";
 import { AddWordForm } from "@/app/components/AddWordForm";
 import { DailyQuests } from "@/app/components/DailyQuests";
 import { LearningPath, type PathNode } from "@/app/components/LearningPath";
 import { LoadWordsButton } from "@/app/components/LoadWordsButton";
+import { DEMO_DUE, DEMO_PROFILE, DEMO_QUESTS, isDemoMode } from "@/lib/demo";
 import {
   claimDailyQuestBonus,
   getDailyQuests,
@@ -14,6 +15,8 @@ import {
 } from "@/lib/db";
 import { xpInCurrentLevel } from "@/lib/srs";
 import { createClient } from "@/lib/supabase/server";
+import type { DailyQuests as DailyQuestsType, Profile } from "@/types";
+import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
@@ -25,38 +28,59 @@ function greetingFor(hour: number, name: string | null) {
 }
 
 export default async function DashboardPage() {
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    redirect("/login");
+  const headerList = await headers();
+  const host = headerList.get("host")?.split(":")[0] ?? null;
+  const demo = isDemoMode(host);
+
+  let profile: Profile = DEMO_PROFILE;
+  let questsView: DailyQuestsType = DEMO_QUESTS;
+  let bonusClaimed = false;
+  let dueWordCount = DEMO_DUE.words;
+  let dueGrammarCount = DEMO_DUE.grammar;
+  let showLoadWords = false;
+  let showAddWord = !demo;
+
+  if (!demo) {
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      redirect("/login");
+    }
+
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      redirect("/login");
+    }
+
+    let liveProfile = await getProfile(supabase, user.id);
+    if (!liveProfile) {
+      redirect("/login");
+    }
+
+    liveProfile = await syncDailyStreak(supabase, liveProfile);
+    const quests = await getDailyQuests(supabase, liveProfile);
+    const bonus = await claimDailyQuestBonus(supabase, liveProfile, quests);
+    if (bonus?.profile) {
+      liveProfile = bonus.profile;
+    }
+
+    const dueWords = await getDueWords(supabase, user.id);
+    const dueGrammar = await getDueGrammar(supabase, user.id);
+
+    profile = liveProfile;
+    dueWordCount = dueWords.length;
+    dueGrammarCount = dueGrammar.length;
+    showLoadWords = dueWords.length === 0;
+    questsView = bonus
+      ? { ...quests, bonusClaimed: true, allComplete: true }
+      : quests;
+    bonusClaimed = Boolean(bonus?.claimed);
+    showAddWord = true;
   }
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/login");
-  }
-
-  let profile = await getProfile(supabase, user.id);
-  if (!profile) {
-    redirect("/login");
-  }
-
-  profile = await syncDailyStreak(supabase, profile);
-  const quests = await getDailyQuests(supabase, profile);
-  const bonus = await claimDailyQuestBonus(supabase, profile, quests);
-  if (bonus?.profile) {
-    profile = bonus.profile;
-  }
-
-  const dueWords = await getDueWords(supabase, user.id);
-  const dueGrammar = await getDueGrammar(supabase, user.id);
   const xpNow = xpInCurrentLevel(profile.xp);
-  const questsView = bonus
-    ? { ...quests, bonusClaimed: true, allComplete: true }
-    : quests;
-
   const hour = new Date().getHours();
   const greeting = greetingFor(hour, profile.username);
 
@@ -66,17 +90,17 @@ export default async function DashboardPage() {
   let unitHint = "Kulağını İngilizce seslere alıştır, telaffuzunu netleştir.";
   let activeId = "sounds";
 
-  if (dueWords.length > 0) {
+  if (dueWordCount > 0) {
     primaryHref = "/quiz";
     primaryLabel = "Kelimeye başla";
     unitTitle = "Kelime tekrarı";
-    unitHint = `${dueWords.length} kelime seni bekliyor. Kısa tekrar, uzun hafıza.`;
+    unitHint = `${dueWordCount} kelime seni bekliyor. Kısa tekrar, uzun hafıza.`;
     activeId = "words";
-  } else if (dueGrammar.length > 0) {
+  } else if (dueGrammarCount > 0) {
     primaryHref = "/quiz/grammar";
     primaryLabel = "Gramere başla";
     unitTitle = "Gramer pratiği";
-    unitHint = `${dueGrammar.length} gramer kuralı tekrar zamanı.`;
+    unitHint = `${dueGrammarCount} gramer kuralı tekrar zamanı.`;
     activeId = "grammar";
   }
 
@@ -84,20 +108,20 @@ export default async function DashboardPage() {
     {
       id: "words",
       title: "Kelimeler",
-      subtitle: dueWords.length > 0 ? `${dueWords.length} bekleyen` : "Hepsi güncel",
+      subtitle: dueWordCount > 0 ? `${dueWordCount} bekleyen` : "Hepsi güncel",
       href: "/quiz",
-      badge: dueWords.length > 0 ? "Tekrar" : "Hazır",
+      badge: dueWordCount > 0 ? "Tekrar" : "Hazır",
       tone: "blue",
-      state: activeId === "words" ? "active" : dueWords.length === 0 ? "done" : "upcoming",
+      state: activeId === "words" ? "active" : dueWordCount === 0 ? "done" : "upcoming",
     },
     {
       id: "grammar",
       title: "Gramer",
-      subtitle: dueGrammar.length > 0 ? `${dueGrammar.length} bekleyen` : "Rahat nefes",
+      subtitle: dueGrammarCount > 0 ? `${dueGrammarCount} bekleyen` : "Rahat nefes",
       href: "/quiz/grammar",
-      badge: dueGrammar.length > 0 ? "Pratik" : "Hazır",
+      badge: dueGrammarCount > 0 ? "Pratik" : "Hazır",
       tone: "purple",
-      state: activeId === "grammar" ? "active" : dueGrammar.length === 0 ? "done" : "upcoming",
+      state: activeId === "grammar" ? "active" : dueGrammarCount === 0 ? "done" : "upcoming",
     },
     {
       id: "sounds",
@@ -119,7 +143,6 @@ export default async function DashboardPage() {
     },
   ];
 
-  // Mark nodes before active as done for path feel
   const activeIndex = nodes.findIndex((n) => n.id === activeId);
   const pathNodes = nodes.map((node, i) => {
     if (i < activeIndex) return { ...node, state: "done" as const };
@@ -130,6 +153,12 @@ export default async function DashboardPage() {
   return (
     <main className="relative mx-auto min-h-screen max-w-6xl px-4 pb-28 pt-5 lg:pb-10 lg:pt-8">
       <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-72 bg-[radial-gradient(ellipse_at_top,_rgba(253,134,10,0.12),_transparent_55%)]" />
+
+      {demo && (
+        <div className="mb-4 rounded-2xl border border-[#ffc800]/40 bg-[#ffc800]/10 px-4 py-2 text-center text-xs font-extrabold text-[#ffc800]">
+          Demo modu — giriş yok, örnek verilerle tasarım yapıyorsun
+        </div>
+      )}
 
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1.15fr)_minmax(280px,0.85fr)] lg:items-start">
         <LearningPath
@@ -192,9 +221,18 @@ export default async function DashboardPage() {
             </p>
           </section>
 
-          <DailyQuests quests={questsView} bonusJustClaimed={Boolean(bonus?.claimed)} />
+          <DailyQuests quests={questsView} bonusJustClaimed={bonusClaimed} />
 
-          <AddWordForm />
+          {showAddWord ? (
+            <AddWordForm />
+          ) : (
+            <section className="rounded-[1.75rem] border-2 border-dashed border-duo-border bg-duo-card/60 p-5">
+              <h2 className="text-base font-black text-white">Kendi kelimeni ekle</h2>
+              <p className="mt-1 text-sm font-semibold text-duo-muted">
+                Demo’da kapalı. Canlıda otomatik anlam + ses ile eklenir.
+              </p>
+            </section>
+          )}
 
           <section className="grid grid-cols-2 gap-3">
             <Link
@@ -204,7 +242,7 @@ export default async function DashboardPage() {
               <p className="text-[10px] font-black uppercase tracking-wide text-[#1cb0f6]">
                 Kelime
               </p>
-              <p className="mt-1 text-2xl font-black tabular-nums text-white">{dueWords.length}</p>
+              <p className="mt-1 text-2xl font-black tabular-nums text-white">{dueWordCount}</p>
             </Link>
             <Link
               href="/quiz/grammar"
@@ -213,11 +251,11 @@ export default async function DashboardPage() {
               <p className="text-[10px] font-black uppercase tracking-wide text-[#ce82ff]">
                 Gramer
               </p>
-              <p className="mt-1 text-2xl font-black tabular-nums text-white">{dueGrammar.length}</p>
+              <p className="mt-1 text-2xl font-black tabular-nums text-white">{dueGrammarCount}</p>
             </Link>
           </section>
 
-          {dueWords.length === 0 && (
+          {showLoadWords && (
             <section className="rounded-[1.75rem] border-2 border-dashed border-duo-border bg-duo-card/80 p-5">
               <h2 className="text-base font-black text-white">Kelime havuzu boş</h2>
               <p className="mt-1 text-sm font-semibold text-duo-muted">

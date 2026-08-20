@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { LoadingScreen } from "@/app/components/LoadingScreen";
+import { DEMO_SOUNDS, isDemoMode } from "@/lib/demo";
 import type { SoundWithProgress } from "@/types";
 
 export function SoundsCatalog() {
@@ -16,6 +17,14 @@ export function SoundsCatalog() {
     let cancelled = false;
     async function load() {
       try {
+        if (isDemoMode(window.location.hostname)) {
+          if (!cancelled) {
+            setVowels(DEMO_SOUNDS.filter((s) => s.category === "vowel"));
+            setConsonants(DEMO_SOUNDS.filter((s) => s.category === "consonant"));
+            setLoading(false);
+          }
+          return;
+        }
         const res = await fetch("/api/sounds");
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Sesler yüklenemedi");
@@ -26,7 +35,12 @@ export function SoundsCatalog() {
         }
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : "Hata");
+          if (isDemoMode(window.location.hostname)) {
+            setVowels(DEMO_SOUNDS.filter((s) => s.category === "vowel"));
+            setConsonants(DEMO_SOUNDS.filter((s) => s.category === "consonant"));
+          } else {
+            setError(err instanceof Error ? err.message : "Hata");
+          }
           setLoading(false);
         }
       }

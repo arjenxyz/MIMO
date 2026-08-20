@@ -12,6 +12,7 @@ import {
   updateProfileXP,
   updateWordProgress,
 } from "@/lib/db";
+import { DEMO_DUE_WORDS, isDemoMode } from "@/lib/demo";
 import { answersMatch, calculateXP } from "@/lib/srs";
 import { playWordAudio, speak } from "@/lib/speak";
 import { createClient } from "@/lib/supabase/client";
@@ -30,13 +31,21 @@ export default function WordQuizPage() {
   const [error, setError] = useState("");
   const [levelUp, setLevelUp] = useState<number | null>(null);
   const [finished, setFinished] = useState(false);
+  const [demo, setDemo] = useState(false);
 
   const current = items[index];
   const word = current?.words;
 
   useEffect(() => {
     async function boot() {
+      const localDemo = isDemoMode(window.location.hostname);
+      setDemo(localDemo);
       try {
+        if (localDemo) {
+          setItems(DEMO_DUE_WORDS);
+          setLoading(false);
+          return;
+        }
         const supabase = createClient();
         const {
           data: { user },
@@ -51,8 +60,12 @@ export default function WordQuizPage() {
           due = await getDueWords(supabase, user.id);
         }
         setItems(due);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Kelimeler yüklenemedi.");
+      } catch (e) {
+        if (localDemo) {
+          setItems(DEMO_DUE_WORDS);
+        } else {
+          setError(e instanceof Error ? e.message : "Yüklenemedi");
+        }
       } finally {
         setLoading(false);
       }
@@ -90,19 +103,21 @@ export default function WordQuizPage() {
     setSaving(true);
     setError("");
     try {
-      const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) return;
-      await updateWordProgress(supabase, current, quality, correct);
-      const profile = await getProfile(supabase, user.id);
-      if (profile) {
-        const xp = calculateXP(quality, "word");
-        const result = await updateProfileXP(supabase, profile, xp);
-        window.dispatchEvent(new Event("profile-updated"));
-        if (result.leveledUp) {
-          setLevelUp(result.profile.level);
+      if (!demo) {
+        const supabase = createClient();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (!user) return;
+        await updateWordProgress(supabase, current, quality, correct);
+        const profile = await getProfile(supabase, user.id);
+        if (profile) {
+          const xp = calculateXP(quality, "word");
+          const result = await updateProfileXP(supabase, profile, xp);
+          window.dispatchEvent(new Event("profile-updated"));
+          if (result.leveledUp) {
+            setLevelUp(result.profile.level);
+          }
         }
       }
       const nextIndex = index + 1;

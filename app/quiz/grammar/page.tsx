@@ -12,6 +12,7 @@ import {
   updateGrammarProgress,
   updateProfileXP,
 } from "@/lib/db";
+import { DEMO_DUE_GRAMMAR, isDemoMode } from "@/lib/demo";
 import { answersMatch, calculateXP } from "@/lib/srs";
 import { createClient } from "@/lib/supabase/client";
 import type { DueGrammarItem, Quality } from "@/types";
@@ -28,13 +29,20 @@ export default function GrammarQuizPage() {
   const [error, setError] = useState("");
   const [levelUp, setLevelUp] = useState<number | null>(null);
   const [finished, setFinished] = useState(false);
+  const [demo, setDemo] = useState(false);
 
   const current = items[index];
   const rule = current?.grammar_rules;
 
   useEffect(() => {
     async function boot() {
+      const localDemo = isDemoMode(window.location.hostname);
+      setDemo(localDemo);
       try {
+        if (localDemo) {
+          setItems(DEMO_DUE_GRAMMAR);
+          return;
+        }
         const supabase = createClient();
         const {
           data: { user },
@@ -50,7 +58,8 @@ export default function GrammarQuizPage() {
         }
         setItems(due);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Gramer yüklenemedi.");
+        if (localDemo) setItems(DEMO_DUE_GRAMMAR);
+        else setError(err instanceof Error ? err.message : "Gramer yüklenemedi.");
       } finally {
         setLoading(false);
       }
@@ -75,19 +84,21 @@ export default function GrammarQuizPage() {
     setSaving(true);
     setError("");
     try {
-      const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) return;
-      await updateGrammarProgress(supabase, current, quality, correct);
-      const profile = await getProfile(supabase, user.id);
-      if (profile) {
-        const xp = calculateXP(quality, "grammar");
-        const result = await updateProfileXP(supabase, profile, xp);
-        window.dispatchEvent(new Event("profile-updated"));
-        if (result.leveledUp) {
-          setLevelUp(result.profile.level);
+      if (!demo) {
+        const supabase = createClient();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (!user) return;
+        await updateGrammarProgress(supabase, current, quality, correct);
+        const profile = await getProfile(supabase, user.id);
+        if (profile) {
+          const xp = calculateXP(quality, "grammar");
+          const result = await updateProfileXP(supabase, profile, xp);
+          window.dispatchEvent(new Event("profile-updated"));
+          if (result.leveledUp) {
+            setLevelUp(result.profile.level);
+          }
         }
       }
       const nextIndex = index + 1;

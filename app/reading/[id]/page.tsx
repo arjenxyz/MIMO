@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { ContinueButton } from "@/app/components/ContinueButton";
 import { LevelUpModal } from "@/app/components/LevelUpModal";
 import { getProfile, saveStoryResult, updateProfileXP } from "@/lib/db";
+import { DEMO_STORIES, isDemoMode } from "@/lib/demo";
 import { answersMatch, calculateXP } from "@/lib/srs";
 import { createClient } from "@/lib/supabase/client";
 import type { Story } from "@/types";
@@ -19,10 +20,18 @@ export default function StoryDetailPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [levelUp, setLevelUp] = useState<number | null>(null);
+  const [demo, setDemo] = useState(false);
 
   useEffect(() => {
     async function load() {
+      const localDemo = isDemoMode(window.location.hostname);
+      setDemo(localDemo);
       try {
+        if (localDemo) {
+          const found = DEMO_STORIES.find((s) => s.id === Number(params.id)) ?? null;
+          setStory(found);
+          return;
+        }
         const supabase = createClient();
         const { data, error: storyError } = await supabase
           .from("stories")
@@ -51,22 +60,24 @@ export default function StoryDetailPage() {
     setSaving(true);
     setError("");
     try {
-      const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) {
-        router.replace("/login");
-        return;
-      }
-      await saveStoryResult(supabase, user.id, story.id, result);
-      const profile = await getProfile(supabase, user.id);
-      if (profile) {
-        const xp = calculateXP(3, "story");
-        const updated = await updateProfileXP(supabase, profile, xp);
-        window.dispatchEvent(new Event("profile-updated"));
-        if (updated.leveledUp) {
-          setLevelUp(updated.profile.level);
+      if (!demo) {
+        const supabase = createClient();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (!user) {
+          router.replace("/login");
+          return;
+        }
+        await saveStoryResult(supabase, user.id, story.id, result);
+        const profile = await getProfile(supabase, user.id);
+        if (profile) {
+          const xp = calculateXP(3, "story");
+          const updated = await updateProfileXP(supabase, profile, xp);
+          window.dispatchEvent(new Event("profile-updated"));
+          if (updated.leveledUp) {
+            setLevelUp(updated.profile.level);
+          }
         }
       }
     } catch (err) {

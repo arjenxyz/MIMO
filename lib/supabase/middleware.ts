@@ -1,7 +1,16 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { isDemoMode } from "@/lib/demo";
 
 export async function updateSession(request: NextRequest) {
+  const host = request.nextUrl.hostname;
+  const demo = isDemoMode(host);
+
+  // Localhost / development: no login gate
+  if (demo) {
+    return NextResponse.next({ request });
+  }
+
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
@@ -50,7 +59,6 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
-  // Skip onboarding — always go to login
   if (!user && pathname === "/onboarding") {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = "/login";

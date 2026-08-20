@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import { DEMO_PROFILE, isDemoMode } from "@/lib/demo";
 import { createClient } from "@/lib/supabase/client";
 import type { Profile } from "@/types";
 
@@ -15,22 +16,27 @@ export function Navbar() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [ready, setReady] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [demo, setDemo] = useState(false);
 
   const loadProfile = useCallback(async () => {
+    const localDemo =
+      isDemoMode(typeof window !== "undefined" ? window.location.hostname : null);
+    setDemo(localDemo);
+
     try {
       const supabase = createClient();
       const {
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) {
-        setProfile(null);
+        setProfile(localDemo ? DEMO_PROFILE : null);
         setReady(true);
         return;
       }
       const { data } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();
-      setProfile((data as Profile | null) ?? null);
+      setProfile((data as Profile | null) ?? (localDemo ? DEMO_PROFILE : null));
     } catch {
-      setProfile(null);
+      setProfile(localDemo ? DEMO_PROFILE : null);
     } finally {
       setReady(true);
     }
@@ -56,6 +62,10 @@ export function Navbar() {
   }
 
   async function signOut() {
+    if (demo) {
+      router.push("/login");
+      return;
+    }
     const supabase = createClient();
     await supabase.auth.signOut();
     router.replace("/login");
@@ -73,6 +83,11 @@ export function Navbar() {
             EN
           </span>
           <span className="hidden text-lg font-black tracking-tight sm:inline">MIMO</span>
+          {demo && (
+            <span className="rounded-full bg-[#ffc800]/15 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-[#ffc800]">
+              Demo
+            </span>
+          )}
         </Link>
 
         <div className="flex items-center gap-1 sm:gap-2">
@@ -135,7 +150,7 @@ export function Navbar() {
                     onClick={signOut}
                     className="w-full px-4 py-3 text-left text-sm font-extrabold text-[#ff4b4b] hover:bg-white/5"
                   >
-                    Çıkış yap
+                    {demo ? "Giriş ekranı" : "Çıkış yap"}
                   </button>
                 </div>
               </>
