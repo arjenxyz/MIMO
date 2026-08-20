@@ -1,22 +1,90 @@
 /**
  * Word → clear, learner-friendly image URL (no Supabase storage).
- * Prefers Wikidata canonical images (P18), then Wikipedia lead thumb,
- * then strictly scored Openverse illustrations.
+ *
+ * Cascade: Wikidata (strict P31 + P18) → Wikipedia summary → Openverse.
+ * Abstract / unmatched words return null so UI can show a placeholder.
  */
 
 const UA = { "User-Agent": "MIMO-LanguageApp/1.0 (english-vocabulary-learning)" };
+const FETCH_MS = 8_000;
+
+/** Concrete / teachable instance-of (P31) — real Wikidata IDs (+ new fruit class). */
+const ALLOW_P31 = new Set([
+  "Q3314483", // fruit
+  "Q140646522", // fruit (newer Wikidata class used by apple etc.)
+  "Q11093", // vegetable
+  "Q2095", // food
+  "Q25403900", // food ingredient
+  "Q729", // animal
+  "Q16521", // taxon (species etc.)
+  "Q55983715", // organisms known by a particular common name
+  "Q39546", // vehicle
+  "Q1420", // automobile
+  "Q11460", // clothing
+  "Q41176", // building
+  "Q35140", // utensil / tool-like
+  "Q11019", // machine
+  "Q34379", // musical instrument
+  "Q488383", // object
+  "Q223557", // physical object
+  "Q4406616", // concrete object
+  "Q8205328", // artificial physical object
+  "Q2424752", // product
+  "Q756", // plant
+  "Q918890", // plant structure
+  "Q1310239", // food product
+  "Q19861951", // type of food or dish
+]);
+
+/** Never use these senses for vocabulary images. */
+const DENY_P31 = new Set([
+  "Q5", // human
+  "Q215627", // person
+  "Q43229", // organization
+  "Q4830453", // business enterprise
+  "Q783794", // company
+  "Q6881511", // enterprise
+  "Q431289", // brand
+  "Q167270", // trademark
+  "Q17141", // brand (user)
+  "Q11635", // company (user-listed)
+  "Q202444", // given name
+  "Q3409032", // unisex given name
+  "Q101352", // family name
+  "Q4167410", // disambiguation page
+  "Q11424", // film
+  "Q5398426", // television series
+  "Q482994", // album
+  "Q7366", // song
+  "Q7889", // video game
+  "Q215380", // musical group / band
+  "Q7397", // software
+  "Q35127", // website
+  "Q11032", // newspaper
+  "Q486972", // human settlement
+  "Q515", // city
+  "Q3957", // town
+  "Q19307174", // streaming media
+  "Q15590336", // music streaming service
+]);
+
+const CONCRETE_DESC =
+  /\b(fruit|vegetable|food|animal|mammal|bird|fish|insect|dog|cat|vehicle|car|automobile|building|house|home|clothing|garment|tool|plant|tree|flower|object|device|furniture|kitchen|toy)\b/;
+
+const ABSTRACT_DESC =
+  /\b(emotion|feeling|concept|philosophy|quality|abstract|idea|principle|virtue|love|luck|chance|coincidence)\b/;
 
 export async function findWordImageUrl(english: string): Promise<string | null> {
   const query = normalizeQuery(english);
   if (!query) return null;
 
-  const wikidata = await searchWikidataImage(query);
+  const wikidata = await withTimeout(searchWikidataImage(query), FETCH_MS);
   if (wikidata) return wikidata;
 
-  const wiki = await searchWikipediaSummary(query);
+  const wiki = await withTimeout(searchWikipediaSummary(query), FETCH_MS);
   if (wiki) return wiki;
 
-  const openverse = await searchOpenverseClear(query);
+  const openverse = await withTimeout(searchOpenverseClear(query), FETCH_MS);
   return openverse;
 }
 
@@ -29,196 +97,248 @@ function normalizeQuery(raw: string) {
     .slice(0, 60);
 }
 
+async function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T | null> {
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<null>((resolve) => {
+        setTimeout(() => resolve(null), ms);
+      }),
+    ]);
+  } catch {
+    return null;
+  }
+}
+
 function commonsFileUrl(filename: string, width = 800) {
   const clean = filename.replace(/ /g, "_");
   return `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(clean)}?width=${width}`;
+}
+
+function isRasterImageFile(filename: string) {
+  return /\.(jpe?g|png|webp)$/i.test(filename);
 }
 
 type WikiSearchHit = {
   id: string;
   label?: string;
   description?: string;
+  aliases?: string[];
+};
+
+type WikidataEntity = {
+  labels?: { en?: { value?: string } };
+  descriptions?: { en?: { value?: string } };
+  aliases?: { en?: Array<{ value?: string }> };
+  claims?: {
+    P18?: Array<{ mainsnak?: { datavalue?: { value?: string } } }>;
+    P31?: Array<{
+      mainsnak?: { datavalue?: { value?: { id?: string } } };
+    }>;
+  };
 };
 
 async function searchWikidataImage(query: string): Promise<string | null> {
-  try {
-    const searchUrl = new URL("https://www.wikidata.org/w/api.php");
-    searchUrl.searchParams.set("action", "wbsearchentities");
-    searchUrl.searchParams.set("search", query);
-    searchUrl.searchParams.set("language", "en");
-    searchUrl.searchParams.set("uselang", "en");
-    searchUrl.searchParams.set("type", "item");
-    searchUrl.searchParams.set("limit", "8");
-    searchUrl.searchParams.set("format", "json");
-    searchUrl.searchParams.set("origin", "*");
+  const searchUrl = new URL("https://www.wikidata.org/w/api.php");
+  searchUrl.searchParams.set("action", "wbsearchentities");
+  searchUrl.searchParams.set("search", query);
+  searchUrl.searchParams.set("language", "en");
+  searchUrl.searchParams.set("uselang", "en");
+  searchUrl.searchParams.set("type", "item");
+  searchUrl.searchParams.set("limit", "10");
+  searchUrl.searchParams.set("format", "json");
+  searchUrl.searchParams.set("origin", "*");
 
-    const searchRes = await fetch(searchUrl.toString(), {
-      headers: UA,
-      next: { revalidate: 86400 },
-    });
-    if (!searchRes.ok) return null;
+  const searchRes = await fetch(searchUrl.toString(), {
+    headers: UA,
+    next: { revalidate: 86400 },
+  });
+  if (!searchRes.ok) return null;
 
-    const searchData = (await searchRes.json()) as { search?: WikiSearchHit[] };
-    const hits = [...(searchData.search ?? [])].sort(
-      (a, b) => scoreWikidataHit(query, b) - scoreWikidataHit(query, a)
-    );
+  const searchData = (await searchRes.json()) as { search?: WikiSearchHit[] };
+  const hits = searchData.search ?? [];
+  if (hits.length === 0) return null;
 
-    const ids = hits
-      .filter((h) => scoreWikidataHit(query, h) >= 4)
-      .slice(0, 5)
-      .map((h) => h.id);
+  const ids = hits.map((h) => h.id);
+  const entityUrl = new URL("https://www.wikidata.org/w/api.php");
+  entityUrl.searchParams.set("action", "wbgetentities");
+  entityUrl.searchParams.set("ids", ids.join("|"));
+  entityUrl.searchParams.set("props", "claims|labels|descriptions|aliases");
+  entityUrl.searchParams.set("languages", "en");
+  entityUrl.searchParams.set("format", "json");
+  entityUrl.searchParams.set("origin", "*");
 
-    if (ids.length === 0) return null;
+  const entityRes = await fetch(entityUrl.toString(), {
+    headers: UA,
+    next: { revalidate: 86400 },
+  });
+  if (!entityRes.ok) return null;
 
-    const entityUrl = new URL("https://www.wikidata.org/w/api.php");
-    entityUrl.searchParams.set("action", "wbgetentities");
-    entityUrl.searchParams.set("ids", ids.join("|"));
-    entityUrl.searchParams.set("props", "claims");
-    entityUrl.searchParams.set("format", "json");
-    entityUrl.searchParams.set("origin", "*");
+  const entityData = (await entityRes.json()) as {
+    entities?: Record<string, WikidataEntity>;
+  };
 
-    const entityRes = await fetch(entityUrl.toString(), {
-      headers: UA,
-      next: { revalidate: 86400 },
-    });
-    if (!entityRes.ok) return null;
+  type Candidate = { id: string; score: number; file: string };
+  const candidates: Candidate[] = [];
 
-    const entityData = (await entityRes.json()) as {
-      entities?: Record<
-        string,
-        {
-          claims?: {
-            P18?: Array<{ mainsnak?: { datavalue?: { value?: string } } }>;
-          };
-        }
-      >;
-    };
+  for (const hit of hits) {
+    const entity = entityData.entities?.[hit.id];
+    if (!entity) continue;
 
-    for (const id of ids) {
-      const filename = entityData.entities?.[id]?.claims?.P18?.[0]?.mainsnak?.datavalue?.value;
-      if (filename) return commonsFileUrl(filename);
-    }
+    const p31Ids = (entity.claims?.P31 ?? [])
+      .map((c) => c.mainsnak?.datavalue?.value?.id)
+      .filter((id): id is string => Boolean(id));
 
-    return null;
-  } catch {
-    return null;
+    if (p31Ids.length === 0) continue;
+    if (p31Ids.some((id) => DENY_P31.has(id))) continue;
+
+    const allowedType = p31Ids.some((id) => ALLOW_P31.has(id));
+    const label = (entity.labels?.en?.value ?? hit.label ?? "").toLowerCase().trim();
+    const description = (
+      entity.descriptions?.en?.value ??
+      hit.description ??
+      ""
+    ).toLowerCase();
+    const aliases = (entity.aliases?.en ?? [])
+      .map((a) => (a.value ?? "").toLowerCase().trim())
+      .filter(Boolean);
+
+    // Fallback when Wikidata invents new P31 classes: exact label + concrete sense.
+    const concreteFallback =
+      label === query && CONCRETE_DESC.test(description) && !ABSTRACT_DESC.test(description);
+    if (!allowedType && !concreteFallback) continue;
+    if (ABSTRACT_DESC.test(description) && !allowedType) continue;
+
+    const filename = entity.claims?.P18?.[0]?.mainsnak?.datavalue?.value;
+    if (!filename || !isRasterImageFile(filename)) continue;
+
+    let score = 0;
+    if (label === query) score += 30;
+    if (description.includes(query)) score += 20;
+    if (aliases.some((a) => a === query || a.includes(query))) score += 10;
+    if (CONCRETE_DESC.test(description)) score += 15;
+    if (allowedType) score += 10;
+
+    if (score < 50) continue;
+    candidates.push({ id: hit.id, score, file: filename });
   }
-}
 
-/**
- * Prefer concrete, teachable senses over companies / people / brands.
- */
-function scoreWikidataHit(query: string, hit: WikiSearchHit) {
-  const label = (hit.label ?? "").toLowerCase().trim();
-  const desc = (hit.description ?? "").toLowerCase();
-  const q = query.toLowerCase();
-
-  let score = 0;
-  if (label === q) score += 8;
-  else if (label.startsWith(q + " ") || label.endsWith(" " + q)) score += 3;
-  else if (label.includes(q)) score += 1;
-  else return -20;
-
-  const concrete =
-    /\b(fruit|vegetable|animal|bird|fish|insect|plant|tree|flower|tool|device|object|vehicle|furniture|food|drink|clothing|garment|building|instrument|body|organ|color|colour|shape|sport|game|kitchen|household|mammal|reptile|metal|material|container|weapon|toy)\b/;
-  if (concrete.test(desc)) score += 10;
-
-  const abstractOk = /\b(emotion|feeling|concept|action|activity|process)\b/;
-  if (abstractOk.test(desc)) score += 2;
-
-  const bad =
-    /\b(company|corporation|brand|business|organization|organisation|band|singer|actor|actress|politician|footballer|athlete|given name|family name|surname|film|movie|album|song|tv series|television|video game|software|website|newspaper|human settlement|city|town|village|river|mountain|disambiguation)\b/;
-  if (bad.test(desc)) score -= 15;
-
-  if (desc.includes("species of") || desc.includes("edible")) score += 4;
-  if (desc.includes("pedal-driven") || desc.includes("means of transport")) score += 4;
-
-  return score;
+  candidates.sort((a, b) => b.score - a.score);
+  const best = candidates[0];
+  return best ? commonsFileUrl(best.file) : null;
 }
 
 async function searchWikipediaSummary(query: string): Promise<string | null> {
-  try {
-    const title = query
-      .split(" ")
-      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-      .join("_");
+  const title = query
+    .split(" ")
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join("_");
 
-    const res = await fetch(
-      `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`,
-      { headers: UA, next: { revalidate: 86400 } }
-    );
-    if (!res.ok) return null;
+  const res = await fetch(
+    `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`,
+    { headers: UA, next: { revalidate: 86400 } }
+  );
+  if (!res.ok) return null;
 
-    const data = (await res.json()) as {
-      type?: string;
-      title?: string;
-      description?: string;
-      thumbnail?: { source?: string };
-      originalimage?: { source?: string };
-    };
+  const data = (await res.json()) as {
+    type?: string;
+    title?: string;
+    description?: string;
+    extract?: string;
+    thumbnail?: { source?: string; width?: number; height?: number };
+    originalimage?: { source?: string; width?: number; height?: number };
+  };
 
-    // Skip disambiguation / meta pages — usually not a clear object photo.
-    if (data.type === "disambiguation") return null;
-    const desc = (data.description ?? "").toLowerCase();
-    if (/\b(company|brand|film|album|given name|disambiguation)\b/.test(desc)) return null;
+  if (data.type && data.type !== "standard") return null;
 
-    const src = data.originalimage?.source || data.thumbnail?.source;
-    return src ? src.split("?")[0] : null;
-  } catch {
+  const desc = (data.description ?? "").toLowerCase();
+  if (
+    /\b(company|brand|film|album|given name|disambiguation|human|singer|actor|emotion|concept|philosophy)\b/.test(
+      desc
+    )
+  ) {
     return null;
   }
+  if (ABSTRACT_DESC.test(desc)) return null;
+
+  const thumb = data.thumbnail;
+  if (!thumb?.source || (thumb.width ?? 0) < 200 || (thumb.height ?? 0) < 200) {
+    return null;
+  }
+
+  const extract = (data.extract ?? "").toLowerCase();
+  const q = query.toLowerCase();
+  const occurrences = extract.split(q).length - 1;
+  const firstWords = extract.split(/\s+/).slice(0, 100).join(" ");
+
+  let score = 0;
+  if (occurrences >= 3) score += 15;
+  if (firstWords.includes(q)) score += 10;
+  if ((data.title ?? "").toLowerCase() === q) score += 20;
+  if (desc.includes(q)) score += 10;
+
+  if (score < 40) return null;
+
+  const src = data.originalimage?.source || thumb.source;
+  return src ? src.split("?")[0] : null;
 }
 
 type OpenverseResult = {
   url?: string;
   thumbnail?: string;
   title?: string;
+  description?: string | null;
   mature?: boolean;
   category?: string | null;
+  license?: string | null;
+  width?: number | null;
+  height?: number | null;
   tags?: Array<{ name?: string }>;
 };
 
 async function searchOpenverseClear(query: string): Promise<string | null> {
-  try {
-    const queries = [
-      `"${query}"`,
-      `${query} object`,
-      `${query} illustration`,
-      query,
-    ];
+  // Skip Openverse for likely-abstract words — prefers placeholder over random stock.
+  if (isLikelyAbstract(query)) return null;
 
-    let bestUrl: string | null = null;
-    let bestScore = -1;
+  const queries = [
+    `"${query} object"`,
+    `"${query} illustration"`,
+    `"${query} photograph"`,
+    `"${query}"`,
+  ];
 
-    for (const q of queries) {
-      for (const category of ["illustration", "photograph", ""] as const) {
-        const results = await fetchOpenverseResults(q, category || null);
-        for (const r of results) {
-          const score = scoreOpenverse(query, r);
-          if (score < 12) continue;
-          const url = r.url || r.thumbnail;
-          if (!url) continue;
-          if (score > bestScore) {
-            bestScore = score;
-            bestUrl = url;
-          }
-        }
-        if (bestScore >= 18 && bestUrl) return bestUrl;
+  let bestUrl: string | null = null;
+  let bestScore = -1;
+
+  for (const q of queries) {
+    const results = await fetchOpenverseResults(q);
+    for (const r of results.slice(0, 10)) {
+      const score = scoreOpenverse(query, r);
+      if (score < 40) continue;
+      const url = r.url || r.thumbnail;
+      if (!url) continue;
+      if (score > bestScore) {
+        bestScore = score;
+        bestUrl = url;
       }
     }
-
-    return bestUrl;
-  } catch {
-    return null;
+    if (bestScore >= 50 && bestUrl) return bestUrl;
   }
+
+  return bestScore >= 40 ? bestUrl : null;
 }
 
-async function fetchOpenverseResults(query: string, category: string | null) {
+function isLikelyAbstract(query: string) {
+  return /^(love|hate|hope|fear|luck|fate|serendipity|freedom|justice|peace|anger|joy|sorrow|beauty|truth|faith|courage|wisdom|happiness|sadness|emotion|idea|concept|thought)$/i.test(
+    query
+  );
+}
+
+async function fetchOpenverseResults(query: string) {
   const url = new URL("https://api.openverse.org/v1/images/");
   url.searchParams.set("q", query);
-  url.searchParams.set("page_size", "20");
+  url.searchParams.set("page_size", "10");
   url.searchParams.set("mature", "false");
-  if (category) url.searchParams.set("category", category);
 
   const res = await fetch(url.toString(), {
     headers: UA,
@@ -227,28 +347,49 @@ async function fetchOpenverseResults(query: string, category: string | null) {
   if (!res.ok) return [] as OpenverseResult[];
 
   const data = (await res.json()) as { results?: OpenverseResult[] };
-  return (data.results ?? []).filter((r) => !r.mature && (r.url || r.thumbnail));
+  return (data.results ?? []).filter((r) => {
+    if (r.mature) return false;
+    if (!(r.url || r.thumbnail)) return false;
+    const w = r.width ?? 0;
+    const h = r.height ?? 0;
+    if (w > 0 && h > 0 && (w < 400 || h < 400)) return false;
+    return true;
+  });
 }
 
 function scoreOpenverse(query: string, result: OpenverseResult) {
   const q = query.toLowerCase();
-  const title = (result.title ?? "").toLowerCase().replace(/[_-]+/g, " ");
+  const title = (result.title ?? "").toLowerCase();
+  const description = (result.description ?? "").toLowerCase();
   const tags = (result.tags ?? []).map((t) => (t.name ?? "").toLowerCase());
-  const words = new Set(title.split(/\s+/).filter(Boolean));
+  const category = (result.category ?? "").toLowerCase();
+  const license = (result.license ?? "").toLowerCase();
+  const words = new Set(title.split(/[^a-z0-9]+/).filter(Boolean));
+
+  if (/\b(logo|screenshot|map|chart|graph|poster|banner|icon)\b/.test(title)) {
+    return -100;
+  }
+  if (category === "logo" || category === "screenshot" || category === "map") {
+    return -100;
+  }
+
+  // Require the query as a whole word in title or exact tag.
+  const titleHit = title === q || words.has(q);
+  const tagHit = tags.some((t) => t === q);
+  if (!titleHit && !tagHit) return -100;
 
   let score = 0;
-  if (title === q) score += 20;
-  else if (words.has(q)) score += 14;
-  else if (title.startsWith(q + " ") || title.endsWith(" " + q)) score += 10;
-  else if (title.includes(q)) score += 4;
-  else score -= 8;
+  if (title === q) score += 25;
+  else if (titleHit) score += 20;
+  if (tagHit) score += 15;
+  if (description.includes(q)) score += 10;
 
-  if (tags.some((t) => t === q)) score += 12;
-  else if (tags.some((t) => t.includes(q))) score += 3;
+  if (category === "photograph") score += 10;
+  else if (category === "illustration") score += 5;
 
-  if (result.category === "illustration") score += 4;
-  if (/\b(logo|screenshot|map|chart|graph|poster|advert|banner)\b/.test(title)) score -= 12;
-  if (/\b(inc|corp|ltd|company|album|concert)\b/.test(title)) score -= 10;
+  if (license === "cc0" || license === "cc-by" || license.startsWith("cc-by")) {
+    score += 5;
+  }
 
   return score;
 }

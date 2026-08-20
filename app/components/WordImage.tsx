@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-/** Fetches a related image URL (Openverse / Wikipedia) — no Supabase storage. */
+/** Fetches a related image URL — shows word placeholder when none fits. */
 export function WordImage({
   english,
   imageUrl,
@@ -15,11 +15,11 @@ export function WordImage({
   alt?: string;
 }) {
   const [src, setSrc] = useState<string | null>(imageUrl ?? null);
-  const [loading, setLoading] = useState(!imageUrl);
+  const [loading, setLoading] = useState(imageUrl === undefined);
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
-    if (imageUrl) {
+    if (imageUrl !== undefined) {
       setSrc(imageUrl);
       setLoading(false);
       setFailed(false);
@@ -61,9 +61,14 @@ export function WordImage({
   if (failed || !src) {
     return (
       <div
-        className={`flex items-center justify-center bg-[#1a2a31] text-xs font-bold text-duo-muted ${className}`}
+        className={`flex flex-col items-center justify-center gap-1 bg-gradient-to-br from-[#24353d] to-[#0f1a1e] px-4 text-center ${className}`}
       >
-        Görsel bulunamadı
+        <span className="text-2xl font-black tracking-[0.12em] text-white sm:text-3xl">
+          {english.trim().toUpperCase()}
+        </span>
+        <span className="text-[10px] font-bold uppercase tracking-wide text-duo-muted">
+          Uygun görsel bulunamadı
+        </span>
       </div>
     );
   }

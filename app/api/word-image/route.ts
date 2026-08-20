@@ -11,8 +11,11 @@ export async function GET(request: NextRequest) {
 
   try {
     const image_url = await findWordImageUrl(q);
-    return NextResponse.json({ image_url });
+    return NextResponse.json({
+      image_url,
+      placeholder: !image_url,
+    });
   } catch {
-    return NextResponse.json({ image_url: null });
+    return NextResponse.json({ image_url: null, placeholder: true });
   }
 }
