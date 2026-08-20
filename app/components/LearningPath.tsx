@@ -51,6 +51,7 @@ const OFFSETS = [
   "-translate-x-14 sm:-translate-x-16",
   "translate-x-14 sm:translate-x-16",
   "-translate-x-10 sm:-translate-x-12",
+  "translate-x-12 sm:translate-x-14",
 ];
 
 function PathIcon({ name }: { name: PathIconName }) {
