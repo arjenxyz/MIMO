@@ -1,9 +1,12 @@
+import { findWordImageUrl } from "@/lib/wordImage";
+
 export type WordLookupResult = {
   english: string;
   turkish: string;
   example_sentence: string | null;
   phonetic: string | null;
   audio_url: string | null;
+  image_url: string | null;
   source: "dictionary+mymemory" | "mymemory" | "manual";
 };
 
@@ -88,7 +91,11 @@ export async function lookupEnglishWord(raw: string): Promise<WordLookupResult |
   }
 
   const dict = await fetchDictionary(word);
-  const turkish = await translateToTurkish(dict?.english || word);
+  const english = dict?.english || word;
+  const [turkish, image_url] = await Promise.all([
+    translateToTurkish(english),
+    findWordImageUrl(english),
+  ]);
 
   if (!turkish) {
     return {
@@ -98,11 +105,12 @@ export async function lookupEnglishWord(raw: string): Promise<WordLookupResult |
   }
 
   return {
-    english: dict?.english || word,
+    english,
     turkish,
     example_sentence: dict?.example_sentence ?? null,
     phonetic: dict?.phonetic ?? null,
     audio_url: dict?.audio_url ?? null,
+    image_url,
     source: dict ? "dictionary+mymemory" : "mymemory",
   };
 }

@@ -15,7 +15,7 @@ import {
 import { DEMO_DUE_WORDS, isDemoMode } from "@/lib/demo";
 import { answersMatch, calculateXP } from "@/lib/srs";
 import { playWordAudio, speak } from "@/lib/speak";
-import { getWordImageUrl } from "@/lib/wordImage";
+import { WordImage } from "@/app/components/WordImage";
 import { createClient } from "@/lib/supabase/client";
 import type { DueWordItem, Quality } from "@/types";
 
@@ -200,13 +200,7 @@ export default function WordQuizPage() {
         </h1>
         {revealed && (
           <div className="mx-auto mt-4 max-w-sm overflow-hidden rounded-2xl border-2 border-duo-border">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={getWordImageUrl(word.english, 640, 360)}
-              alt=""
-              className="h-40 w-full object-cover"
-              loading="lazy"
-            />
+            <WordImage english={word.english} className="h-40 w-full object-cover" alt="" />
           </div>
         )}
         {revealed && word.example_sentence && (

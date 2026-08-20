@@ -164,7 +164,12 @@ export function Navbar() {
   }
 
   if (!ready || !profile) {
-    return null;
+    return (
+      <>
+        <header className="fixed inset-x-0 top-0 z-50 h-14 border-b-2 border-duo-border/80 bg-[#0f1a1e]" />
+        <div className="h-14 shrink-0" aria-hidden />
+      </>
+    );
   }
 
   async function signOut() {
@@ -182,75 +187,85 @@ export function Navbar() {
   const displayName = profile.username || "Öğrenci";
 
   return (
-    <header className="sticky top-0 z-50 border-b-2 border-duo-border/80 bg-[#0f1a1e]/95 backdrop-blur-md">
-      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-3 px-4">
-        <Link
-          href="/"
-          className="flex items-center gap-2.5 rounded-xl px-1 py-1 transition hover:bg-white/5"
-        >
-          <Image
-            src={FALLBACK_AVATAR}
-            alt=""
-            width={36}
-            height={36}
-            className="h-9 w-9 rounded-full object-cover ring-2 ring-[#fd860a]/45"
-          />
-          <span className="text-xl font-black tracking-tight text-white">MIMO</span>
-          {demo && (
-            <span className="rounded-full bg-[#ffc800]/15 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-[#ffc800]">
-              Demo
-            </span>
-          )}
-        </Link>
-
-        <div className="flex items-center gap-2">
-          <div
-            className="flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 font-black text-[#ff9600]"
-            title="Günlük seri"
+    <>
+      <header className="fixed inset-x-0 top-0 z-50 border-b-2 border-duo-border/80 bg-[#0f1a1e]/95 backdrop-blur-md">
+        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-3 px-4">
+          <Link
+            href="/"
+            className="flex items-center gap-2.5 rounded-xl px-1 py-1 transition hover:bg-white/5"
           >
-            <span className="text-lg" aria-hidden>
-              🔥
-            </span>
-            <span className="text-sm tabular-nums">{profile.daily_streak}</span>
-          </div>
+            <Image
+              src={FALLBACK_AVATAR}
+              alt=""
+              width={36}
+              height={36}
+              className="h-9 w-9 rounded-full object-cover ring-2 ring-[#fd860a]/45"
+            />
+            <span className="text-xl font-black tracking-tight text-white">MIMO</span>
+            {demo && (
+              <span className="rounded-full bg-[#ffc800]/15 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-[#ffc800]">
+                Demo
+              </span>
+            )}
+          </Link>
 
-          <details ref={detailsRef} className="relative">
-            <summary
-              aria-label="Profil menüsü"
-              className="flex h-10 w-10 cursor-pointer list-none items-center justify-center overflow-hidden rounded-full ring-2 ring-[#fd860a]/50 transition hover:ring-[#fd860a] [&::-webkit-details-marker]:hidden"
-            >
-              <UserAvatar src={avatarUrl} name={displayName} size={40} />
-            </summary>
+          <div className="flex items-center gap-2">
             <div
-              role="menu"
-              className="absolute right-0 top-12 z-[200] w-52 overflow-hidden rounded-2xl border-2 border-duo-border bg-duo-card shadow-xl"
+              className="flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 font-black text-[#ff9600]"
+              title="Günlük seri"
             >
-              <div className="flex items-center gap-3 border-b border-duo-border px-4 py-3">
-                <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full ring-2 ring-[#fd860a]/40">
-                  <UserAvatar src={avatarUrl} name={displayName} size={36} />
-                </div>
-                <p className="truncate text-sm font-extrabold text-duo-muted">{displayName}</p>
-              </div>
-              <Link
-                href="/words/add"
-                role="menuitem"
-                className="block border-b border-duo-border px-4 py-3 text-sm font-extrabold text-[#1cb0f6] hover:bg-white/5"
-                onClick={() => detailsRef.current?.removeAttribute("open")}
+              <svg
+                width={18}
+                height={18}
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                aria-hidden
+                className="text-[#ff9600]"
               >
-                Kelime ekle
-              </Link>
-              <button
-                type="button"
-                role="menuitem"
-                onClick={signOut}
-                className="w-full px-4 py-3 text-left text-sm font-extrabold text-[#ff4b4b] hover:bg-white/5"
-              >
-                {demo ? "Giriş ekranı" : "Çıkış yap"}
-              </button>
+                <path d="M12 2c1.5 3.5-.5 5.5-2 7.2C8.2 11 7 12.8 7 15.2 7 18.4 9.2 21 12 21s5-2.6 5-5.8c0-2.8-1.4-4.6-3.2-6.5C12.2 7 11 5.2 12 2z" />
+              </svg>
+              <span className="text-sm tabular-nums">{profile.daily_streak}</span>
             </div>
-          </details>
+
+            <details ref={detailsRef} className="relative">
+              <summary
+                aria-label="Profil menüsü"
+                className="flex h-10 w-10 cursor-pointer list-none items-center justify-center overflow-hidden rounded-full ring-2 ring-[#fd860a]/50 transition hover:ring-[#fd860a] [&::-webkit-details-marker]:hidden"
+              >
+                <UserAvatar src={avatarUrl} name={displayName} size={40} />
+              </summary>
+              <div
+                role="menu"
+                className="absolute right-0 top-12 z-[200] w-52 overflow-hidden rounded-2xl border-2 border-duo-border bg-duo-card shadow-xl"
+              >
+                <div className="flex items-center gap-3 border-b border-duo-border px-4 py-3">
+                  <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full ring-2 ring-[#fd860a]/40">
+                    <UserAvatar src={avatarUrl} name={displayName} size={36} />
+                  </div>
+                  <p className="truncate text-sm font-extrabold text-duo-muted">{displayName}</p>
+                </div>
+                <Link
+                  href="/words/add"
+                  role="menuitem"
+                  className="block border-b border-duo-border px-4 py-3 text-sm font-extrabold text-[#1cb0f6] hover:bg-white/5"
+                  onClick={() => detailsRef.current?.removeAttribute("open")}
+                >
+                  Kelime ekle
+                </Link>
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={signOut}
+                  className="w-full px-4 py-3 text-left text-sm font-extrabold text-[#ff4b4b] hover:bg-white/5"
+                >
+                  {demo ? "Giriş ekranı" : "Çıkış yap"}
+                </button>
+              </div>
+            </details>
+          </div>
         </div>
-      </div>
-    </header>
+      </header>
+      <div className="h-14 shrink-0" aria-hidden />
+    </>
   );
 }

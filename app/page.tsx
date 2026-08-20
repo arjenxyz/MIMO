@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { headers } from "next/headers";
-import { AddWordForm } from "@/app/components/AddWordForm";
 import { LearningPath, type PathNode } from "@/app/components/LearningPath";
 import { LoadWordsButton } from "@/app/components/LoadWordsButton";
 import { DEMO_DUE, DEMO_PROFILE, isDemoMode } from "@/lib/demo";
@@ -30,7 +29,6 @@ export default async function DashboardPage() {
   let profile: Profile = DEMO_PROFILE;
   let dueWordCount = DEMO_DUE.words;
   let showLoadWords = false;
-  let showAddWord = !demo;
 
   if (!demo) {
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
@@ -57,7 +55,6 @@ export default async function DashboardPage() {
     profile = liveProfile;
     dueWordCount = dueWords.length;
     showLoadWords = dueWords.length === 0;
-    showAddWord = true;
   }
 
   const hour = new Date().getHours();
@@ -119,6 +116,15 @@ export default async function DashboardPage() {
     return { ...node, state: node.state === "done" ? ("done" as const) : ("upcoming" as const) };
   });
 
+  const shortcuts = [
+    { href: "/quiz", label: "Kelime quiz", hint: "Tekrar et", color: "#1cb0f6" },
+    { href: "/sounds", label: "Sesler", hint: "Dinle & tekrarla", color: "#00cd9c" },
+    { href: "/det/read-complete", label: "Read & Complete", hint: "Boşluk doldur", color: "#ce82ff" },
+    { href: "/photo-practice", label: "Görsel Betimleme", hint: "60 sn yaz", color: "#fd860a" },
+    { href: "/words/add", label: "Kelime ekle", hint: "Kendi listen", color: "#ff9600" },
+    { href: "/quiz/grammar", label: "Gramer", hint: "Kural pratikleri", color: "#a568cc" },
+  ] as const;
+
   return (
     <main className="relative mx-auto min-h-screen max-w-6xl overflow-x-clip px-4 pb-10 pt-5 lg:pt-8">
       <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-72 bg-[radial-gradient(ellipse_at_top,_rgba(253,134,10,0.12),_transparent_55%)]" />
@@ -129,7 +135,7 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      <div className="grid min-w-0 gap-8 lg:grid-cols-[minmax(0,1.15fr)_minmax(280px,0.85fr)] lg:items-start">
+      <div className="grid min-w-0 gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(300px,360px)] lg:items-start lg:gap-10">
         <LearningPath
           nodes={pathNodes}
           unitTitle={unitTitle}
@@ -140,7 +146,29 @@ export default async function DashboardPage() {
         />
 
         <aside className="min-w-0 space-y-5 lg:sticky lg:top-20">
-          {showAddWord && <AddWordForm />}
+          <section className="rounded-[1.75rem] border-2 border-duo-border bg-duo-card p-5">
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-duo-muted">
+              Hızlı git
+            </p>
+            <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
+              {shortcuts.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="flex items-center justify-between gap-3 rounded-2xl border-2 border-duo-border bg-[#0f1a1e] px-4 py-3 transition hover:border-white/20"
+                  style={{ boxShadow: `inset 3px 0 0 ${item.color}` }}
+                >
+                  <span>
+                    <span className="block text-sm font-extrabold text-white">{item.label}</span>
+                    <span className="mt-0.5 block text-xs font-bold text-duo-muted">{item.hint}</span>
+                  </span>
+                  <span className="text-duo-muted" aria-hidden>
+                    →
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </section>
 
           {showLoadWords && (
             <section className="rounded-[1.75rem] border-2 border-dashed border-duo-border bg-duo-card/80 p-5">
@@ -153,26 +181,6 @@ export default async function DashboardPage() {
               </div>
             </section>
           )}
-
-          <nav className="hidden gap-2 lg:grid lg:grid-cols-2">
-            {(
-              [
-                ["/quiz", "Kelime quiz", "#1cb0f6"],
-                ["/quiz/grammar", "Gramer", "#ce82ff"],
-                ["/sounds", "Sesler", "#00cd9c"],
-                ["/reading", "Okuma", "#ff9600"],
-              ] as const
-            ).map(([href, label, color]) => (
-              <Link
-                key={href}
-                href={href}
-                className="rounded-2xl border-2 border-duo-border bg-[#0f1a1e] px-4 py-3 text-center text-sm font-extrabold text-white transition hover:border-white/20"
-                style={{ boxShadow: `inset 3px 0 0 ${color}` }}
-              >
-                {label}
-              </Link>
-            ))}
-          </nav>
         </aside>
       </div>
     </main>

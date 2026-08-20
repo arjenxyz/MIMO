@@ -177,11 +177,11 @@ export default function ReadCompletePage() {
     return Math.round((correctCount / total) * 100);
   }, [correctCount, wrongCount]);
 
-  if (!mounted) {
+  if (!mounted || !ready) {
     return (
       <main className="min-h-screen bg-[#f3f4f6] text-[#0f172a]">
         <div className="mx-auto max-w-3xl px-4 pb-10 pt-5">
-          <p className="text-center text-sm font-bold text-[#64748b]">Loading…</p>
+          <div className="text-center text-sm font-bold text-[#64748b]">Loading…</div>
         </div>
       </main>
     );

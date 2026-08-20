@@ -3,7 +3,7 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { playWordAudio } from "@/lib/speak";
-import { getWordImageUrl } from "@/lib/wordImage";
+import { WordImage } from "@/app/components/WordImage";
 import type { WordLookupResult } from "@/lib/wordLookup";
 
 async function demoLookupEnglish(raw: string): Promise<WordLookupResult> {
@@ -67,6 +67,7 @@ async function demoLookupEnglish(raw: string): Promise<WordLookupResult> {
     example_sentence,
     phonetic,
     audio_url,
+    image_url: null,
     source: "dictionary+mymemory",
   };
 }
@@ -90,7 +91,9 @@ export function AddWordForm({ demo = false }: { demo?: boolean }) {
     try {
       if (demo) {
         const result = await demoLookupEnglish(query);
-        setLookup(result);
+        const imgRes = await fetch(`/api/word-image?q=${encodeURIComponent(result.english)}`);
+        const imgData = (await imgRes.json()) as { image_url?: string | null };
+        setLookup({ ...result, image_url: imgData.image_url ?? null });
         setTurkish(result.turkish);
         return;
       }
@@ -186,12 +189,10 @@ export function AddWordForm({ demo = false }: { demo?: boolean }) {
       {lookup && (
         <div className="mt-4 space-y-3 rounded-2xl border-2 border-duo-border bg-[#0f1a1e]/80 p-4">
           <div className="overflow-hidden rounded-xl border border-duo-border">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={getWordImageUrl(lookup.english, 640, 360)}
-              alt={`${lookup.english} görseli`}
+            <WordImage
+              english={lookup.english}
+              imageUrl={lookup.image_url}
               className="h-36 w-full object-cover"
-              loading="lazy"
             />
           </div>
 
