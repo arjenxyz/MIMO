@@ -194,14 +194,24 @@ export default function PhotoPracticePage() {
                 </p>
               </div>
 
-              <button
-                type="button"
-                onClick={startSession}
-                disabled={!imageUrl || cooldownSec > 0}
-                className="w-full rounded-2xl bg-[#58cc02] py-4 text-sm font-black uppercase tracking-wide text-[#14260a] shadow-[0_4px_0_#46a302] disabled:opacity-50"
-              >
-                {cooldownSec > 0 ? `Bekle (${cooldownSec}s)` : `Başlat (${WRITE_SECONDS}s)`}
-              </button>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={startSession}
+                  disabled={!imageUrl || cooldownSec > 0}
+                  className="flex-1 rounded-2xl bg-[#58cc02] py-4 text-sm font-black uppercase tracking-wide text-[#14260a] shadow-[0_4px_0_#46a302] disabled:opacity-50"
+                >
+                  {cooldownSec > 0 ? `Bekle (${cooldownSec}s)` : `Başlat (${WRITE_SECONDS}s)`}
+                </button>
+                <button
+                  type="button"
+                  onClick={resetWithNewImage}
+                  disabled={!imageUrl || phase === "evaluating"}
+                  className="shrink-0 rounded-2xl border-2 border-duo-border px-5 py-4 text-sm font-black uppercase tracking-wide text-duo-muted transition hover:border-white/25 hover:text-white disabled:opacity-50"
+                >
+                  Geç
+                </button>
+              </div>
             </section>
           )}
 
@@ -243,14 +253,23 @@ export default function PhotoPracticePage() {
               )}
 
               {phase === "running" && (
-                <button
-                  type="button"
-                  onClick={() => void runEvaluation(answer)}
-                  disabled={answer.trim().length < 20 || sessionEvalStartedRef.current}
-                  className="w-full rounded-2xl bg-[#58cc02] py-3.5 text-sm font-black uppercase tracking-wide text-[#14260a] shadow-[0_4px_0_#46a302] disabled:opacity-50"
-                >
-                  Bitir ve Değerlendir
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => void runEvaluation(answer)}
+                    disabled={answer.trim().length < 20 || sessionEvalStartedRef.current}
+                    className="flex-1 rounded-2xl bg-[#58cc02] py-3.5 text-sm font-black uppercase tracking-wide text-[#14260a] shadow-[0_4px_0_#46a302] disabled:opacity-50"
+                  >
+                    Bitir ve Değerlendir
+                  </button>
+                  <button
+                    type="button"
+                    onClick={resetWithNewImage}
+                    className="shrink-0 rounded-2xl border-2 border-duo-border px-5 py-3.5 text-sm font-black uppercase tracking-wide text-duo-muted transition hover:border-white/25 hover:text-white"
+                  >
+                    Geç
+                  </button>
+                </div>
               )}
 
               {phase === "evaluating" && (
