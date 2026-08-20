@@ -117,7 +117,7 @@ export function ClozePassage({
   }
 
   return (
-    <div className="text-[17px] font-semibold leading-[1.85] text-[#334155] sm:text-[18px] sm:leading-[1.9]">
+    <div className="text-[17px] font-semibold leading-[2] text-[#334155] sm:text-[18px] sm:leading-[2.05]">
       {parts.map((part, index) => {
         if (part.kind === "text") {
           return (
@@ -141,25 +141,39 @@ export function ClozePassage({
         return (
           <span key={gap.id} className="inline whitespace-nowrap align-baseline">
             <span className="text-[#0f172a]">{prefix}</span>
-            {chars.map((display, letterIndex) => (
-              <input
-                key={`${gap.id}-${letterIndex}`}
-                ref={(el) => {
-                  if (!inputRefs.current[gap.id]) inputRefs.current[gap.id] = [];
-                  inputRefs.current[gap.id][letterIndex] = el;
-                }}
-                type="text"
-                inputMode="text"
-                autoComplete="off"
-                maxLength={1}
-                disabled={disabled}
-                value={display}
-                aria-label={`${gap.answer} letter ${letterIndex + 1}`}
-                onChange={(e) => setLetter(gap, letterIndex, e.target.value)}
-                onKeyDown={(e) => onKeyDown(gap, letterIndex, e)}
-                className={`mx-[1px] inline-block h-[1.15em] w-[0.92em] appearance-none rounded-[3px] border border-solid p-0 text-center text-[0.95em] font-semibold lowercase leading-none text-[#0f172a] align-[-0.12em] outline-none focus:border-[#1cb0f6] focus:ring-1 focus:ring-[#1cb0f6]/30 disabled:opacity-90 ${ring}`}
-              />
-            ))}
+            {chars.map((display, letterIndex) => {
+              const filled = Boolean(display);
+              const sizeClass = filled
+                ? "mx-px h-[1em] w-[0.7em] rounded-sm border-0 border-b border-[#64748b] bg-transparent p-0 text-[1em] leading-none align-baseline"
+                : "mx-[2px] h-8 w-7 rounded-md border sm:h-9 sm:w-8 align-[-0.2em]";
+              return (
+                <input
+                  key={`${gap.id}-${letterIndex}`}
+                  ref={(el) => {
+                    if (!inputRefs.current[gap.id]) inputRefs.current[gap.id] = [];
+                    inputRefs.current[gap.id][letterIndex] = el;
+                  }}
+                  type="text"
+                  inputMode="text"
+                  autoComplete="off"
+                  maxLength={1}
+                  disabled={disabled}
+                  value={display}
+                  aria-label={`${gap.answer} letter ${letterIndex + 1}`}
+                  onChange={(e) => setLetter(gap, letterIndex, e.target.value)}
+                  onKeyDown={(e) => onKeyDown(gap, letterIndex, e)}
+                  className={`inline-block appearance-none border-solid text-center font-semibold lowercase text-[#0f172a] outline-none transition-all duration-150 focus:border-[#1cb0f6] focus:ring-1 focus:ring-[#1cb0f6]/25 disabled:opacity-90 ${sizeClass} ${
+                    filled ? "" : ring
+                  } ${
+                    filled && status === "ok"
+                      ? "border-b-[#58cc02] text-[#15803d]"
+                      : filled && status === "bad"
+                        ? "border-b-[#ff4b4b] text-[#b91c1c]"
+                        : ""
+                  }`}
+                />
+              );
+            })}
           </span>
         );
       })}
