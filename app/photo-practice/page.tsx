@@ -138,15 +138,15 @@ export default function PhotoPracticePage() {
   }
 
   const photoPanel = (
-    <div className="overflow-hidden rounded-[1.75rem] border-2 border-duo-border bg-[#0f1a1e] lg:sticky lg:top-20">
-      <div className="relative aspect-[4/3] w-full bg-black/40 lg:aspect-[3/4] xl:aspect-[4/5]">
+    <div className="overflow-hidden rounded-[1.75rem] border-2 border-duo-border bg-[#0f1a1e] lg:self-start">
+      <div className="relative h-[220px] w-full bg-black/40 sm:h-[260px] lg:h-[min(300px,40dvh)]">
         {imageUrl ? (
           <Image
             src={imageUrl}
             alt="Practice photo"
             fill
             unoptimized
-            sizes="(max-width: 1024px) 100vw, 50vw"
+            sizes="(max-width: 1024px) 100vw, 480px"
             className="object-cover"
             priority
             onLoadingComplete={(img) => {
