@@ -206,7 +206,7 @@ export default function PhotoPracticePage() {
                 <button
                   type="button"
                   onClick={resetWithNewImage}
-                  disabled={!imageUrl || phase === "evaluating"}
+                  disabled={!imageUrl}
                   className="shrink-0 rounded-2xl border-2 border-duo-border px-5 py-4 text-sm font-black uppercase tracking-wide text-duo-muted transition hover:border-white/25 hover:text-white disabled:opacity-50"
                 >
                   Geç
