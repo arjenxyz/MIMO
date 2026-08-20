@@ -33,11 +33,21 @@ function PendingContent() {
         setMessage(`${LABELS[provider]} hesabına yönlendiriliyorsun...`);
         const supabase = createClient();
         const origin = window.location.origin;
+        const scopes =
+          provider === "google"
+            ? "openid email profile"
+            : provider === "discord"
+              ? "identify email"
+              : provider === "github"
+                ? "read:user user:email"
+                : undefined;
+
         const { data, error } = await supabase.auth.signInWithOAuth({
           provider,
           options: {
             redirectTo: `${origin}/auth/callback`,
             skipBrowserRedirect: true,
+            ...(scopes ? { scopes } : {}),
           },
         });
 
