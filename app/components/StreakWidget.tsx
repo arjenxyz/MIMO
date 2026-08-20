@@ -48,8 +48,8 @@ export function StreakWidget({
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-black/35" />
 
-      <div className="relative flex h-full flex-col justify-between p-4 sm:p-5">
-        <div className="rounded-2xl bg-black/45 px-3 py-2 backdrop-blur-sm">
+      <div className="relative flex h-full flex-col justify-end p-4 sm:p-5">
+        <div className="absolute left-3 right-3 top-3 rounded-2xl bg-black/45 px-3 py-2 backdrop-blur-sm sm:left-4 sm:right-4 sm:top-4">
           <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#ff9600]">
             Günlük seri
           </p>
