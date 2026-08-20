@@ -79,12 +79,6 @@ export default async function DashboardPage() {
     unitTitle = "Kelime tekrarı";
     unitHint = `${dueWordCount} kelime seni bekliyor. Kısa tekrar, uzun hafıza.`;
     activeId = "words";
-  } else if (dueGrammarCount > 0) {
-    primaryHref = "/quiz/grammar";
-    primaryLabel = "Gramere başla";
-    unitTitle = "Gramer pratiği";
-    unitHint = `${dueGrammarCount} gramer kuralı tekrar zamanı.`;
-    activeId = "grammar";
   }
 
   const nodes: PathNode[] = [
@@ -101,13 +95,6 @@ export default async function DashboardPage() {
       href: "/sounds",
       tone: "cyan",
       state: activeId === "sounds" ? "active" : "upcoming",
-    },
-    {
-      id: "reading",
-      title: "Okuma",
-      href: "/reading",
-      tone: "orange",
-      state: "upcoming",
     },
   ];
 
@@ -166,27 +153,6 @@ export default async function DashboardPage() {
           </section>
 
           {showAddWord && <AddWordForm />}
-
-          <section className="grid grid-cols-2 gap-3">
-            <Link
-              href="/quiz"
-              className="rounded-2xl border-2 border-[#1cb0f6]/35 bg-[#1cb0f6]/10 p-4 transition hover:border-[#1cb0f6]/70"
-            >
-              <p className="text-[10px] font-black uppercase tracking-wide text-[#1cb0f6]">
-                Kelime
-              </p>
-              <p className="mt-1 text-2xl font-black tabular-nums text-white">{dueWordCount}</p>
-            </Link>
-            <Link
-              href="/quiz/grammar"
-              className="rounded-2xl border-2 border-[#ce82ff]/35 bg-[#ce82ff]/10 p-4 transition hover:border-[#ce82ff]/70"
-            >
-              <p className="text-[10px] font-black uppercase tracking-wide text-[#ce82ff]">
-                Gramer
-              </p>
-              <p className="mt-1 text-2xl font-black tabular-nums text-white">{dueGrammarCount}</p>
-            </Link>
-          </section>
 
           {showLoadWords && (
             <section className="rounded-[1.75rem] border-2 border-dashed border-duo-border bg-duo-card/80 p-5">
