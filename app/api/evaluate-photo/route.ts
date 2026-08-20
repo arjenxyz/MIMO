@@ -1,5 +1,6 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextRequest, NextResponse } from "next/server";
+import { clientKeyFromRequest, consumeRateLimit } from "@/lib/rateLimit";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -61,6 +62,37 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const clientKey = clientKeyFromRequest(request);
+
+    // Burst protection: max 1 eval / 20s
+    const burst = consumeRateLimit(`photo-burst:${clientKey}`, {
+      max: 1,
+      windowMs: 20_000,
+    });
+    if (!burst.ok) {
+      return NextResponse.json(
+        {
+          error: `Çok hızlı istek. ${burst.retryAfterSec} sn sonra tekrar dene.`,
+        },
+        { status: 429 }
+      );
+    }
+
+    // Daily soft cap: max 40 evals / day (protects free Gemini quota from spam)
+    const daily = consumeRateLimit(`photo-day:${clientKey}`, {
+      max: 40,
+      windowMs: 24 * 60 * 60 * 1000,
+    });
+    if (!daily.ok) {
+      return NextResponse.json(
+        {
+          error:
+            "Günlük değerlendirme limitine ulaştın (40). Yarın tekrar dene veya kotanı AI Studio’dan kontrol et.",
+        },
+        { status: 429 }
+      );
+    }
+
     const body = (await request.json()) as {
       answer?: string;
       mode?: "write" | "speak";
@@ -71,14 +103,17 @@ export async function POST(request: NextRequest) {
     const mode = body.mode === "speak" ? "speak" : "write";
     const imageUrl = (body.imageUrl || "").trim();
 
-    if (userAnswer.length < 8) {
+    if (userAnswer.length < 20) {
       return NextResponse.json(
-        { error: "Değerlendirme için daha uzun bir cevap gerekli." },
+        { error: "Değerlendirme için en az ~20 karakter / birkaç cümle yaz." },
         { status: 400 }
       );
     }
 
-    if (!imageUrl || !/^https:\/\/(picsum\.photos|fastly\.picsum\.photos)\b/i.test(imageUrl)) {
+    if (
+      !imageUrl ||
+      !/^https:\/\/([a-z0-9.-]+\.)?picsum\.photos\b/i.test(imageUrl)
+    ) {
       return NextResponse.json(
         { error: "Geçerli bir pratik görseli gerekli." },
         { status: 400 }

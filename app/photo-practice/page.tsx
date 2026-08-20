@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { PhotoEvaluation } from "@/app/api/evaluate-photo/route";
-import { getRandomImage } from "@/lib/image-api";
+import { getRandomImage, stabilizePicsumUrl } from "@/lib/image-api";
 import {
   isSpeechRecognitionSupported,
   startSpeechRecognition,
@@ -34,7 +34,7 @@ function wordCount(text: string) {
 export default function PhotoPracticePage() {
   const [mode, setMode] = useState<Mode>("write");
   const [phase, setPhase] = useState<Phase>("ready");
-  const [imageUrl, setImageUrl] = useState("https://picsum.photos/900/600");
+  const [imageUrl, setImageUrl] = useState("");
   const [answer, setAnswer] = useState("");
   const [secondsLeft, setSecondsLeft] = useState(60);
   const [listening, setListening] = useState(false);
@@ -43,6 +43,10 @@ export default function PhotoPracticePage() {
   const recognitionRef = useRef<SpeechRecognitionHandle | null>(null);
   const answerRef = useRef("");
   const evaluatingRef = useRef(false);
+  const lockedImageRef = useRef("");
+  const sessionEvalStartedRef = useRef(false);
+  const lastEvalAtRef = useRef(0);
+  const [cooldownSec, setCooldownSec] = useState(0);
 
   const duration = mode === "write" ? 60 : 90;
   const speechOk = useMemo(() => isSpeechRecognitionSupported(), []);
@@ -59,8 +63,16 @@ export default function PhotoPracticePage() {
   }, []);
 
   useEffect(() => {
-    setImageUrl(getRandomImage(900, 600));
+    const next = getRandomImage(900, 600);
+    setImageUrl(next);
+    lockedImageRef.current = next;
   }, []);
+
+  useEffect(() => {
+    if (cooldownSec <= 0) return;
+    const t = window.setTimeout(() => setCooldownSec((s) => Math.max(0, s - 1)), 1000);
+    return () => window.clearTimeout(t);
+  }, [cooldownSec]);
 
   const stopMic = useCallback(() => {
     recognitionRef.current?.stop();
@@ -70,18 +82,36 @@ export default function PhotoPracticePage() {
 
   const runEvaluation = useCallback(
     async (text: string) => {
-      if (evaluatingRef.current) return;
+      if (evaluatingRef.current || sessionEvalStartedRef.current) return;
+      if (text.trim().length < 20) {
+        setError("Değerlendirme için biraz daha uzun yaz (en az birkaç cümle).");
+        return;
+      }
+
+      const sinceLast = Date.now() - lastEvalAtRef.current;
+      if (lastEvalAtRef.current && sinceLast < 20_000) {
+        const wait = Math.ceil((20_000 - sinceLast) / 1000);
+        setCooldownSec(wait);
+        setError(`Token koruması: ${wait} sn sonra yeni değerlendirme yapabilirsin.`);
+        return;
+      }
+
+      sessionEvalStartedRef.current = true;
       evaluatingRef.current = true;
+      lastEvalAtRef.current = Date.now();
+      setCooldownSec(20);
       stopMic();
       setPhase("evaluating");
       setError("");
       setEvaluation(null);
 
+      const imageForAi = lockedImageRef.current || imageUrl;
+
       try {
         const res = await fetch("/api/evaluate-photo", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ answer: text, mode, imageUrl }),
+          body: JSON.stringify({ answer: text, mode, imageUrl: imageForAi }),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Değerlendirme başarısız");
@@ -115,11 +145,17 @@ export default function PhotoPracticePage() {
   }, [phase, runEvaluation]);
 
   function startSession() {
+    if (cooldownSec > 0) {
+      setError(`Kısa bir ara ver (${cooldownSec} sn), sonra başlat.`);
+      return;
+    }
     setError("");
     setEvaluation(null);
     setAnswer("");
     answerRef.current = "";
     setSecondsLeft(duration);
+    sessionEvalStartedRef.current = false;
+    lockedImageRef.current = imageUrl;
     setPhase("running");
     evaluatingRef.current = false;
   }
@@ -147,12 +183,15 @@ export default function PhotoPracticePage() {
 
   function resetWithNewImage() {
     stopMic();
+    const next = getRandomImage(900, 600);
     setPhase("ready");
     setAnswer("");
     setEvaluation(null);
     setError("");
     setSecondsLeft(duration);
-    setImageUrl(getRandomImage(900, 600));
+    setImageUrl(next);
+    lockedImageRef.current = next;
+    sessionEvalStartedRef.current = false;
     evaluatingRef.current = false;
   }
 
@@ -175,15 +214,26 @@ export default function PhotoPracticePage() {
 
       <div className="overflow-hidden rounded-[1.75rem] border-2 border-duo-border bg-[#0f1a1e]">
         <div className="relative aspect-[4/3] w-full bg-black/40 sm:aspect-[16/10]">
-          <Image
-            src={imageUrl}
-            alt="Practice photo"
-            fill
-            unoptimized
-            sizes="(max-width: 768px) 100vw, 768px"
-            className="object-cover"
-            priority
-          />
+          {imageUrl ? (
+            <Image
+              src={imageUrl}
+              alt="Practice photo"
+              fill
+              unoptimized
+              sizes="(max-width: 768px) 100vw, 768px"
+              className="object-cover"
+              priority
+              onLoadingComplete={(img) => {
+                const stable = stabilizePicsumUrl(img.currentSrc || img.src, 900, 600);
+                lockedImageRef.current = stable;
+                if (stable !== imageUrl) setImageUrl(stable);
+              }}
+            />
+          ) : (
+            <div className="flex h-full items-center justify-center text-sm font-bold text-duo-muted">
+              Görsel yükleniyor…
+            </div>
+          )}
         </div>
       </div>
 
@@ -227,9 +277,10 @@ export default function PhotoPracticePage() {
           <button
             type="button"
             onClick={startSession}
-            className="w-full rounded-2xl bg-[#58cc02] py-4 text-sm font-black uppercase tracking-wide text-[#14260a] shadow-[0_4px_0_#46a302]"
+            disabled={!imageUrl || cooldownSec > 0}
+            className="w-full rounded-2xl bg-[#58cc02] py-4 text-sm font-black uppercase tracking-wide text-[#14260a] shadow-[0_4px_0_#46a302] disabled:opacity-50"
           >
-            Başlat ({duration}s)
+            {cooldownSec > 0 ? `Bekle (${cooldownSec}s)` : `Başlat (${duration}s)`}
           </button>
         </section>
       )}
@@ -289,7 +340,7 @@ export default function PhotoPracticePage() {
             <button
               type="button"
               onClick={() => void runEvaluation(answer)}
-              disabled={answer.trim().length < 8}
+              disabled={answer.trim().length < 20 || sessionEvalStartedRef.current}
               className="w-full rounded-2xl bg-[#58cc02] py-3.5 text-sm font-black uppercase tracking-wide text-[#14260a] shadow-[0_4px_0_#46a302] disabled:opacity-50"
             >
               Bitir ve Değerlendir
