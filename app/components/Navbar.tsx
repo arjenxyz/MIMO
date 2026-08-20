@@ -10,18 +10,32 @@ import type { Profile } from "@/types";
 
 const HIDDEN_PATHS = ["/login", "/register", "/onboarding", "/auth", "/sounds/practice"];
 
+function detectDemo() {
+  if (typeof window !== "undefined") {
+    return isDemoMode(window.location.hostname);
+  }
+  return isDemoMode(null);
+}
+
 export function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [ready, setReady] = useState(false);
+  const [demo, setDemo] = useState(detectDemo);
+  const [profile, setProfile] = useState<Profile | null>(() =>
+    detectDemo() ? DEMO_PROFILE : null
+  );
+  const [ready, setReady] = useState(() => detectDemo());
   const [menuOpen, setMenuOpen] = useState(false);
-  const [demo, setDemo] = useState(false);
 
   const loadProfile = useCallback(async () => {
-    const localDemo =
-      isDemoMode(typeof window !== "undefined" ? window.location.hostname : null);
+    const localDemo = detectDemo();
     setDemo(localDemo);
+
+    if (localDemo) {
+      setProfile(DEMO_PROFILE);
+      setReady(true);
+      return;
+    }
 
     try {
       const supabase = createClient();
@@ -29,14 +43,14 @@ export function Navbar() {
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) {
-        setProfile(localDemo ? DEMO_PROFILE : null);
+        setProfile(null);
         setReady(true);
         return;
       }
       const { data } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();
-      setProfile((data as Profile | null) ?? (localDemo ? DEMO_PROFILE : null));
+      setProfile((data as Profile | null) ?? null);
     } catch {
-      setProfile(localDemo ? DEMO_PROFILE : null);
+      setProfile(null);
     } finally {
       setReady(true);
     }
@@ -73,7 +87,7 @@ export function Navbar() {
   }
 
   return (
-    <header className="sticky top-0 z-40 border-b-2 border-duo-border/80 bg-[#0f1a1e]/92 backdrop-blur-md">
+    <header className="sticky top-0 z-50 border-b-2 border-duo-border/80 bg-[#0f1a1e]/95 backdrop-blur-md">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-3 px-4">
         <Link
           href="/"
