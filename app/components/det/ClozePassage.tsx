@@ -116,67 +116,114 @@ export function ClozePassage({
     return filled.toLowerCase() === gap.missing.toLowerCase() ? ("ok" as const) : ("bad" as const);
   }
 
+  const reviewGaps = showResults
+    ? gaps.map((gap) => {
+        const filled = (values[gap.id] || "").replace(/·/g, "");
+        const ok = filled.toLowerCase() === gap.missing.toLowerCase();
+        return { gap, ok, userMissing: filled };
+      })
+    : [];
+
   return (
-    <div className="text-[17px] font-semibold leading-[2] text-[#334155] sm:text-[18px] sm:leading-[2.05]">
-      {parts.map((part, index) => {
-        if (part.kind === "text") {
+    <div>
+      <div className="text-[17px] font-semibold leading-[2] text-[#334155] sm:text-[18px] sm:leading-[2.05]">
+        {parts.map((part, index) => {
+          if (part.kind === "text") {
+            return (
+              <span key={`t-${index}`} className="whitespace-pre-wrap">
+                {part.value}
+              </span>
+            );
+          }
+
+          const { gap } = part;
+          const prefix = gap.answer.slice(0, gap.shown);
+          const status = gapStatus(gap);
+          // After check: reveal the correct letters so the learner can study them.
+          const chars =
+            showResults && status === "bad"
+              ? gap.missing.split("")
+              : readChars(values[gap.id] || "", gap.missing.length);
+          const ring =
+            status === "ok"
+              ? "border-[#58cc02] bg-[#ecfce5]"
+              : status === "bad"
+                ? "border-[#1cb0f6] bg-[#e8f6fe]"
+                : "border-[#94a3b8] bg-white";
+
           return (
-            <span key={`t-${index}`} className="whitespace-pre-wrap">
-              {part.value}
+            <span key={gap.id} className="inline whitespace-nowrap align-baseline">
+              <span className="text-[#0f172a]">{prefix}</span>
+              {chars.map((display, letterIndex) => {
+                const filled = Boolean(display);
+                const revealed = showResults && status === "bad";
+                const sizeClass = filled
+                  ? "mx-px h-[1em] w-[0.7em] rounded-sm border-0 border-b border-[#64748b] bg-transparent p-0 text-[1em] leading-none align-baseline"
+                  : "mx-[2px] h-8 w-7 rounded-md border sm:h-9 sm:w-8 align-[-0.2em]";
+                return (
+                  <input
+                    key={`${gap.id}-${letterIndex}`}
+                    ref={(el) => {
+                      if (!inputRefs.current[gap.id]) inputRefs.current[gap.id] = [];
+                      inputRefs.current[gap.id][letterIndex] = el;
+                    }}
+                    type="text"
+                    inputMode="text"
+                    autoComplete="off"
+                    maxLength={1}
+                    disabled={disabled}
+                    value={display}
+                    readOnly={Boolean(showResults)}
+                    aria-label={`${gap.answer} letter ${letterIndex + 1}`}
+                    onChange={(e) => setLetter(gap, letterIndex, e.target.value)}
+                    onKeyDown={(e) => onKeyDown(gap, letterIndex, e)}
+                    className={`inline-block appearance-none border-solid text-center font-semibold lowercase text-[#0f172a] outline-none transition-all duration-150 focus:border-[#1cb0f6] focus:ring-1 focus:ring-[#1cb0f6]/25 disabled:opacity-90 ${sizeClass} ${
+                      filled ? "" : ring
+                    } ${
+                      filled && status === "ok"
+                        ? "border-b-[#58cc02] text-[#15803d]"
+                        : revealed
+                          ? "border-b-[#1cb0f6] text-[#0369a1]"
+                          : filled && status === "bad"
+                            ? "border-b-[#ff4b4b] text-[#b91c1c]"
+                            : ""
+                    }`}
+                  />
+                );
+              })}
             </span>
           );
-        }
+        })}
+      </div>
 
-        const { gap } = part;
-        const prefix = gap.answer.slice(0, gap.shown);
-        const chars = readChars(values[gap.id] || "", gap.missing.length);
-        const status = gapStatus(gap);
-        const ring =
-          status === "ok"
-            ? "border-[#58cc02] bg-[#ecfce5]"
-            : status === "bad"
-              ? "border-[#ff4b4b] bg-[#ffe8e8]"
-              : "border-[#94a3b8] bg-white";
-
-        return (
-          <span key={gap.id} className="inline whitespace-nowrap align-baseline">
-            <span className="text-[#0f172a]">{prefix}</span>
-            {chars.map((display, letterIndex) => {
-              const filled = Boolean(display);
-              const sizeClass = filled
-                ? "mx-px h-[1em] w-[0.7em] rounded-sm border-0 border-b border-[#64748b] bg-transparent p-0 text-[1em] leading-none align-baseline"
-                : "mx-[2px] h-8 w-7 rounded-md border sm:h-9 sm:w-8 align-[-0.2em]";
+      {showResults && reviewGaps.length > 0 && (
+        <div className="mt-6 rounded-xl border border-[#e2e8f0] bg-[#f8fafc] px-4 py-3 text-left">
+          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#64748b]">
+            Doğru kelimeler
+          </p>
+          <ul className="mt-2 space-y-1.5">
+            {reviewGaps.map(({ gap, ok, userMissing }) => {
+              const userWord = `${gap.answer.slice(0, gap.shown)}${userMissing}`;
               return (
-                <input
-                  key={`${gap.id}-${letterIndex}`}
-                  ref={(el) => {
-                    if (!inputRefs.current[gap.id]) inputRefs.current[gap.id] = [];
-                    inputRefs.current[gap.id][letterIndex] = el;
-                  }}
-                  type="text"
-                  inputMode="text"
-                  autoComplete="off"
-                  maxLength={1}
-                  disabled={disabled}
-                  value={display}
-                  aria-label={`${gap.answer} letter ${letterIndex + 1}`}
-                  onChange={(e) => setLetter(gap, letterIndex, e.target.value)}
-                  onKeyDown={(e) => onKeyDown(gap, letterIndex, e)}
-                  className={`inline-block appearance-none border-solid text-center font-semibold lowercase text-[#0f172a] outline-none transition-all duration-150 focus:border-[#1cb0f6] focus:ring-1 focus:ring-[#1cb0f6]/25 disabled:opacity-90 ${sizeClass} ${
-                    filled ? "" : ring
-                  } ${
-                    filled && status === "ok"
-                      ? "border-b-[#58cc02] text-[#15803d]"
-                      : filled && status === "bad"
-                        ? "border-b-[#ff4b4b] text-[#b91c1c]"
-                        : ""
-                  }`}
-                />
+                <li key={`review-${gap.id}`} className="text-sm font-semibold">
+                  <span className={ok ? "text-[#15803d]" : "text-[#0369a1]"}>
+                    {gap.answer}
+                  </span>
+                  {!ok && userMissing ? (
+                    <span className="ml-2 text-xs font-bold text-[#94a3b8] line-through">
+                      senin: {userWord}
+                    </span>
+                  ) : !ok ? (
+                    <span className="ml-2 text-xs font-bold text-[#94a3b8]">boş bıraktın</span>
+                  ) : (
+                    <span className="ml-2 text-xs font-bold text-[#86efac]">doğru</span>
+                  )}
+                </li>
               );
             })}
-          </span>
-        );
-      })}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }

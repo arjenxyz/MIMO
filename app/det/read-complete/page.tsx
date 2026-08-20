@@ -388,10 +388,18 @@ export default function ReadCompletePage() {
                 </button>
               ) : (
                 <>
-                  <p className="text-center text-sm font-bold text-[#64748b]">
-                    {timedOutRef.current ? "Süre doldu. " : ""}
-                    Bu pasajda {scoreCloze(gaps, values).correct}/{gaps.length} boşluk doğru.
-                  </p>
+                  {(() => {
+                    const score = scoreCloze(gaps, values);
+                    return (
+                      <p className="text-center text-sm font-bold text-[#64748b]">
+                        {timedOutRef.current ? "Süre doldu. " : ""}
+                        Bu pasajda {score.correct}/{gaps.length} boşluk doğru.
+                        {score.wrong > 0
+                          ? " Yanlışlarda doğru kelime gösterildi — öğrenip devam et."
+                          : ""}
+                      </p>
+                    );
+                  })()}
                   <button
                     type="button"
                     onClick={goNext}
