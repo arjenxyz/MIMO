@@ -136,6 +136,14 @@ export default async function DashboardPage() {
         </div>
       )}
 
+      <div className="mb-6 max-w-md lg:max-w-sm">
+        <StreakWidget
+          dailyStreak={profile.daily_streak}
+          primaryHref={primaryHref}
+          primaryLabel={primaryLabel}
+        />
+      </div>
+
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1.15fr)_minmax(280px,0.85fr)] lg:items-start">
         <LearningPath
           nodes={pathNodes}
@@ -147,12 +155,6 @@ export default async function DashboardPage() {
         />
 
         <aside className="space-y-5 lg:sticky lg:top-20">
-          <StreakWidget
-            dailyStreak={profile.daily_streak}
-            primaryHref={primaryHref}
-            primaryLabel={primaryLabel}
-          />
-
           <section className="overflow-hidden rounded-[1.75rem] border-2 border-[#1cb0f6]/35 bg-gradient-to-br from-[#1cb0f6]/12 via-duo-card to-duo-card p-5">
             <p className="text-base font-black text-white">📝 Read and Complete</p>
             <p className="mt-1 text-sm font-semibold text-duo-muted">
