@@ -1,4 +1,5 @@
-/** Lorem Picsum — no API key required. */
+/** Lorem Picsum — no API key required. Seed keeps the same image on every fetch. */
 export function getRandomImage(width = 800, height = 600): string {
-  return `https://picsum.photos/${width}/${height}?random=${Date.now()}`;
+  const seed = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+  return `https://picsum.photos/seed/${encodeURIComponent(seed)}/${width}/${height}`;
 }

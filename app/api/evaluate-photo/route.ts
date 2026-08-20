@@ -27,6 +27,30 @@ function extractJson(text: string) {
   return JSON.parse(cleaned.slice(start, end + 1)) as PhotoEvaluation;
 }
 
+async function fetchImagePart(imageUrl: string) {
+  const res = await fetch(imageUrl, {
+    redirect: "follow",
+    headers: { Accept: "image/*" },
+  });
+  if (!res.ok) {
+    throw new Error(`Görsel indirilemedi (${res.status})`);
+  }
+  const contentType = (res.headers.get("content-type") || "image/jpeg").split(";")[0];
+  if (!contentType.startsWith("image/")) {
+    throw new Error("Geçersiz görsel yanıtı");
+  }
+  const buffer = Buffer.from(await res.arrayBuffer());
+  if (buffer.byteLength < 100) {
+    throw new Error("Görsel boş veya çok küçük");
+  }
+  return {
+    inlineData: {
+      data: buffer.toString("base64"),
+      mimeType: contentType,
+    },
+  };
+}
+
 export async function POST(request: NextRequest) {
   try {
     const apiKey = process.env.GEMINI_API_KEY;
@@ -40,10 +64,12 @@ export async function POST(request: NextRequest) {
     const body = (await request.json()) as {
       answer?: string;
       mode?: "write" | "speak";
+      imageUrl?: string;
     };
 
     const userAnswer = (body.answer || "").trim();
     const mode = body.mode === "speak" ? "speak" : "write";
+    const imageUrl = (body.imageUrl || "").trim();
 
     if (userAnswer.length < 8) {
       return NextResponse.json(
@@ -52,34 +78,53 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (!imageUrl || !/^https:\/\/(picsum\.photos|fastly\.picsum\.photos)\b/i.test(imageUrl)) {
+      return NextResponse.json(
+        { error: "Geçerli bir pratik görseli gerekli." },
+        { status: 400 }
+      );
+    }
+
+    const imagePart = await fetchImagePart(imageUrl);
+
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: "gemini-3.6-flash" });
 
-    const prompt = `You are an expert Duolingo English Test evaluator. Evaluate the following student's response to a "Describe the photo" task.
+    const prompt = `You are an expert Duolingo English Test evaluator for the "Describe the photo" / "Write about the photo" task.
+
+IMPORTANT: An image is attached. You MUST look at the attached photo carefully.
+- Judge whether the student's response accurately describes people, objects, setting, actions, and mood that are VISIBLE in THIS photo.
+- Do NOT invent a different scene.
+- "improved_version" MUST be a B2-level description of THIS SAME photo (what is actually in the image), written in English.
+- If the student described something unrelated to the photo, lower the score and mention the mismatch in feedback.
+
 Mode: ${mode}
 Student's response: "${userAnswer.replace(/"/g, '\\"')}"
 
-Please provide your evaluation in the following JSON format:
+Return ONLY valid JSON in this format:
 {
   "cefr_level": "A1|A2|B1|B2|C1|C2",
   "score": 0-10,
   "grammar_errors": ["error1", "error2"],
   "vocabulary_score": 0-10,
   "coherence_score": 0-10,
-  "feedback": "Detailed feedback in Turkish about what they did well and what needs improvement.",
-  "improved_version": "A B2-level corrected version of their response.",
+  "feedback": "Detailed feedback in Turkish about accuracy to the photo, strengths, and improvements.",
+  "improved_version": "A B2-level English description of the attached photo.",
   "suggestions": ["Suggestion 1 in Turkish", "Suggestion 2 in Turkish"]
 }
 
-Criteria for B2 level:
-- Can describe complex subjects with clear, detailed text.
-- Can use a range of vocabulary and grammatical structures.
-- Can express opinions and develop arguments.
-- Minimum 50 words for writing, 40 words for speaking.
+B2 criteria:
+- Clear, detailed description of the photo.
+- Range of vocabulary and grammar.
+- Opinions / inferences grounded in the image are fine.
+- Minimum ~50 words for writing, ~40 for speaking.
 
 Only return valid JSON, no other text.`;
 
-    const result = await model.generateContent(prompt);
+    const result = await model.generateContent([
+      { text: prompt },
+      imagePart,
+    ]);
     const text = result.response.text();
     const evaluation = extractJson(text);
 
