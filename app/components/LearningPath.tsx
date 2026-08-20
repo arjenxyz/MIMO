@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
-export type PathIconName = "books" | "sound" | "write" | "photo";
+export type PathIconName = "books" | "sound" | "write" | "photo" | "match";
 
 export type PathNode = {
   id: string;
@@ -93,6 +93,13 @@ function PathIcon({ name }: { name: PathIconName }) {
         <rect x="3" y="5" width="18" height="14" rx="2" />
         <circle cx="12" cy="12" r="3.25" />
         <path d="M3 9h3.5l1.2-2h4.6" />
+      </svg>
+    ),
+    match: (
+      <svg {...common}>
+        <rect x="3" y="3" width="8" height="8" rx="1.5" />
+        <rect x="13" y="13" width="8" height="8" rx="1.5" />
+        <path d="M14 6h4M16 4v4M6 14h4M8 12v4" />
       </svg>
     ),
   };

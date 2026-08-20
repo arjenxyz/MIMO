@@ -103,6 +103,14 @@ export default async function DashboardPage() {
       icon: "photo",
       state: "upcoming",
     },
+    {
+      id: "match",
+      title: "Hızlı Eşleştir",
+      href: "/quiz/match",
+      tone: "green",
+      icon: "match",
+      state: "upcoming",
+    },
   ];
 
   const activeIndex = nodes.findIndex((n) => n.id === activeId);

@@ -115,6 +115,32 @@ export async function getDueWords(
   return (data ?? []) as DueWordItem[];
 }
 
+/** Words the user has already practiced — for speed match drills. */
+export async function getLearnedWords(
+  supabase: SupabaseClient,
+  userId: string,
+  minCount = 5
+): Promise<DueWordItem[]> {
+  const { data, error } = await supabase
+    .from("user_words")
+    .select("*, words(*)")
+    .eq("user_id", userId)
+    .or("correct_count.gt.0,repetition.gt.0")
+    .order("correct_count", { ascending: false })
+    .limit(80);
+
+  if (error) throw error;
+
+  let list = ((data ?? []) as DueWordItem[]).filter((row) => row.words?.english && row.words?.turkish);
+
+  if (list.length < minCount) {
+    const all = await getUserWords(supabase, userId);
+    list = all.filter((row) => row.words?.english && row.words?.turkish);
+  }
+
+  return list;
+}
+
 /** All words on the user's list, newest activity first. */
 export async function getUserWords(
   supabase: SupabaseClient,
