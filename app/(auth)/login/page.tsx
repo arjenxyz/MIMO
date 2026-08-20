@@ -73,7 +73,7 @@ export default function LoginPage() {
           </div>
           <h2 className="mt-4 text-4xl font-black text-[#1f2937]">MIMO</h2>
           <p className="relative z-10 mt-2 max-w-sm text-lg font-bold text-[#6b7280]">
-            Eğlenerek öğrenmenin en tatlı hali. Her gün seviye atla.
+            Eğlenerek öğrenmenin en tatlı hali.
           </p>
         </section>
 
