@@ -1,0 +1,66 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #131f24;
+  --foreground: #ffffff;
+}
+
+html,
+body {
+  min-height: 100%;
+  color: var(--foreground);
+  background: var(--background);
+}
+
+body {
+  font-family: var(--font-nunito), "Nunito", Arial, Helvetica, sans-serif;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+@keyframes mimo-wave {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  40% {
+    transform: rotate(18deg);
+  }
+  70% {
+    transform: rotate(-6deg);
+  }
+}
+
+@keyframes mimo-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.mimo-wave {
+  transform-origin: 70% 70%;
+  animation: mimo-wave 1.6s ease-in-out infinite;
+}
+
+.mimo-bounce {
+  animation: mimo-bounce 2.4s ease-in-out infinite;
+}
+
+.duo-btn {
+  @apply w-full rounded-2xl py-4 text-base font-extrabold uppercase tracking-wide transition-all;
+}
+
+.duo-btn:active {
+  transform: translateY(4px);
+  box-shadow: none;
+}
