@@ -93,10 +93,16 @@ export function Navbar() {
           href="/"
           className="flex items-center gap-2.5 rounded-xl px-1 py-1 transition hover:bg-white/5"
         >
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#fd860a] text-sm font-black text-white shadow-[0_3px_0_#d66f08]">
-            EN
+          <Image
+            src="/mimo-avatar.png"
+            alt=""
+            width={36}
+            height={36}
+            className="h-9 w-9 rounded-full object-cover ring-2 ring-[#fd860a]/45"
+          />
+          <span className="text-xl font-black tracking-tight text-white">
+            MIMO
           </span>
-          <span className="hidden text-lg font-black tracking-tight sm:inline">MIMO</span>
           {demo && (
             <span className="rounded-full bg-[#ffc800]/15 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-[#ffc800]">
               Demo
