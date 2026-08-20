@@ -81,7 +81,7 @@ export default function PhotoPracticePage() {
         const res = await fetch("/api/evaluate-photo", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ answer: text, mode }),
+          body: JSON.stringify({ answer: text, mode, imageUrl }),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Değerlendirme başarısız");
@@ -94,7 +94,7 @@ export default function PhotoPracticePage() {
         evaluatingRef.current = false;
       }
     },
-    [mode, stopMic]
+    [imageUrl, mode, stopMic]
   );
 
   useEffect(() => {
