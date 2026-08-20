@@ -1,13 +1,10 @@
 import Link from "next/link";
 import { headers } from "next/headers";
 import { AddWordForm } from "@/app/components/AddWordForm";
-import { DailyQuests } from "@/app/components/DailyQuests";
 import { LearningPath, type PathNode } from "@/app/components/LearningPath";
 import { LoadWordsButton } from "@/app/components/LoadWordsButton";
-import { DEMO_DUE, DEMO_PROFILE, DEMO_QUESTS, isDemoMode } from "@/lib/demo";
+import { DEMO_DUE, DEMO_PROFILE, isDemoMode } from "@/lib/demo";
 import {
-  claimDailyQuestBonus,
-  getDailyQuests,
   getDueGrammar,
   getDueWords,
   getProfile,
@@ -15,7 +12,7 @@ import {
 } from "@/lib/db";
 import { xpInCurrentLevel } from "@/lib/srs";
 import { createClient } from "@/lib/supabase/server";
-import type { DailyQuests as DailyQuestsType, Profile } from "@/types";
+import type { Profile } from "@/types";
 import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
@@ -33,8 +30,6 @@ export default async function DashboardPage() {
   const demo = isDemoMode(host);
 
   let profile: Profile = DEMO_PROFILE;
-  let questsView: DailyQuestsType = DEMO_QUESTS;
-  let bonusClaimed = false;
   let dueWordCount = DEMO_DUE.words;
   let dueGrammarCount = DEMO_DUE.grammar;
   let showLoadWords = false;
@@ -60,12 +55,6 @@ export default async function DashboardPage() {
     }
 
     liveProfile = await syncDailyStreak(supabase, liveProfile);
-    const quests = await getDailyQuests(supabase, liveProfile);
-    const bonus = await claimDailyQuestBonus(supabase, liveProfile, quests);
-    if (bonus?.profile) {
-      liveProfile = bonus.profile;
-    }
-
     const dueWords = await getDueWords(supabase, user.id);
     const dueGrammar = await getDueGrammar(supabase, user.id);
 
@@ -73,10 +62,6 @@ export default async function DashboardPage() {
     dueWordCount = dueWords.length;
     dueGrammarCount = dueGrammar.length;
     showLoadWords = dueWords.length === 0;
-    questsView = bonus
-      ? { ...quests, bonusClaimed: true, allComplete: true }
-      : quests;
-    bonusClaimed = Boolean(bonus?.claimed);
     showAddWord = true;
   }
 
