@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { Mascot } from "@/app/components/Mascot";
 
 export type PathNode = {
   id: string;
@@ -90,14 +89,13 @@ export function LearningPath({
       <div className="relative mx-auto mt-8 max-w-md pb-4">
         <div className="absolute bottom-8 left-1/2 top-4 w-1 -translate-x-1/2 rounded-full bg-gradient-to-b from-duo-border via-[#37464f] to-transparent" />
 
-        <div className="relative mb-10 flex items-end justify-center gap-3">
-          <div className="relative max-w-[200px]">
-            <div className="rounded-2xl border-2 border-duo-border bg-duo-card px-4 py-3 text-sm font-extrabold leading-snug text-white shadow-lg">
+        <div className="relative mb-10 flex justify-center">
+          <div className="relative max-w-[240px]">
+            <div className="rounded-2xl border-2 border-duo-border bg-duo-card px-4 py-3 text-center text-sm font-extrabold leading-snug text-white shadow-lg">
               {greeting}
             </div>
-            <div className="absolute left-8 top-full h-3 w-3 -translate-y-1/2 rotate-45 border-b-2 border-r-2 border-duo-border bg-duo-card" />
+            <div className="absolute left-1/2 top-full h-3 w-3 -translate-x-1/2 -translate-y-1/2 rotate-45 border-b-2 border-r-2 border-duo-border bg-duo-card" />
           </div>
-          <Mascot mood="wave" size={140} className="w-28 shrink-0 sm:w-32" />
         </div>
 
         <ol className="relative space-y-10">
