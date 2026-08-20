@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
@@ -63,9 +64,13 @@ export function Navbar() {
     <header className="sticky top-0 z-40 border-b-2 border-duo-border bg-duo-bg/95 backdrop-blur">
       <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-4 py-3">
         <Link href="/" className="flex items-center gap-2 font-black tracking-tight">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-duo-green text-lg text-duo-greenText">
-            M
-          </span>
+          <Image
+            src="/mimo-avatar.png"
+            alt="Mimo"
+            width={36}
+            height={36}
+            className="h-9 w-9 rounded-full object-cover ring-2 ring-duo-orange/40"
+          />
           <span className="text-xl">MIMO</span>
         </Link>
 

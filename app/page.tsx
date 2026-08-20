@@ -52,7 +52,7 @@ export default async function DashboardPage() {
   return (
     <main className="mx-auto min-h-screen max-w-5xl px-4 py-6">
       <section className="mb-6 flex flex-col items-center rounded-3xl border-2 border-duo-border bg-duo-card p-6 text-center sm:flex-row sm:text-left">
-        <Mascot mood="excited" className="scale-75 sm:scale-90" />
+        <Mascot mood="excited" size={220} className="w-40 sm:w-52" />
         <div className="flex-1">
           <p className="text-sm font-extrabold uppercase tracking-wide text-duo-muted">
             Hoş geldin{profile.username ? `, ${profile.username}` : ""}

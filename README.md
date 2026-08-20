@@ -21,12 +21,21 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=
 
 Değerleri Supabase Dashboard > Project Settings > API içinden alırsın.
 
-## 2) Veritabanı
+## 2) Veritabanı + OAuth
 
 1. [Supabase](https://supabase.com) üzerinde bir proje aç.
-2. Authentication > Providers içinde Email girişinin açık olduğundan emin ol.
-3. SQL Editor'e `schema.sql` içeriğini yapıştırıp çalıştır.
-   - Tablolar, RLS politikaları, yeni kullanıcı trigger'ı ve başlangıç kelime/gramer/hikaye verisi gelir.
+2. SQL Editor'e `schema.sql` içeriğini yapıştırıp çalıştır.
+3. Authentication > Providers içinde şunları aç (ücretsiz):
+   - **Google** (ana giriş)
+   - **Discord**, **Spotify**, **GitHub** (Diğer seçenekler modalı)
+4. Apple şu an UI'da "Geçerli değil" olarak pasif; provider açmana gerek yok.
+5. Her aktif provider için Redirect URL:
+   - `https://<PROJECT_REF>.supabase.co/auth/v1/callback`
+6. Site URL ve app redirect:
+   - Local: `http://localhost:3000/auth/callback`
+   - Prod: `https://senin-projen.vercel.app/auth/callback`
+
+Giriş ekranı: Google + pasif Apple + "Diğer seçenekler" (Discord / Spotify / GitHub).
 
 ## 3) Geliştirme sunucusu
 
@@ -50,8 +59,8 @@ Tarayıcıda [http://localhost:3000](http://localhost:3000) açılır. Giriş yo
 
 ## Modüller
 
-- `/onboarding` — Mimo maskotu + DEVAM ET (Duolingo tarzı)
-- `/register` ve `/login` — e-posta / şifre
+- `/onboarding` — turuncu “Merhaba!” ekranı + Mimo görseli
+- `/login` — Google + pasif Apple + Diğer seçenekler modalı (Discord / Spotify / GitHub)
 - `/` — XP, level, streak, günlük görevler
 - `/quiz` — kelime + dinleme (Web Speech API)
 - `/quiz/grammar` — gramer SM-2
