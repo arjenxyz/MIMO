@@ -108,7 +108,7 @@ export function SoundListenQuiz() {
         <div className="mx-auto max-w-xl px-4 py-8">
           <PracticeExamCard className="text-center">
             <p className="font-bold text-[#b91c1c]">{error}</p>
-            <p className="mt-2 text-sm font-semibold text-[#64748b]">
+            <p className="mt-2 text-sm font-semibold text-mimo-muted">
               Supabase’de schema-sounds.sql çalıştırıldığından emin ol.
             </p>
             <div className="mt-6">
@@ -125,7 +125,7 @@ export function SoundListenQuiz() {
       <PracticeExamMain>
         <div className="mx-auto max-w-xl px-4 py-8">
           <PracticeExamCard className="text-center">
-            <p className="font-bold text-[#64748b]">Henüz soru yok. Seed verisini yükle.</p>
+            <p className="font-bold text-mimo-muted">Henüz soru yok. Seed verisini yükle.</p>
             <div className="mt-6">
               <PracticeExamGhostLink href="/sounds">Geri dön</PracticeExamGhostLink>
             </div>
@@ -142,7 +142,7 @@ export function SoundListenQuiz() {
           <PracticeExamCard className="text-center">
             <PracticeExamEyebrow>Listen and Select</PracticeExamEyebrow>
             <h1 className="mt-3 text-2xl font-black">Well done!</h1>
-            <p className="mt-2 text-sm font-semibold text-[#64748b]">
+            <p className="mt-2 text-sm font-semibold text-mimo-muted">
               {correctCount}/{questions.length} doğru · +{xpAwarded} XP
             </p>
             <div className="mt-6 flex flex-col gap-2">
@@ -161,13 +161,13 @@ export function SoundListenQuiz() {
         <PracticeExamTopBar
           exitHref="/sounds"
           left={
-            <p className="text-sm font-bold text-[#64748b]">
+            <p className="text-sm font-bold text-mimo-muted">
               Ses {Math.min(index + 1, questions.length)} / {questions.length}
             </p>
           }
         />
 
-        <p className="mb-5 text-center text-base font-bold text-[#0f172a] sm:text-lg">
+        <p className="mb-5 text-center text-base font-bold text-mimo-fg sm:text-lg">
           Listen carefully and choose what you hear.
         </p>
 
@@ -190,13 +190,13 @@ export function SoundListenQuiz() {
               const isSelected = selected === option;
               const isAnswer = option === current.correct;
               let style =
-                "border-[#e2e8f0] bg-[#f8fafc] text-[#0f172a] hover:border-[#cbd5e1]";
+                "border-mimo-soft bg-mimo-surface text-mimo-fg hover:border-mimo-border";
               if (checked) {
                 if (isAnswer) style = "border-[#58cc02] bg-[#ecfce5] text-[#15803d]";
                 else if (isSelected) style = "border-[#ff4b4b] bg-[#ffe8e8] text-[#b91c1c]";
-                else style = "border-[#e2e8f0] bg-white text-[#94a3b8]";
+                else style = "border-mimo-soft bg-mimo-card text-mimo-muted";
               } else if (isSelected) {
-                style = "border-[#1cb0f6] bg-[#e8f6fe] text-[#0f172a]";
+                style = "border-[#1cb0f6] bg-[#e8f6fe] text-mimo-fg";
               }
 
               return (
@@ -225,7 +225,7 @@ export function SoundListenQuiz() {
             ) : (
               <>
                 {selected !== current.correct && (
-                  <p className="text-center text-sm font-bold text-[#64748b]">
+                  <p className="text-center text-sm font-bold text-mimo-muted">
                     Doğru cevap: <span className="text-[#0369a1]">{current.correct}</span>
                   </p>
                 )}
@@ -237,8 +237,8 @@ export function SoundListenQuiz() {
           </div>
         </PracticeExamCard>
 
-        <p className="mt-4 text-center text-xs font-semibold text-[#94a3b8]">
-          <Link href="/sounds" className="hover:text-[#64748b]">
+        <p className="mt-4 text-center text-xs font-semibold text-mimo-muted">
+          <Link href="/sounds" className="hover:text-mimo-muted">
             Seslere dön
           </Link>
         </p>

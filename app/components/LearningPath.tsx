@@ -144,16 +144,16 @@ export function LearningPath({
 }) {
   return (
     <section className="relative min-w-0 overflow-x-clip">
-      <div className="relative overflow-hidden rounded-2xl border border-[#e5e7eb] bg-white p-5 shadow-sm sm:p-6">
+      <div className="relative overflow-hidden rounded-2xl border border-mimo-border bg-mimo-card p-5 shadow-sm sm:p-6">
         <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0 flex-1">
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#1cb0f6]">
               Bugünün yolu
             </p>
-            <h1 className="mt-1 text-2xl font-black tracking-tight text-[#1e3a5f] sm:text-3xl">
+            <h1 className="mt-1 text-2xl font-black tracking-tight text-mimo-title sm:text-3xl">
               {unitTitle}
             </h1>
-            <p className="mt-1.5 max-w-md text-sm font-semibold text-[#64748b]">{unitHint}</p>
+            <p className="mt-1.5 max-w-md text-sm font-semibold text-mimo-muted">{unitHint}</p>
           </div>
           <Link
             href={primaryHref}
@@ -166,16 +166,16 @@ export function LearningPath({
 
       <div className="relative mx-auto mt-8 max-w-sm overflow-x-clip px-2 pb-6 sm:max-w-md">
         <div
-          className="pointer-events-none absolute bottom-10 left-1/2 top-6 w-[3px] -translate-x-1/2 rounded-full bg-gradient-to-b from-[#cbd5e1] via-[#e2e8f0] to-transparent"
+          className="pointer-events-none absolute bottom-10 left-1/2 top-6 w-[3px] -translate-x-1/2 rounded-full bg-gradient-to-b from-mimo-border via-mimo-soft to-transparent"
           aria-hidden
         />
 
         <div className="relative mb-12 flex justify-center">
           <div className="relative max-w-[280px]">
-            <div className="rounded-2xl border border-[#e5e7eb] bg-white px-4 py-3 text-center text-sm font-extrabold leading-snug text-[#0f172a] shadow-sm">
+            <div className="rounded-2xl border border-mimo-border bg-mimo-card px-4 py-3 text-center text-sm font-extrabold leading-snug text-mimo-fg shadow-sm">
               {greeting}
             </div>
-            <div className="absolute left-1/2 top-full h-3 w-3 -translate-x-1/2 -translate-y-1/2 rotate-45 border-b border-r border-[#e5e7eb] bg-white" />
+            <div className="absolute left-1/2 top-full h-3 w-3 -translate-x-1/2 -translate-y-1/2 rotate-45 border-b border-r border-mimo-border bg-mimo-card" />
           </div>
         </div>
 
@@ -199,7 +199,7 @@ export function LearningPath({
                   <Link
                     href={node.href}
                     aria-current={isActive ? "step" : undefined}
-                    className={`group relative flex h-[4.75rem] w-[4.75rem] items-center justify-center rounded-full border-[4px] border-white transition duration-200 hover:-translate-y-0.5 active:translate-y-1 active:shadow-none ${tone.fill} ${tone.shadow} ${
+                    className={`group relative flex h-[4.75rem] w-[4.75rem] items-center justify-center rounded-full border-[4px] border-white transition duration-200 hover:-translate-y-0.5 active:translate-y-1 active:shadow-none dark:border-mimo-bg ${tone.fill} ${tone.shadow} ${
                       isActive ? `${tone.glow} mimo-path-pulse` : ""
                     } ${isUpcoming ? "opacity-45 grayscale-[30%]" : ""}`}
                   >
@@ -215,7 +215,7 @@ export function LearningPath({
                   <div className="mt-3 max-w-[7.5rem] text-center">
                     <p
                       className={`text-[15px] font-black leading-tight ${
-                        isActive ? "text-[#0f172a]" : "text-[#334155]"
+                        isActive ? "text-mimo-fg" : "text-[#334155]"
                       }`}
                     >
                       {node.title}

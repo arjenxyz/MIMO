@@ -51,7 +51,7 @@ export function WordImage({
   if (loading) {
     return (
       <div
-        className={`flex items-center justify-center bg-[#eef2f7] text-xs font-bold text-[#64748b] ${className}`}
+        className={`flex items-center justify-center bg-[#eef2f7] text-xs font-bold text-mimo-muted ${className}`}
       >
         Görsel aranıyor…
       </div>
@@ -63,10 +63,10 @@ export function WordImage({
       <div
         className={`flex flex-col items-center justify-center gap-1 bg-gradient-to-br from-[#e8f6fe] to-[#f1f5f9] px-4 text-center ${className}`}
       >
-        <span className="text-2xl font-black tracking-[0.12em] text-[#1e3a5f] sm:text-3xl">
+        <span className="text-2xl font-black tracking-[0.12em] text-mimo-title sm:text-3xl">
           {english.trim().toUpperCase()}
         </span>
-        <span className="text-[10px] font-bold uppercase tracking-wide text-[#64748b]">
+        <span className="text-[10px] font-bold uppercase tracking-wide text-mimo-muted">
           Uygun görsel bulunamadı
         </span>
       </div>

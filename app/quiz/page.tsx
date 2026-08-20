@@ -225,7 +225,7 @@ export default function WordQuizPage() {
     return (
       <PracticeExamMain>
         <div className="mx-auto max-w-3xl px-4 pb-10 pt-16 text-center">
-          <p className="text-sm font-bold text-[#64748b]">Kelimeler hazırlanıyor…</p>
+          <p className="text-sm font-bold text-mimo-muted">Kelimeler hazırlanıyor…</p>
         </div>
       </PracticeExamMain>
     );
@@ -238,7 +238,7 @@ export default function WordQuizPage() {
           <PracticeExamCard className="text-center">
             <PracticeExamEyebrow>Word Quiz</PracticeExamEyebrow>
             <h1 className="mt-3 text-2xl font-black">Well done!</h1>
-            <p className="mt-2 text-sm font-semibold text-[#64748b]">
+            <p className="mt-2 text-sm font-semibold text-mimo-muted">
               Bugünlük kelime alıştırmalarını tamamladın.
             </p>
             <div className="mt-6">
@@ -270,13 +270,13 @@ export default function WordQuizPage() {
       <div className="mx-auto max-w-3xl px-4 pb-10 pt-5">
         <PracticeExamTopBar
           left={
-            <p className="text-sm font-bold text-[#64748b]">
+            <p className="text-sm font-bold text-mimo-muted">
               Kelime {Math.min(index + 1, items.length)} / {items.length}
             </p>
           }
         />
 
-        <p className="mb-5 text-center text-base font-bold text-[#0f172a] sm:text-lg">
+        <p className="mb-5 text-center text-base font-bold text-mimo-fg sm:text-lg">
           Choose the correct Turkish meaning.
         </p>
 
@@ -311,11 +311,11 @@ export default function WordQuizPage() {
           </div>
 
           <div className="px-5 py-6 sm:px-8 sm:py-8">
-            <h1 className="text-center text-3xl font-black tracking-tight text-[#1e3a5f] sm:text-4xl">
+            <h1 className="text-center text-3xl font-black tracking-tight text-mimo-title sm:text-4xl">
               {word.english}
             </h1>
             {word.phonetic && (
-              <p className="mt-1 text-center text-sm font-bold text-[#64748b]">{word.phonetic}</p>
+              <p className="mt-1 text-center text-sm font-bold text-mimo-muted">{word.phonetic}</p>
             )}
 
             <div className="mt-6 grid gap-2.5">
@@ -323,13 +323,13 @@ export default function WordQuizPage() {
                 const isPick = selected === option;
                 const isRight = option.toLowerCase() === correctLabel.toLowerCase();
                 let style =
-                  "border-[#e2e8f0] bg-[#f8fafc] text-[#0f172a] hover:border-[#cbd5e1]";
+                  "border-mimo-soft bg-mimo-surface text-mimo-fg hover:border-mimo-border";
                 if (checked) {
                   if (isRight) style = "border-[#58cc02] bg-[#ecfce5] text-[#15803d]";
                   else if (isPick) style = "border-[#ff4b4b] bg-[#ffe8e8] text-[#b91c1c]";
-                  else style = "border-[#e2e8f0] bg-white text-[#94a3b8]";
+                  else style = "border-mimo-soft bg-mimo-card text-mimo-muted";
                 } else if (isPick) {
-                  style = "border-[#1cb0f6] bg-[#e8f6fe] text-[#0f172a]";
+                  style = "border-[#1cb0f6] bg-[#e8f6fe] text-mimo-fg";
                 }
 
                 return (
@@ -369,8 +369,8 @@ export default function WordQuizPage() {
           </div>
         </PracticeExamCard>
 
-        <p className="mt-4 text-center text-xs font-semibold text-[#94a3b8]">
-          <Link href="/" className="hover:text-[#64748b]">
+        <p className="mt-4 text-center text-xs font-semibold text-mimo-muted">
+          <Link href="/" className="hover:text-mimo-muted">
             Ana sayfa
           </Link>
         </p>

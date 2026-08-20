@@ -149,11 +149,11 @@ export function ClozePassage({
               ? "border-[#58cc02] bg-[#ecfce5]"
               : status === "bad"
                 ? "border-[#1cb0f6] bg-[#e8f6fe]"
-                : "border-[#94a3b8] bg-white";
+                : "border-[#94a3b8] bg-mimo-card";
 
           return (
             <span key={gap.id} className="inline whitespace-nowrap align-baseline">
-              <span className="text-[#0f172a]">{prefix}</span>
+              <span className="text-mimo-fg">{prefix}</span>
               {chars.map((display, letterIndex) => {
                 const filled = Boolean(display);
                 const revealed = showResults && status === "bad";
@@ -177,7 +177,7 @@ export function ClozePassage({
                     aria-label={`${gap.answer} letter ${letterIndex + 1}`}
                     onChange={(e) => setLetter(gap, letterIndex, e.target.value)}
                     onKeyDown={(e) => onKeyDown(gap, letterIndex, e)}
-                    className={`inline-block appearance-none border-solid text-center font-semibold lowercase text-[#0f172a] outline-none transition-all duration-150 focus:border-[#1cb0f6] focus:ring-1 focus:ring-[#1cb0f6]/25 disabled:opacity-90 ${sizeClass} ${
+                    className={`inline-block appearance-none border-solid text-center font-semibold lowercase text-mimo-fg outline-none transition-all duration-150 focus:border-[#1cb0f6] focus:ring-1 focus:ring-[#1cb0f6]/25 disabled:opacity-90 ${sizeClass} ${
                       filled ? "" : ring
                     } ${
                       filled && status === "ok"
@@ -197,8 +197,8 @@ export function ClozePassage({
       </div>
 
       {showResults && reviewGaps.length > 0 && (
-        <div className="mt-6 rounded-xl border border-[#e2e8f0] bg-[#f8fafc] px-4 py-3 text-left">
-          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#64748b]">
+        <div className="mt-6 rounded-xl border border-mimo-soft bg-mimo-surface px-4 py-3 text-left">
+          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-mimo-muted">
             Doğru kelimeler
           </p>
           <ul className="mt-2 space-y-1.5">
@@ -210,11 +210,11 @@ export function ClozePassage({
                     {gap.answer}
                   </span>
                   {!ok && userMissing ? (
-                    <span className="ml-2 text-xs font-bold text-[#94a3b8] line-through">
+                    <span className="ml-2 text-xs font-bold text-mimo-muted line-through">
                       senin: {userWord}
                     </span>
                   ) : !ok ? (
-                    <span className="ml-2 text-xs font-bold text-[#94a3b8]">boş bıraktın</span>
+                    <span className="ml-2 text-xs font-bold text-mimo-muted">boş bıraktın</span>
                   ) : (
                     <span className="ml-2 text-xs font-bold text-[#86efac]">doğru</span>
                   )}

@@ -155,7 +155,7 @@ export default function PhotoPracticePage() {
             showTimer ? (
               <p
                 className={`text-2xl font-black tabular-nums tracking-tight ${
-                  secondsLeft <= 10 ? "text-[#ff4b4b]" : "text-[#1e3a5f]"
+                  secondsLeft <= 10 ? "text-[#ff4b4b]" : "text-mimo-title"
                 }`}
               >
                 {formatTimer(secondsLeft)}
@@ -166,7 +166,7 @@ export default function PhotoPracticePage() {
           }
         />
 
-        <p className="mb-5 text-center text-base font-bold text-[#0f172a] sm:text-lg">
+        <p className="mb-5 text-center text-base font-bold text-mimo-fg sm:text-lg">
           Describe the photo in English. Be clear and specific.
         </p>
 
@@ -188,7 +188,7 @@ export default function PhotoPracticePage() {
                 }}
               />
             ) : (
-              <div className="flex h-full items-center justify-center text-sm font-bold text-[#64748b]">
+              <div className="flex h-full items-center justify-center text-sm font-bold text-mimo-muted">
                 Görsel yükleniyor…
               </div>
             )}
@@ -198,10 +198,10 @@ export default function PhotoPracticePage() {
             {phase === "ready" && (
               <div className="space-y-5 text-center">
                 <div>
-                  <h1 className="text-lg font-black text-[#1e3a5f] sm:text-xl">
+                  <h1 className="text-lg font-black text-mimo-title sm:text-xl">
                     Fotoğrafı İngilizce anlat
                   </h1>
-                  <p className="mt-2 text-sm font-semibold text-[#64748b]">
+                  <p className="mt-2 text-sm font-semibold text-mimo-muted">
                     60 saniye içinde gördüğünü yaz. Gemini seviyenizi değerlendirir.
                   </p>
                 </div>
@@ -218,7 +218,7 @@ export default function PhotoPracticePage() {
                     type="button"
                     onClick={resetWithNewImage}
                     disabled={!imageUrl}
-                    className="w-full rounded-2xl border border-[#e2e8f0] px-6 py-3 text-sm font-bold text-[#64748b] disabled:opacity-50 sm:w-auto"
+                    className="w-full rounded-2xl border border-mimo-soft px-6 py-3 text-sm font-bold text-mimo-muted disabled:opacity-50 sm:w-auto"
                   >
                     Geç
                   </button>
@@ -229,7 +229,7 @@ export default function PhotoPracticePage() {
             {(phase === "running" || phase === "evaluating") && (
               <div className="space-y-4">
                 <label className="block text-left">
-                  <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#64748b]">
+                  <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-mimo-muted">
                     Cevabın · {wordCount(answer)} kelime
                   </span>
                   <textarea
@@ -238,7 +238,7 @@ export default function PhotoPracticePage() {
                     disabled={phase !== "running"}
                     rows={8}
                     placeholder="Describe the photo in English…"
-                    className="mt-2 w-full resize-none rounded-xl border border-[#e2e8f0] bg-[#f8fafc] px-4 py-3 text-sm font-semibold leading-relaxed text-[#0f172a] outline-none placeholder:text-[#94a3b8] focus:border-[#1cb0f6] disabled:opacity-70"
+                    className="mt-2 w-full resize-none rounded-xl border border-mimo-soft bg-mimo-surface px-4 py-3 text-sm font-semibold leading-relaxed text-mimo-fg outline-none placeholder:text-mimo-muted focus:border-[#1cb0f6] disabled:opacity-70"
                   />
                 </label>
 
@@ -259,7 +259,7 @@ export default function PhotoPracticePage() {
                     <button
                       type="button"
                       onClick={resetWithNewImage}
-                      className="w-full rounded-2xl border border-[#e2e8f0] px-6 py-3 text-sm font-bold text-[#64748b] sm:w-auto"
+                      className="w-full rounded-2xl border border-mimo-soft px-6 py-3 text-sm font-bold text-mimo-muted sm:w-auto"
                     >
                       Geç
                     </button>
@@ -267,7 +267,7 @@ export default function PhotoPracticePage() {
                 )}
 
                 {phase === "evaluating" && (
-                  <p className="text-center text-sm font-bold text-[#64748b]">
+                  <p className="text-center text-sm font-bold text-mimo-muted">
                     Değerlendiriliyor…
                   </p>
                 )}
@@ -284,9 +284,9 @@ export default function PhotoPracticePage() {
                   >
                     {evaluation.cefr_level}
                   </span>
-                  <p className="text-2xl font-black text-[#1e3a5f]">
+                  <p className="text-2xl font-black text-mimo-title">
                     {evaluation.score}
-                    <span className="text-sm font-bold text-[#64748b]"> / 10</span>
+                    <span className="text-sm font-bold text-mimo-muted"> / 10</span>
                   </p>
                 </div>
 
@@ -305,18 +305,18 @@ export default function PhotoPracticePage() {
                   </div>
                 </div>
 
-                <p className="text-sm font-semibold leading-relaxed text-[#64748b]">
+                <p className="text-sm font-semibold leading-relaxed text-mimo-muted">
                   {evaluation.feedback}
                 </p>
 
                 {evaluation.grammar_errors.length > 0 && (
-                  <div className="rounded-xl border border-[#e2e8f0] bg-[#f8fafc] px-4 py-3">
+                  <div className="rounded-xl border border-mimo-soft bg-mimo-surface px-4 py-3">
                     <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#b91c1c]">
                       Gramer hataları
                     </p>
                     <ul className="mt-2 space-y-1">
                       {evaluation.grammar_errors.map((item) => (
-                        <li key={item} className="text-sm font-semibold text-[#0f172a]">
+                        <li key={item} className="text-sm font-semibold text-mimo-fg">
                           • {item}
                         </li>
                       ))}
@@ -325,13 +325,13 @@ export default function PhotoPracticePage() {
                 )}
 
                 {evaluation.suggestions.length > 0 && (
-                  <div className="rounded-xl border border-[#e2e8f0] bg-[#f8fafc] px-4 py-3">
-                    <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#64748b]">
+                  <div className="rounded-xl border border-mimo-soft bg-mimo-surface px-4 py-3">
+                    <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-mimo-muted">
                       {isB2OrAbove(evaluation.cefr_level) ? "Öneriler" : "B2 için gelişim"}
                     </p>
                     <ul className="mt-2 space-y-1">
                       {evaluation.suggestions.map((item) => (
-                        <li key={item} className="text-sm font-semibold text-[#0f172a]">
+                        <li key={item} className="text-sm font-semibold text-mimo-fg">
                           • {item}
                         </li>
                       ))}

@@ -257,7 +257,7 @@ export function AddWordForm({ demo = false }: { demo?: boolean }) {
 
   return (
     <div>
-      <p className="text-sm font-semibold text-[#64748b]">
+      <p className="text-sm font-semibold text-mimo-muted">
         İngilizce yaz → anlam, ses ve görsel otomatik gelir.
       </p>
 
@@ -266,7 +266,7 @@ export function AddWordForm({ demo = false }: { demo?: boolean }) {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="örn. serendipity"
-          className="min-w-0 flex-1 rounded-xl border border-[#e2e8f0] bg-[#f8fafc] px-4 py-3 text-sm font-bold text-[#0f172a] outline-none placeholder:text-[#94a3b8] focus:border-[#1cb0f6]"
+          className="min-w-0 flex-1 rounded-xl border border-mimo-soft bg-mimo-surface px-4 py-3 text-sm font-bold text-mimo-fg outline-none placeholder:text-mimo-muted focus:border-[#1cb0f6]"
         />
         <button
           type="submit"
@@ -289,10 +289,10 @@ export function AddWordForm({ demo = false }: { demo?: boolean }) {
       {success && <p className="mt-3 text-sm font-bold text-[#15803d]">{success}</p>}
 
       {lookup && (
-        <div className="mt-4 space-y-3 rounded-xl border border-[#e2e8f0] bg-[#f8fafc] p-4">
+        <div className="mt-4 space-y-3 rounded-xl border border-mimo-soft bg-mimo-surface p-4">
           {!alreadyOwned && (
             <>
-              <div className="overflow-hidden rounded-xl border border-[#e2e8f0] bg-white">
+              <div className="overflow-hidden rounded-xl border border-mimo-soft bg-mimo-card">
                 <WordImage
                   english={lookup.english}
                   imageUrl={lookup.image_url}
@@ -304,7 +304,7 @@ export function AddWordForm({ demo = false }: { demo?: boolean }) {
                 type="button"
                 onClick={() => void swapImage()}
                 disabled={swapping}
-                className="w-full rounded-xl border border-[#e2e8f0] bg-white px-4 py-2.5 text-sm font-bold text-[#0369a1] transition hover:border-[#1cb0f6] hover:bg-[#e8f6fe] disabled:opacity-50"
+                className="w-full rounded-xl border border-mimo-soft bg-mimo-card px-4 py-2.5 text-sm font-bold text-[#0369a1] transition hover:border-[#1cb0f6] hover:bg-[#e8f6fe] disabled:opacity-50"
               >
                 {swapping ? "Yeni görsel aranıyor…" : "Görseli değiştir"}
               </button>
@@ -313,11 +313,11 @@ export function AddWordForm({ demo = false }: { demo?: boolean }) {
 
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="text-xl font-black text-[#1e3a5f]">{lookup.english}</p>
+              <p className="text-xl font-black text-mimo-title">{lookup.english}</p>
               {lookup.phonetic && (
-                <p className="text-xs font-bold text-[#64748b]">{lookup.phonetic}</p>
+                <p className="text-xs font-bold text-mimo-muted">{lookup.phonetic}</p>
               )}
-              <p className="mt-1 text-sm font-semibold text-[#64748b]">{lookup.turkish}</p>
+              <p className="mt-1 text-sm font-semibold text-mimo-muted">{lookup.turkish}</p>
             </div>
             <button
               type="button"
@@ -336,18 +336,18 @@ export function AddWordForm({ demo = false }: { demo?: boolean }) {
           ) : (
             <>
               <label className="block">
-                <span className="text-[10px] font-black uppercase tracking-wide text-[#64748b]">
+                <span className="text-[10px] font-black uppercase tracking-wide text-mimo-muted">
                   Türkçe anlam (düzenleyebilirsin)
                 </span>
                 <input
                   value={turkish}
                   onChange={(e) => setTurkish(e.target.value)}
-                  className="mt-1 w-full rounded-xl border border-[#e2e8f0] bg-white px-3 py-2 text-sm font-bold text-[#0f172a] outline-none focus:border-[#1cb0f6]"
+                  className="mt-1 w-full rounded-xl border border-mimo-soft bg-mimo-card px-3 py-2 text-sm font-bold text-mimo-fg outline-none focus:border-[#1cb0f6]"
                 />
               </label>
 
               {lookup.example_sentence && (
-                <p className="text-sm font-semibold italic text-[#64748b]">
+                <p className="text-sm font-semibold italic text-mimo-muted">
                   “{lookup.example_sentence}”
                 </p>
               )}

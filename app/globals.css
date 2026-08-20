@@ -3,8 +3,31 @@
 @tailwind utilities;
 
 :root {
-  --background: #131f24;
-  --foreground: #ffffff;
+  --background: #f3f4f6;
+  --foreground: #0f172a;
+  --mimo-bg: #f3f4f6;
+  --mimo-fg: #0f172a;
+  --mimo-card: #ffffff;
+  --mimo-muted: #64748b;
+  --mimo-border: #e5e7eb;
+  --mimo-border-soft: #e2e8f0;
+  --mimo-surface: #f8fafc;
+  --mimo-title: #1e3a5f;
+  --mimo-nav: rgba(255, 255, 255, 0.95);
+}
+
+html.dark {
+  --background: #0f1a1e;
+  --foreground: #f1f5f9;
+  --mimo-bg: #0f1a1e;
+  --mimo-fg: #f1f5f9;
+  --mimo-card: #1a2a31;
+  --mimo-muted: #94a3b8;
+  --mimo-border: #2a3940;
+  --mimo-border-soft: #334155;
+  --mimo-surface: #152229;
+  --mimo-title: #e2e8f0;
+  --mimo-nav: rgba(15, 26, 30, 0.95);
 }
 
 html,

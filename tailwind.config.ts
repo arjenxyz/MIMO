@@ -1,6 +1,7 @@
 import type { Config } from "tailwindcss";
 
 const config: Config = {
+  darkMode: "class",
   content: [
     "./pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -9,6 +10,17 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        mimo: {
+          bg: "var(--mimo-bg)",
+          fg: "var(--mimo-fg)",
+          card: "var(--mimo-card)",
+          muted: "var(--mimo-muted)",
+          border: "var(--mimo-border)",
+          soft: "var(--mimo-border-soft)",
+          surface: "var(--mimo-surface)",
+          title: "var(--mimo-title)",
+          nav: "var(--mimo-nav)",
+        },
         duo: {
           bg: "#131f24",
           surface: "#1e2a32",

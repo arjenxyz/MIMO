@@ -128,7 +128,7 @@ export default function GrammarQuizPage() {
     return (
       <PracticeExamMain>
         <div className="mx-auto max-w-3xl px-4 pb-10 pt-16 text-center">
-          <p className="text-sm font-bold text-[#64748b]">Gramer soruları hazırlanıyor…</p>
+          <p className="text-sm font-bold text-mimo-muted">Gramer soruları hazırlanıyor…</p>
         </div>
       </PracticeExamMain>
     );
@@ -141,7 +141,7 @@ export default function GrammarQuizPage() {
           <PracticeExamCard className="text-center">
             <PracticeExamEyebrow>Grammar</PracticeExamEyebrow>
             <h1 className="mt-3 text-2xl font-black">Well done!</h1>
-            <p className="mt-2 text-sm font-semibold text-[#64748b]">
+            <p className="mt-2 text-sm font-semibold text-mimo-muted">
               Bugünlük gramer alıştırmalarını tamamladın.
             </p>
             <div className="mt-6">
@@ -172,18 +172,18 @@ export default function GrammarQuizPage() {
     <PracticeExamMain>
       <div className="mx-auto max-w-3xl px-4 pb-10 pt-5">
         <PracticeExamTopBar
-          left={<p className="text-sm font-bold text-[#64748b]">Soru {progressLabel}</p>}
+          left={<p className="text-sm font-bold text-mimo-muted">Soru {progressLabel}</p>}
         />
 
-        <p className="mb-5 text-center text-base font-bold text-[#0f172a] sm:text-lg">
+        <p className="mb-5 text-center text-base font-bold text-mimo-fg sm:text-lg">
           Complete the grammar exercise below.
         </p>
 
         <PracticeExamCard>
-          <p className="text-center text-xs font-bold uppercase tracking-[0.14em] text-[#64748b]">
+          <p className="text-center text-xs font-bold uppercase tracking-[0.14em] text-mimo-muted">
             {rule.title}
           </p>
-          <h1 className="mt-4 text-center text-xl font-black leading-snug text-[#1e3a5f] sm:text-2xl">
+          <h1 className="mt-4 text-center text-xl font-black leading-snug text-mimo-title sm:text-2xl">
             {rule.question}
           </h1>
 
@@ -193,7 +193,7 @@ export default function GrammarQuizPage() {
               onChange={(e) => setAnswer(e.target.value)}
               disabled={checked}
               placeholder="Cevabı yaz"
-              className="w-full rounded-xl border border-[#e2e8f0] bg-[#f8fafc] px-4 py-4 text-center text-lg font-bold text-[#0f172a] outline-none placeholder:text-[#94a3b8] focus:border-[#1cb0f6] disabled:opacity-70"
+              className="w-full rounded-xl border border-mimo-soft bg-mimo-surface px-4 py-4 text-center text-lg font-bold text-mimo-fg outline-none placeholder:text-mimo-muted focus:border-[#1cb0f6] disabled:opacity-70"
             />
             {!checked && (
               <div className="flex justify-center">
@@ -216,7 +216,7 @@ export default function GrammarQuizPage() {
                 {correct ? "Doğru!" : `Yanlış. Doğru cevap: ${rule.correct_answer}`}
               </div>
               {rule.explanation && (
-                <div className="rounded-xl border border-[#e2e8f0] bg-[#f8fafc] px-4 py-3 text-sm font-semibold text-[#64748b]">
+                <div className="rounded-xl border border-mimo-soft bg-mimo-surface px-4 py-3 text-sm font-semibold text-mimo-muted">
                   {rule.explanation}
                 </div>
               )}

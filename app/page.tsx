@@ -121,7 +121,7 @@ export default async function DashboardPage() {
   });
 
   return (
-    <main className="relative mx-auto min-h-screen max-w-2xl overflow-x-clip bg-[#f3f4f6] px-4 pb-10 pt-5 text-[#0f172a] lg:pt-8">
+    <main className="relative mx-auto min-h-screen max-w-2xl overflow-x-clip bg-mimo-bg px-4 pb-10 pt-5 text-mimo-fg lg:pt-8">
       {demo && (
         <div className="mb-4 rounded-2xl border border-[#fde68a] bg-[#fffbeb] px-4 py-2 text-center text-xs font-extrabold text-[#a16207]">
           Demo modu — giriş yok, örnek verilerle tasarım yapıyorsun

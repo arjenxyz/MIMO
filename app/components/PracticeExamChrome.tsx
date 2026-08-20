@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 
-/** Light exam-style chrome shared by DET / practice sessions (Read & Complete look). */
+/** Shared exam-style chrome — follows light/dark mimo tokens. */
 export function PracticeExamMain({
   children,
   className = "",
@@ -10,7 +10,7 @@ export function PracticeExamMain({
   className?: string;
 }) {
   return (
-    <main className={`min-h-screen bg-[#f3f4f6] text-[#0f172a] ${className}`.trim()}>
+    <main className={`min-h-screen bg-mimo-bg text-mimo-fg ${className}`.trim()}>
       {children}
     </main>
   );
@@ -25,7 +25,7 @@ export function PracticeExamCard({
 }) {
   return (
     <section
-      className={`rounded-2xl border border-[#e5e7eb] bg-white px-5 py-6 shadow-sm sm:px-8 sm:py-8 ${className}`.trim()}
+      className={`rounded-2xl border border-mimo-border bg-mimo-card px-5 py-6 shadow-sm sm:px-8 sm:py-8 ${className}`.trim()}
     >
       {children}
     </section>
@@ -46,7 +46,7 @@ export function PracticeExamTopBar({
       <div className="min-w-0">{left}</div>
       <Link
         href={exitHref}
-        className="shrink-0 text-sm font-bold text-[#64748b] hover:text-[#0f172a]"
+        className="shrink-0 text-sm font-bold text-mimo-muted hover:text-mimo-fg"
       >
         {exitLabel}
       </Link>
@@ -94,7 +94,7 @@ export function PracticeExamGhostLink({
   return (
     <Link
       href={href}
-      className="block rounded-2xl border border-[#e2e8f0] px-4 py-3 text-center text-sm font-bold text-[#64748b]"
+      className="block rounded-2xl border border-mimo-soft px-4 py-3 text-center text-sm font-bold text-mimo-muted"
     >
       {children}
     </Link>

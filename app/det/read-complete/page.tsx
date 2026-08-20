@@ -254,9 +254,9 @@ export default function ReadCompletePage() {
 
   if (!mounted || !ready) {
     return (
-      <main className="min-h-screen bg-[#f3f4f6] text-[#0f172a]">
+      <main className="min-h-screen bg-mimo-bg text-mimo-fg">
         <div className="mx-auto max-w-3xl px-4 pb-10 pt-5">
-          <div className="text-center text-sm font-bold text-[#64748b]">Loading…</div>
+          <div className="text-center text-sm font-bold text-mimo-muted">Loading…</div>
         </div>
       </main>
     );
@@ -264,13 +264,13 @@ export default function ReadCompletePage() {
 
   if (generating) {
     return (
-      <main className="min-h-screen bg-[#f3f4f6] text-[#0f172a]">
+      <main className="min-h-screen bg-mimo-bg text-mimo-fg">
         <div className="mx-auto max-w-3xl px-4 pb-10 pt-16 text-center">
           <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#1cb0f6]">
             Read and Complete
           </p>
           <h1 className="mt-3 text-xl font-black">Yeni pasajlar hazırlanıyor…</h1>
-          <p className="mt-2 text-sm font-semibold text-[#64748b]">
+          <p className="mt-2 text-sm font-semibold text-mimo-muted">
             Yapay zeka her seferinde farklı cümleler üretiyor.
           </p>
         </div>
@@ -280,13 +280,13 @@ export default function ReadCompletePage() {
 
   if (finished) {
     return (
-      <main className="min-h-screen bg-[#f3f4f6] px-4 py-8 text-[#0f172a]">
-        <div className="mx-auto max-w-xl rounded-2xl border border-[#e2e8f0] bg-white p-6 text-center shadow-sm">
+      <main className="min-h-screen bg-mimo-bg px-4 py-8 text-mimo-fg">
+        <div className="mx-auto max-w-xl rounded-2xl border border-mimo-soft bg-mimo-card p-6 text-center shadow-sm">
           <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#1cb0f6]">
             Read and Complete
           </p>
           <h1 className="mt-3 text-2xl font-black">Well done!</h1>
-          <p className="mt-2 text-sm font-semibold text-[#64748b]">
+          <p className="mt-2 text-sm font-semibold text-mimo-muted">
             Bugünkü Read and Complete alıştırmalarını tamamladın.
           </p>
           <div className="mt-6 grid grid-cols-3 gap-3">
@@ -315,7 +315,7 @@ export default function ReadCompletePage() {
             </button>
             <Link
               href="/"
-              className="rounded-2xl border border-[#e2e8f0] px-4 py-3 text-sm font-bold text-[#64748b]"
+              className="rounded-2xl border border-mimo-soft px-4 py-3 text-sm font-bold text-mimo-muted"
             >
               Ana sayfa
             </Link>
@@ -326,13 +326,13 @@ export default function ReadCompletePage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#f3f4f6] text-[#0f172a]">
+    <main className="min-h-screen bg-mimo-bg text-mimo-fg">
       <div className="mx-auto max-w-3xl px-4 pb-10 pt-5">
         <div className="mb-6 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <p
               className={`text-2xl font-black tabular-nums tracking-tight ${
-                secondsLeft <= 30 ? "text-[#ff4b4b]" : "text-[#1e3a5f]"
+                secondsLeft <= 30 ? "text-[#ff4b4b]" : "text-mimo-title"
               }`}
             >
               {formatTimer(secondsLeft)}
@@ -342,29 +342,29 @@ export default function ReadCompletePage() {
               aria-label={paused ? "Devam" : "Duraklat"}
               onClick={() => setPaused((p) => !p)}
               disabled={checked}
-              className="flex h-9 w-9 items-center justify-center rounded-full border border-[#d0d7de] bg-white text-[#1e3a5f] shadow-sm disabled:opacity-50"
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-mimo-border bg-mimo-card text-mimo-title shadow-sm disabled:opacity-50"
             >
               {paused ? "▶" : "❚❚"}
             </button>
           </div>
-          <Link href="/" className="text-sm font-bold text-[#64748b] hover:text-[#0f172a]">
+          <Link href="/" className="text-sm font-bold text-mimo-muted hover:text-mimo-fg">
             Çık
           </Link>
         </div>
 
-        <p className="mb-5 text-center text-base font-bold text-[#0f172a] sm:text-lg">
+        <p className="mb-5 text-center text-base font-bold text-mimo-fg sm:text-lg">
           Type the missing letters to complete the text below.
         </p>
 
         {(error || aiSource) && (
-          <p className="mb-4 text-center text-xs font-semibold text-[#64748b]">
+          <p className="mb-4 text-center text-xs font-semibold text-mimo-muted">
             {error || "Yapay zeka ile üretilen yeni pasajlar"}
           </p>
         )}
 
         {current && (
-          <section className="rounded-2xl border border-[#e5e7eb] bg-white px-5 py-6 shadow-sm sm:px-8 sm:py-8">
-            <h1 className="mb-5 text-center text-lg font-black text-[#1e3a5f] sm:text-xl">
+          <section className="rounded-2xl border border-mimo-border bg-mimo-card px-5 py-6 shadow-sm sm:px-8 sm:py-8">
+            <h1 className="mb-5 text-center text-lg font-black text-mimo-title sm:text-xl">
               {current.topic || "Read and Complete"}
             </h1>
 
@@ -391,7 +391,7 @@ export default function ReadCompletePage() {
                   {(() => {
                     const score = scoreCloze(gaps, values);
                     return (
-                      <p className="text-center text-sm font-bold text-[#64748b]">
+                      <p className="text-center text-sm font-bold text-mimo-muted">
                         {timedOutRef.current ? "Süre doldu. " : ""}
                         Bu pasajda {score.correct}/{gaps.length} boşluk doğru.
                         {score.wrong > 0
@@ -413,7 +413,7 @@ export default function ReadCompletePage() {
           </section>
         )}
 
-        <p className="mt-4 text-center text-xs font-semibold text-[#94a3b8]">
+        <p className="mt-4 text-center text-xs font-semibold text-mimo-muted">
           Pasaj {Math.min(index + 1, Math.max(exercises.length, 1))} / {exercises.length || 1}
         </p>
       </div>

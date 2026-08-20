@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { Nunito } from "next/font/google";
 import "./globals.css";
 import { Navbar } from "@/app/components/Navbar";
+import { ThemeProvider } from "@/app/components/ThemeProvider";
+import { THEME_BOOT_SCRIPT } from "@/lib/theme";
 
 const nunito = Nunito({
   subsets: ["latin", "latin-ext"],
@@ -40,7 +42,10 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#f3f4f6",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f3f4f6" },
+    { media: "(prefers-color-scheme: dark)", color: "#0f1a1e" },
+  ],
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
@@ -52,10 +57,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="tr">
-      <body className={`${nunito.variable} ${nunito.className} bg-[#f3f4f6] text-[#0f172a] antialiased`}>
-        <Navbar />
-        {children}
+    <html lang="tr" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
+      </head>
+      <body
+        className={`${nunito.variable} ${nunito.className} bg-mimo-bg text-mimo-fg antialiased`}
+      >
+        <ThemeProvider>
+          <Navbar />
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );

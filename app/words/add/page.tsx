@@ -39,12 +39,12 @@ export default async function AddWordPage() {
       <div className="mx-auto max-w-lg px-4 pb-10 pt-5">
         <PracticeExamTopBar left={<PracticeExamEyebrow>Kelimeler</PracticeExamEyebrow>} />
 
-        <p className="mb-5 text-center text-base font-bold text-[#0f172a] sm:text-lg">
+        <p className="mb-5 text-center text-base font-bold text-mimo-fg sm:text-lg">
           Add your own word to practice later.
         </p>
 
         <PracticeExamCard>
-          <h1 className="text-center text-xl font-black text-[#1e3a5f]">Kelime ekle</h1>
+          <h1 className="text-center text-xl font-black text-mimo-title">Kelime ekle</h1>
           <div className="mt-5">
             <AddWordForm demo={demo} />
           </div>

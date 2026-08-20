@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useTheme } from "@/app/components/ThemeProvider";
 import { DEMO_PROFILE, isDemoMode } from "@/lib/demo";
 import { createClient } from "@/lib/supabase/client";
 import type { Profile } from "@/types";
@@ -53,7 +54,6 @@ function UserAvatar({
   const showImage = Boolean(src) && !broken;
 
   if (showImage && src) {
-    // Remote OAuth avatars — plain img avoids next/image host allowlist issues.
     if (src.startsWith("http")) {
       return (
         // eslint-disable-next-line @next/next/no-img-element
@@ -94,6 +94,7 @@ function UserAvatar({
 export function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
+  const { theme, toggleTheme } = useTheme();
   const detailsRef = useRef<HTMLDetailsElement>(null);
   const [demo, setDemo] = useState(detectDemo);
   const [profile, setProfile] = useState<Profile | null>(() =>
@@ -158,18 +159,16 @@ export function Navbar() {
     return () => document.removeEventListener("pointerdown", onPointerDown);
   }, []);
 
-  // Üst bar yalnızca ana sayfada. Pathname henüz yokken de gizle (flash önleme).
   const path =
     pathname || (typeof window !== "undefined" ? window.location.pathname : "");
   if (path !== "/") {
     return null;
   }
 
-  // Sadece uygulama sayfalarında yükleme iskeleti (login'de değil)
   if (!ready || !profile) {
     return (
       <>
-        <header className="fixed inset-x-0 top-0 z-50 h-14 border-b border-[#e5e7eb] bg-white" />
+        <header className="fixed inset-x-0 top-0 z-50 h-14 border-b border-mimo-border bg-mimo-nav" />
         <div className="h-14 shrink-0" aria-hidden />
       </>
     );
@@ -191,11 +190,11 @@ export function Navbar() {
 
   return (
     <>
-      <header className="fixed inset-x-0 top-0 z-50 border-b border-[#e5e7eb] bg-white/95 backdrop-blur-md">
+      <header className="fixed inset-x-0 top-0 z-50 border-b border-mimo-border bg-mimo-nav backdrop-blur-md">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-3 px-4">
           <Link
             href="/"
-            className="flex items-center gap-2.5 rounded-xl px-1 py-1 transition hover:bg-[#f8fafc]"
+            className="flex items-center gap-2.5 rounded-xl px-1 py-1 transition hover:bg-mimo-surface"
           >
             <Image
               src={FALLBACK_AVATAR}
@@ -204,9 +203,9 @@ export function Navbar() {
               height={36}
               className="h-9 w-9 rounded-full object-cover ring-2 ring-[#1cb0f6]/35"
             />
-            <span className="text-xl font-black tracking-tight text-[#1e3a5f]">MIMO</span>
+            <span className="text-xl font-black tracking-tight text-mimo-title">MIMO</span>
             {demo && (
-              <span className="rounded-full bg-[#fffbeb] px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-[#a16207]">
+              <span className="rounded-full bg-[#fffbeb] px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-[#a16207] dark:bg-[#422006]/40 dark:text-[#fbbf24]">
                 Demo
               </span>
             )}
@@ -233,24 +232,37 @@ export function Navbar() {
             <details ref={detailsRef} className="relative">
               <summary
                 aria-label="Profil menüsü"
-                className="flex h-10 w-10 cursor-pointer list-none items-center justify-center overflow-hidden rounded-full ring-2 ring-[#cbd5e1] transition hover:ring-[#1cb0f6] [&::-webkit-details-marker]:hidden"
+                className="flex h-10 w-10 cursor-pointer list-none items-center justify-center overflow-hidden rounded-full ring-2 ring-mimo-border transition hover:ring-[#1cb0f6] [&::-webkit-details-marker]:hidden"
               >
                 <UserAvatar src={avatarUrl} name={displayName} size={40} />
               </summary>
               <div
                 role="menu"
-                className="absolute right-0 top-12 z-[200] w-52 overflow-hidden rounded-2xl border border-[#e5e7eb] bg-white shadow-lg"
+                className="absolute right-0 top-12 z-[200] w-56 overflow-hidden rounded-2xl border border-mimo-border bg-mimo-card shadow-lg"
               >
-                <div className="flex items-center gap-3 border-b border-[#e5e7eb] px-4 py-3">
-                  <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full ring-2 ring-[#e2e8f0]">
+                <div className="flex items-center gap-3 border-b border-mimo-border px-4 py-3">
+                  <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full ring-2 ring-mimo-soft">
                     <UserAvatar src={avatarUrl} name={displayName} size={36} />
                   </div>
-                  <p className="truncate text-sm font-extrabold text-[#64748b]">{displayName}</p>
+                  <p className="truncate text-sm font-extrabold text-mimo-muted">{displayName}</p>
                 </div>
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => {
+                    toggleTheme();
+                  }}
+                  className="flex w-full items-center justify-between border-b border-mimo-border px-4 py-3 text-left text-sm font-extrabold text-mimo-fg hover:bg-mimo-surface"
+                >
+                  <span>{theme === "dark" ? "Açık mod" : "Koyu mod"}</span>
+                  <span className="text-base" aria-hidden>
+                    {theme === "dark" ? "☀️" : "🌙"}
+                  </span>
+                </button>
                 <Link
                   href="/words/add"
                   role="menuitem"
-                  className="block border-b border-[#e5e7eb] px-4 py-3 text-sm font-extrabold text-[#0369a1] hover:bg-[#f8fafc]"
+                  className="block border-b border-mimo-border px-4 py-3 text-sm font-extrabold text-[#0369a1] hover:bg-mimo-surface dark:text-[#38bdf8]"
                   onClick={() => detailsRef.current?.removeAttribute("open")}
                 >
                   Kelime ekle
@@ -259,7 +271,7 @@ export function Navbar() {
                   type="button"
                   role="menuitem"
                   onClick={signOut}
-                  className="w-full px-4 py-3 text-left text-sm font-extrabold text-[#b91c1c] hover:bg-[#f8fafc]"
+                  className="w-full px-4 py-3 text-left text-sm font-extrabold text-[#b91c1c] hover:bg-mimo-surface dark:text-[#f87171]"
                 >
                   {demo ? "Giriş ekranı" : "Çıkış yap"}
                 </button>

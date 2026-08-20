@@ -290,18 +290,18 @@ export function MatchPairsGame({ words }: { words: MatchWord[] }) {
   function renderColumn(tiles: Tile[], label: string) {
     return (
       <div className="min-w-0 flex-1 space-y-2.5">
-        <p className="text-center text-[10px] font-black uppercase tracking-[0.14em] text-[#94a3b8]">
+        <p className="text-center text-[10px] font-black uppercase tracking-[0.14em] text-mimo-muted">
           {label}
         </p>
         {tiles.map((tile) => {
           const isSel = selected.includes(tile.uid);
           const state = flash[tile.uid];
-          let style = "border-[#e2e8f0] bg-white text-[#0f172a] hover:border-[#cbd5e1]";
+          let style = "border-mimo-soft bg-mimo-card text-mimo-fg hover:border-mimo-border";
           if (state === "ok") style = "border-[#58cc02] bg-[#ecfce5] text-[#15803d]";
           else if (state === "bad") style = "border-[#ff4b4b] bg-[#ffe8e8] text-[#b91c1c]";
-          else if (isSel) style = "border-[#1cb0f6] bg-[#e8f6fe] text-[#0f172a]";
+          else if (isSel) style = "border-[#1cb0f6] bg-[#e8f6fe] text-mimo-fg";
           else if (phase === "shuffling") {
-            style = "border-[#cbd5e1] bg-[#f8fafc] text-[#334155] animate-pulse";
+            style = "border-mimo-border bg-mimo-surface text-[#334155] animate-pulse";
           }
 
           return (
@@ -327,7 +327,7 @@ export function MatchPairsGame({ words }: { words: MatchWord[] }) {
           <PracticeExamCard className="text-center">
             <PracticeExamEyebrow>Hızlı Eşleştir</PracticeExamEyebrow>
             <h1 className="mt-3 text-2xl font-black">Henüz yeterli kelime yok</h1>
-            <p className="mt-2 text-sm font-semibold text-[#64748b]">
+            <p className="mt-2 text-sm font-semibold text-mimo-muted">
               Önce Kelimeler alıştırmasında en az {BOARD_PAIRS} kelime öğren, sonra burada hızlı
               tekrar yap.
             </p>
@@ -347,11 +347,11 @@ export function MatchPairsGame({ words }: { words: MatchWord[] }) {
         <div className="mx-auto max-w-lg px-4 py-8">
           <PracticeExamCard className="text-center">
             <PracticeExamEyebrow>Hızlı Eşleştir</PracticeExamEyebrow>
-            <h1 className="mt-3 text-2xl font-black text-[#1e3a5f]">Eşleşen çiftlere dokun</h1>
-            <p className="mt-2 text-sm font-semibold text-[#64748b]">
+            <h1 className="mt-3 text-2xl font-black text-mimo-title">Eşleşen çiftlere dokun</h1>
+            <p className="mt-2 text-sm font-semibold text-mimo-muted">
               Sol İngilizce, sağ Türkçe. Her 30 saniyede tahta karışır — süre durur, kombon kalır.
             </p>
-            <p className="mt-3 text-xs font-bold text-[#94a3b8]">Havuz: {pool.length} kelime</p>
+            <p className="mt-3 text-xs font-bold text-mimo-muted">Havuz: {pool.length} kelime</p>
             <div className="mt-6 flex flex-col items-center gap-2">
               <PracticeExamPrimaryButton variant="green" onClick={startGame}>
                 Başlat
@@ -406,7 +406,7 @@ export function MatchPairsGame({ words }: { words: MatchWord[] }) {
           <Link
             href="/"
             aria-label="Çık"
-            className="flex h-10 w-10 items-center justify-center rounded-full text-2xl font-black text-[#94a3b8] hover:bg-white hover:text-[#0f172a]"
+            className="flex h-10 w-10 items-center justify-center rounded-full text-2xl font-black text-mimo-muted hover:bg-mimo-card hover:text-mimo-fg"
           >
             ×
           </Link>
@@ -418,7 +418,7 @@ export function MatchPairsGame({ words }: { words: MatchWord[] }) {
                 style={{ width: `${Math.max(4, progressPct)}%` }}
               />
             </div>
-            <div className="pointer-events-none absolute inset-x-0 top-0 flex justify-between text-[10px] font-black text-[#64748b]">
+            <div className="pointer-events-none absolute inset-x-0 top-0 flex justify-between text-[10px] font-black text-mimo-muted">
               {MILESTONES.map((m) => (
                 <span key={m} className="translate-y-[-2px]">
                   {m}
@@ -429,19 +429,19 @@ export function MatchPairsGame({ words }: { words: MatchWord[] }) {
 
           <p
             className={`shrink-0 text-lg font-black tabular-nums ${
-              secondsLeft <= 20 ? "text-[#ff4b4b]" : "text-[#1e3a5f]"
+              secondsLeft <= 20 ? "text-[#ff4b4b]" : "text-mimo-title"
             } ${shuffling ? "opacity-50" : ""}`}
           >
             {formatTimer(secondsLeft)}
           </p>
         </div>
 
-        <h1 className="text-center text-xl font-black text-[#0f172a] sm:text-2xl">
+        <h1 className="text-center text-xl font-black text-mimo-fg sm:text-2xl">
           {shuffling ? "Karıştırılıyor…" : "Eşleşen çiftlere dokun"}
         </h1>
 
         <div className="mt-2 flex items-center justify-center gap-4">
-          <p className="flex items-center gap-1.5 text-sm font-black uppercase tracking-wide text-[#64748b]">
+          <p className="flex items-center gap-1.5 text-sm font-black uppercase tracking-wide text-mimo-muted">
             <span aria-hidden className="text-[#f59e0b]">
               ⚡
             </span>
@@ -454,7 +454,7 @@ export function MatchPairsGame({ words }: { words: MatchWord[] }) {
                 ? "border-[#1cb0f6] bg-[#e8f6fe] text-[#0369a1]"
                 : shuffleIn <= 3
                   ? "border-[#ff4b4b] bg-[#ffe8e8] text-[#b91c1c]"
-                  : "border-[#e2e8f0] bg-white text-[#1e3a5f]"
+                  : "border-mimo-soft bg-mimo-card text-mimo-title"
             }`}
             title="Sonraki karıştırma"
             aria-label={shuffling ? "Karıştırılıyor" : `${shuffleIn} saniye sonra karışır`}
@@ -468,18 +468,18 @@ export function MatchPairsGame({ words }: { words: MatchWord[] }) {
           {renderColumn(board.tr, "Türkçe")}
 
           {shuffling && (
-            <div className="pointer-events-none absolute inset-0 flex items-center justify-center rounded-2xl bg-[#f3f4f6]/55 backdrop-blur-[1px]">
-              <div className="rounded-2xl border border-[#e2e8f0] bg-white px-5 py-3 text-center shadow-sm">
+            <div className="pointer-events-none absolute inset-0 flex items-center justify-center rounded-2xl bg-black/10 backdrop-blur-[1px] dark:bg-black/40">
+              <div className="rounded-2xl border border-mimo-soft bg-mimo-card px-5 py-3 text-center shadow-sm">
                 <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#1cb0f6]">
                   Karıştırma
                 </p>
-                <p className="mt-1 text-sm font-black text-[#1e3a5f]">Süre durdu · kombo korunuyor</p>
+                <p className="mt-1 text-sm font-black text-mimo-title">Süre durdu · kombo korunuyor</p>
               </div>
             </div>
           )}
         </div>
 
-        <p className="mt-4 text-center text-xs font-semibold text-[#94a3b8]">
+        <p className="mt-4 text-center text-xs font-semibold text-mimo-muted">
           {matches} eşleşme · hedef {MILESTONES.join(" / ")}
           {!shuffling && ` · karışmaya ${shuffleIn}s`}
         </p>
