@@ -237,4 +237,94 @@ export const DEMO_DET_READ_COMPLETE: DETExercise[] = [
     topic: "Climate Policy Challenges",
     created_at: today(),
   },
+  {
+    id: 4,
+    question_type_id: 1,
+    question_text:
+      "Many universities now [[require:3]] students to complete an [[internship:3]] before graduation. This experience helps them develop practical [[skills:3]] and build [[professional:4]] networks that can lead to better job [[opportunities:4]] after college.",
+    correct_answer: "require|internship|skills|professional|opportunities",
+    difficulty: 3,
+    topic: "Internships and Career Readiness",
+    created_at: today(),
+  },
+  {
+    id: 5,
+    question_type_id: 1,
+    question_text:
+      "Urban planners are redesigning city centers to [[encourage:3]] walking and cycling. Wider sidewalks, protected bike lanes, and reduced [[traffic:3]] congestion can [[improve:3]] air quality and public [[health:3]] for millions of residents.",
+    correct_answer: "encourage|traffic|improve|health",
+    difficulty: 3,
+    topic: "Sustainable City Design",
+    created_at: today(),
+  },
+  {
+    id: 6,
+    question_type_id: 1,
+    question_text:
+      "The museum exhibition features rare [[artifacts:3]] discovered during an archaeological dig. Visitors can [[examine:3]] ancient tools and pottery while listening to audio guides that [[explain:3]] each object's cultural [[significance:4]].",
+    correct_answer: "artifacts|examine|explain|significance",
+    difficulty: 3,
+    topic: "Museum Exhibition",
+    created_at: today(),
+  },
+  {
+    id: 7,
+    question_type_id: 1,
+    question_text:
+      "Online education has become more [[accessible:4]] than ever, allowing learners to study from [[almost:3]] anywhere. However, some students still struggle with [[motivation:4]] and time [[management:4]] when classes are fully remote.",
+    correct_answer: "accessible|almost|motivation|management",
+    difficulty: 4,
+    topic: "Online Learning Challenges",
+    created_at: today(),
+  },
+  {
+    id: 8,
+    question_type_id: 1,
+    question_text:
+      "Scientists warn that plastic pollution continues to [[threaten:3]] marine ecosystems. Tiny particles called microplastics can [[enter:2]] the food chain and [[eventually:4]] affect human [[health:3]] as well.",
+    correct_answer: "threaten|enter|eventually|health",
+    difficulty: 3,
+    topic: "Plastic Pollution in Oceans",
+    created_at: today(),
+  },
+  {
+    id: 9,
+    question_type_id: 1,
+    question_text:
+      "The committee reached a [[consensus:3]] after lengthy [[deliberation:4]]. Members agreed to [[postpone:3]] the final vote until additional [[evidence:3]] could be reviewed by independent experts.",
+    correct_answer: "consensus|deliberation|postpone|evidence",
+    difficulty: 4,
+    topic: "Committee Decision Making",
+    created_at: today(),
+  },
+  {
+    id: 10,
+    question_type_id: 1,
+    question_text:
+      "Travelers are advised to [[arrive:3]] at the airport early during peak season. Long security lines and unexpected [[delays:3]] can cause passengers to [[miss:2]] their connecting [[flights:3]].",
+    correct_answer: "arrive|delays|miss|flights",
+    difficulty: 2,
+    topic: "Airport Travel Tips",
+    created_at: today(),
+  },
+  {
+    id: 11,
+    question_type_id: 1,
+    question_text:
+      "Libraries remain vital community spaces even in the digital age. They provide free [[access:3]] to information, quiet study areas, and [[programs:3]] that [[support:3]] literacy for children and adults [[alike:3]].",
+    correct_answer: "access|programs|support|alike",
+    difficulty: 3,
+    topic: "Modern Public Libraries",
+    created_at: today(),
+  },
+  {
+    id: 12,
+    question_type_id: 1,
+    question_text:
+      "Renewable energy investments have grown [[rapidly:3]] over the past decade. Solar and wind projects now [[compete:3]] with fossil fuels on price, making the transition to cleaner power more [[realistic:4]] for many [[countries:3]].",
+    correct_answer: "rapidly|compete|realistic|countries",
+    difficulty: 4,
+    topic: "Renewable Energy Growth",
+    created_at: today(),
+  },
 ];

@@ -14,7 +14,7 @@ import {
 } from "@/lib/db";
 import { DEMO_DUE_WORDS, isDemoMode } from "@/lib/demo";
 import { answersMatch, calculateXP } from "@/lib/srs";
-import { playWordAudio, speak } from "@/lib/speak";
+import { playWordAudio } from "@/lib/speak";
 import { WordImage } from "@/app/components/WordImage";
 import { createClient } from "@/lib/supabase/client";
 import type { DueWordItem, Quality } from "@/types";
@@ -83,11 +83,6 @@ export default function WordQuizPage() {
     if (!word) return;
     setRevealed(true);
     playWordAudio(word.english, word.audio_url);
-  }
-
-  function listenExample() {
-    if (!word?.example_sentence) return;
-    speak(word.example_sentence);
   }
 
   function check(event: FormEvent) {
@@ -181,15 +176,6 @@ export default function WordQuizPage() {
           >
             🔊 Dinle
           </button>
-          {word.example_sentence && (
-            <button
-              type="button"
-              onClick={listenExample}
-              className="rounded-2xl border-2 border-duo-border px-5 py-3 font-black text-duo-muted"
-            >
-              Cümle
-            </button>
-          )}
         </div>
 
         <p className="text-center text-sm font-bold uppercase tracking-wide text-duo-muted">

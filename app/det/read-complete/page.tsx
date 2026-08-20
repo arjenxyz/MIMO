@@ -8,6 +8,8 @@ import { DEMO_DET_READ_COMPLETE, isDemoMode } from "@/lib/demo";
 import type { DETExercise } from "@/types";
 
 const PASSAGE_SECONDS = 3 * 60;
+const SESSION_SIZE = 5;
+const RECENT_KEY = "mimo-det-rc-recent";
 
 function shuffle<T>(items: T[]) {
   const copy = [...items];
@@ -18,6 +20,35 @@ function shuffle<T>(items: T[]) {
   return copy;
 }
 
+function readRecentIds(): number[] {
+  try {
+    const raw = sessionStorage.getItem(RECENT_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as unknown;
+    return Array.isArray(parsed) ? parsed.filter((n): n is number => typeof n === "number") : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeRecentIds(ids: number[]) {
+  try {
+    sessionStorage.setItem(RECENT_KEY, JSON.stringify(ids.slice(-24)));
+  } catch {
+    // ignore
+  }
+}
+
+/** Prefer unseen passages so mobile sessions don't feel stuck on the same 3. */
+function pickSession(pool: DETExercise[], count = SESSION_SIZE) {
+  const recent = new Set(readRecentIds());
+  const fresh = pool.filter((ex) => !recent.has(ex.id));
+  const source = fresh.length >= count ? fresh : pool;
+  const picked = shuffle(source).slice(0, Math.min(count, source.length));
+  writeRecentIds([...readRecentIds(), ...picked.map((ex) => ex.id)]);
+  return picked;
+}
+
 function detectDemoClient() {
   if (typeof window === "undefined") return isDemoMode(null);
   return isDemoMode(window.location.hostname);
@@ -25,7 +56,7 @@ function detectDemoClient() {
 
 export default function ReadCompletePage() {
   const [mounted, setMounted] = useState(false);
-  const [exercises, setExercises] = useState<DETExercise[]>(DEMO_DET_READ_COMPLETE);
+  const [exercises, setExercises] = useState<DETExercise[]>([]);
   const [index, setIndex] = useState(0);
   const [values, setValues] = useState<Record<string, string>>({});
   const [checked, setChecked] = useState(false);
@@ -52,9 +83,9 @@ export default function ReadCompletePage() {
     setDemo(localDemo);
     setReady(true);
 
-    // Local/demo: keep seeded passages, never wait on Supabase.
+    // Local/demo: rotate through a larger demo pool; avoid recent ones.
     if (localDemo) {
-      setExercises(shuffle(DEMO_DET_READ_COMPLETE));
+      setExercises(pickSession(DEMO_DET_READ_COMPLETE));
       setUserId(null);
       return;
     }
@@ -90,18 +121,32 @@ export default function ReadCompletePage() {
         .eq("question_type_id", typeRow.id);
 
       if (exError) throw exError;
-      const list = (data as DETExercise[]) ?? [];
+      let list = (data as DETExercise[]) ?? [];
+
+      // Prefer exercises the user has not answered recently.
+      if (user?.id && list.length > SESSION_SIZE) {
+        const { data: answered } = await supabase
+          .from("user_det_answers")
+          .select("exercise_id")
+          .eq("user_id", user.id)
+          .order("answered_at", { ascending: false })
+          .limit(40);
+        const answeredIds = new Set((answered ?? []).map((row) => row.exercise_id as number));
+        const unseen = list.filter((ex) => !answeredIds.has(ex.id));
+        if (unseen.length >= SESSION_SIZE) list = unseen;
+      }
+
       if (list.length === 0) {
-        setExercises(shuffle(DEMO_DET_READ_COMPLETE));
+        setExercises(pickSession(DEMO_DET_READ_COMPLETE));
         setDemo(true);
         setError("Havuz boş — demo pasajlar gösteriliyor.");
         return;
       }
-      setExercises(shuffle(list));
+      setExercises(pickSession(list));
       setError("");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Sorular yüklenemedi");
-      setExercises(shuffle(DEMO_DET_READ_COMPLETE));
+      setExercises(pickSession(DEMO_DET_READ_COMPLETE));
       setDemo(true);
     }
   }, []);
@@ -219,7 +264,7 @@ export default function ReadCompletePage() {
                 setIndex(0);
                 setCorrectCount(0);
                 setWrongCount(0);
-                setExercises(shuffle(DEMO_DET_READ_COMPLETE));
+                setExercises(pickSession(DEMO_DET_READ_COMPLETE));
                 void loadLive();
               }}
               className="rounded-2xl bg-[#1cb0f6] px-4 py-3 text-sm font-black uppercase tracking-wide text-white"
