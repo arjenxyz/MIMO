@@ -110,6 +110,21 @@ export async function getDueWords(
   return (data ?? []) as DueWordItem[];
 }
 
+/** All words on the user's list, newest activity first. */
+export async function getUserWords(
+  supabase: SupabaseClient,
+  userId: string
+): Promise<DueWordItem[]> {
+  const { data, error } = await supabase
+    .from("user_words")
+    .select("*, words(*)")
+    .eq("user_id", userId)
+    .order("last_answered", { ascending: false });
+
+  if (error) throw error;
+  return (data ?? []) as DueWordItem[];
+}
+
 export async function getDueGrammar(
   supabase: SupabaseClient,
   userId: string

@@ -1,8 +1,16 @@
-import Link from "next/link";
 import { headers } from "next/headers";
 import { AddWordForm } from "@/app/components/AddWordForm";
-import { isDemoMode } from "@/lib/demo";
+import { MyWordsList } from "@/app/components/MyWordsList";
+import {
+  PracticeExamCard,
+  PracticeExamEyebrow,
+  PracticeExamMain,
+  PracticeExamTopBar,
+} from "@/app/components/PracticeExamChrome";
+import { getUserWords } from "@/lib/db";
+import { DEMO_DUE_WORDS, isDemoMode } from "@/lib/demo";
 import { createClient } from "@/lib/supabase/server";
+import type { DueWordItem } from "@/types";
 import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
@@ -11,6 +19,8 @@ export default async function AddWordPage() {
   const headerList = await headers();
   const host = headerList.get("host")?.split(":")[0] ?? null;
   const demo = isDemoMode(host);
+
+  let words: DueWordItem[] = DEMO_DUE_WORDS;
 
   if (!demo) {
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
@@ -21,26 +31,29 @@ export default async function AddWordPage() {
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) redirect("/login");
+    words = await getUserWords(supabase, user.id);
   }
 
   return (
-    <main className="relative mx-auto min-h-screen max-w-lg px-4 pb-28 pt-6 lg:pb-10">
-      <div className="mb-6 flex items-center justify-between gap-3">
-        <div>
-          <p className="text-xs font-black uppercase tracking-[0.18em] text-[#1cb0f6]">
-            Kelimeler
-          </p>
-          <h1 className="mt-1 text-2xl font-black text-white">Kelime ekle</h1>
-        </div>
-        <Link
-          href="/"
-          className="rounded-xl border-2 border-duo-border bg-duo-card px-3 py-2 text-xs font-black uppercase tracking-wide text-duo-muted transition hover:text-white"
-        >
-          Ana sayfa
-        </Link>
-      </div>
+    <PracticeExamMain>
+      <div className="mx-auto max-w-lg px-4 pb-10 pt-5">
+        <PracticeExamTopBar left={<PracticeExamEyebrow>Kelimeler</PracticeExamEyebrow>} />
 
-      <AddWordForm demo={demo} />
-    </main>
+        <p className="mb-5 text-center text-base font-bold text-[#0f172a] sm:text-lg">
+          Add your own word to practice later.
+        </p>
+
+        <PracticeExamCard>
+          <h1 className="text-center text-xl font-black text-[#1e3a5f]">Kelime ekle</h1>
+          <div className="mt-5">
+            <AddWordForm demo={demo} />
+          </div>
+        </PracticeExamCard>
+
+        <div className="mt-5">
+          <MyWordsList words={words} />
+        </div>
+      </div>
+    </PracticeExamMain>
   );
 }

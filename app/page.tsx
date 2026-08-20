@@ -1,6 +1,5 @@
 import { headers } from "next/headers";
 import { LearningPath, type PathNode } from "@/app/components/LearningPath";
-import { LoadWordsButton } from "@/app/components/LoadWordsButton";
 import { DEMO_DUE, DEMO_PROFILE, isDemoMode } from "@/lib/demo";
 import {
   getDueWords,
@@ -27,7 +26,6 @@ export default async function DashboardPage() {
 
   let profile: Profile = DEMO_PROFILE;
   let dueWordCount = DEMO_DUE.words;
-  let showLoadWords = false;
 
   if (!demo) {
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
@@ -53,7 +51,6 @@ export default async function DashboardPage() {
 
     profile = liveProfile;
     dueWordCount = dueWords.length;
-    showLoadWords = dueWords.length === 0;
   }
 
   const hour = new Date().getHours();
@@ -131,18 +128,6 @@ export default async function DashboardPage() {
         primaryLabel={primaryLabel}
         greeting={greeting}
       />
-
-      {showLoadWords && (
-        <section className="mt-6 rounded-2xl border border-dashed border-[#cbd5e1] bg-white p-5 shadow-sm">
-          <h2 className="text-base font-black text-[#1e3a5f]">Kelime havuzu boş</h2>
-          <p className="mt-1 text-sm font-semibold text-[#64748b]">
-            Yeni kelimeler yükle, yolun ilk adımı dolsun.
-          </p>
-          <div className="mt-4">
-            <LoadWordsButton />
-          </div>
-        </section>
-      )}
     </main>
   );
 }
