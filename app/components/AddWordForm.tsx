@@ -3,6 +3,7 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { playWordAudio } from "@/lib/speak";
+import { getWordImageUrl } from "@/lib/wordImage";
 import type { WordLookupResult } from "@/lib/wordLookup";
 
 async function demoLookupEnglish(raw: string): Promise<WordLookupResult> {
@@ -160,7 +161,7 @@ export function AddWordForm({ demo = false }: { demo?: boolean }) {
     <section className="rounded-[1.75rem] border-2 border-[#1cb0f6]/35 bg-gradient-to-br from-[#1cb0f6]/10 to-transparent p-5">
       <h2 className="text-base font-black text-white">Kendi kelimeni ekle</h2>
       <p className="mt-1 text-xs font-bold text-duo-muted">
-        İngilizce yaz → anlam ve ses ücretsiz otomatik gelir.
+        İngilizce yaz → anlam, ses ve görsel otomatik gelir (URL ile, depolama yok).
       </p>
 
       <form onSubmit={onLookup} className="mt-4 flex gap-2">
@@ -184,6 +185,16 @@ export function AddWordForm({ demo = false }: { demo?: boolean }) {
 
       {lookup && (
         <div className="mt-4 space-y-3 rounded-2xl border-2 border-duo-border bg-[#0f1a1e]/80 p-4">
+          <div className="overflow-hidden rounded-xl border border-duo-border">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={getWordImageUrl(lookup.english, 640, 360)}
+              alt={`${lookup.english} görseli`}
+              className="h-36 w-full object-cover"
+              loading="lazy"
+            />
+          </div>
+
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="text-xl font-black text-white">{lookup.english}</p>

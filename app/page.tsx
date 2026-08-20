@@ -87,6 +87,7 @@ export default async function DashboardPage() {
       title: "Kelimeler",
       href: "/quiz",
       tone: "blue",
+      icon: "📚",
       state: activeId === "words" ? "active" : dueWordCount === 0 ? "done" : "upcoming",
     },
     {
@@ -94,7 +95,24 @@ export default async function DashboardPage() {
       title: "Sesler",
       href: "/sounds",
       tone: "cyan",
+      icon: "🔊",
       state: activeId === "sounds" ? "active" : "upcoming",
+    },
+    {
+      id: "det",
+      title: "Read & Complete",
+      href: "/det/read-complete",
+      tone: "purple",
+      icon: "📝",
+      state: "upcoming",
+    },
+    {
+      id: "photo",
+      title: "Görsel Betimleme",
+      href: "/photo-practice",
+      tone: "orange",
+      icon: "🖼️",
+      state: "upcoming",
     },
   ];
 
@@ -106,7 +124,7 @@ export default async function DashboardPage() {
   });
 
   return (
-    <main className="relative mx-auto min-h-screen max-w-6xl px-4 pb-10 pt-5 lg:pt-8">
+    <main className="relative mx-auto min-h-screen max-w-6xl overflow-x-clip px-4 pb-10 pt-5 lg:pt-8">
       <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-72 bg-[radial-gradient(ellipse_at_top,_rgba(253,134,10,0.12),_transparent_55%)]" />
 
       {demo && (
@@ -115,7 +133,7 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,1.15fr)_minmax(280px,0.85fr)] lg:items-start">
+      <div className="grid min-w-0 gap-8 lg:grid-cols-[minmax(0,1.15fr)_minmax(280px,0.85fr)] lg:items-start">
         <LearningPath
           nodes={pathNodes}
           unitTitle={unitTitle}
@@ -125,33 +143,7 @@ export default async function DashboardPage() {
           greeting={greeting}
         />
 
-        <aside className="space-y-5 lg:sticky lg:top-20">
-          <section className="overflow-hidden rounded-[1.75rem] border-2 border-[#1cb0f6]/35 bg-gradient-to-br from-[#1cb0f6]/12 via-duo-card to-duo-card p-5">
-            <p className="text-base font-black text-white">📝 Read and Complete</p>
-            <p className="mt-1 text-sm font-semibold text-duo-muted">
-              Boşluk doldurma alıştırmaları ile akademik kelime dağarcığını geliştir.
-            </p>
-            <Link
-              href="/det/read-complete"
-              className="mt-4 flex w-full items-center justify-center rounded-2xl bg-[#1cb0f6] px-4 py-3 text-sm font-black uppercase tracking-wide text-white shadow-[0_4px_0_#1899d6] transition active:translate-y-1 active:shadow-none"
-            >
-              Başla
-            </Link>
-          </section>
-
-          <section className="overflow-hidden rounded-[1.75rem] border-2 border-[#fd860a]/40 bg-gradient-to-br from-[#fd860a]/15 via-duo-card to-duo-card p-5">
-            <p className="text-base font-black text-white">🖼️ Görsel Betimleme</p>
-            <p className="mt-1 text-sm font-semibold text-duo-muted">
-              Fotoğrafı yazarak veya konuşarak anlat; Gemini B2 seviyesini değerlendirsin.
-            </p>
-            <Link
-              href="/photo-practice"
-              className="mt-4 flex w-full items-center justify-center rounded-2xl bg-[#fd860a] px-4 py-3 text-sm font-black uppercase tracking-wide text-[#2a1600] shadow-[0_4px_0_#e07800] transition active:translate-y-1 active:shadow-none"
-            >
-              Başla
-            </Link>
-          </section>
-
+        <aside className="min-w-0 space-y-5 lg:sticky lg:top-20">
           {showAddWord && <AddWordForm />}
 
           {showLoadWords && (

@@ -197,6 +197,17 @@ export default function WordQuizPage() {
         <h1 className="mt-2 min-h-16 text-center text-4xl font-black">
           {revealed ? word.english : "••••••"}
         </h1>
+        {revealed && (
+          <div className="mx-auto mt-4 max-w-sm overflow-hidden rounded-2xl border-2 border-duo-border">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={getWordImageUrl(word.english, 640, 360)}
+              alt=""
+              className="h-40 w-full object-cover"
+              loading="lazy"
+            />
+          </div>
+        )}
         {revealed && word.example_sentence && (
           <p className="mt-3 text-center font-semibold text-duo-muted">{word.example_sentence}</p>
         )}
