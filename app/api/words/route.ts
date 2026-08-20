@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { addWordToUserList } from "@/lib/db";
+import { addWordToUserList, findExistingUserWord } from "@/lib/db";
 import { createClient } from "@/lib/supabase/server";
 import { lookupEnglishWord } from "@/lib/wordLookup";
+import { normalizeEnglishKey } from "@/lib/wordNormalize";
 
 export const dynamic = "force-dynamic";
 
@@ -30,7 +31,28 @@ export async function POST(request: NextRequest) {
       if ("error" in result) {
         return NextResponse.json({ error: result.error }, { status: 400 });
       }
-      return NextResponse.json({ lookup: result });
+
+      const existing = await findExistingUserWord(supabase, user.id, result.english);
+      if (existing?.alreadyOwned) {
+        return NextResponse.json({
+          lookup: {
+            ...result,
+            english: existing.word.english,
+            turkish: existing.word.turkish || result.turkish,
+            phonetic: existing.word.phonetic ?? result.phonetic,
+            audio_url: existing.word.audio_url ?? result.audio_url,
+            example_sentence: existing.word.example_sentence ?? result.example_sentence,
+          },
+          alreadyOwned: true,
+          message: `"${existing.word.english}" zaten listende — tekrar eklenmez.`,
+        });
+      }
+
+      return NextResponse.json({
+        lookup: result,
+        alreadyOwned: false,
+        inPool: Boolean(existing?.word),
+      });
     }
 
     if (body.action === "save") {
@@ -38,6 +60,19 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(
           { error: "İngilizce kelime ve Türkçe anlam gerekli." },
           { status: 400 }
+        );
+      }
+
+      const key = normalizeEnglishKey(body.english);
+      const precheck = await findExistingUserWord(supabase, user.id, key);
+      if (precheck?.alreadyOwned) {
+        return NextResponse.json(
+          {
+            error: `"${precheck.word.english}" zaten listende. Aynı kelime tekrar eklenemez.`,
+            alreadyHad: true,
+            word: precheck.word,
+          },
+          { status: 409 }
         );
       }
 
@@ -49,9 +84,20 @@ export async function POST(request: NextRequest) {
         audio_url: body.audio_url ?? null,
       });
 
+      if (saved.alreadyHad) {
+        return NextResponse.json(
+          {
+            error: `"${saved.word.english}" zaten listende. Aynı kelime tekrar eklenemez.`,
+            alreadyHad: true,
+            word: saved.word,
+          },
+          { status: 409 }
+        );
+      }
+
       return NextResponse.json({
         ok: true,
-        alreadyHad: saved.alreadyHad,
+        alreadyHad: false,
         word: saved.word,
       });
     }

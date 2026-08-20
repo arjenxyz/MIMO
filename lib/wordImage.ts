@@ -75,17 +75,48 @@ const ABSTRACT_DESC =
   /\b(emotion|feeling|concept|philosophy|quality|abstract|idea|principle|virtue|love|luck|chance|coincidence)\b/;
 
 export async function findWordImageUrl(english: string): Promise<string | null> {
-  const query = normalizeQuery(english);
-  if (!query) return null;
+  const candidates = await findWordImageCandidates(english, { limit: 1 });
+  return candidates[0] ?? null;
+}
 
-  const wikidata = await withTimeout(searchWikidataImage(query), FETCH_MS);
-  if (wikidata) return wikidata;
+/** Ranked image URLs for a word — used to let learners swap mismatched photos. */
+export async function findWordImageCandidates(
+  english: string,
+  opts?: { exclude?: string[]; limit?: number }
+): Promise<string[]> {
+  const query = normalizeQuery(english);
+  if (!query) return [];
+
+  const exclude = new Set((opts?.exclude ?? []).map(normalizeUrlKey).filter(Boolean));
+  const limit = Math.min(12, Math.max(1, opts?.limit ?? 8));
+
+  const scored: Array<{ url: string; score: number }> = [];
+
+  const wikidata = await withTimeout(searchWikidataCandidates(query), FETCH_MS);
+  if (wikidata) scored.push(...wikidata);
 
   const wiki = await withTimeout(searchWikipediaSummary(query), FETCH_MS);
-  if (wiki) return wiki;
+  if (wiki) scored.push({ url: wiki, score: 55 });
 
-  const openverse = await withTimeout(searchOpenverseClear(query), FETCH_MS);
-  return openverse;
+  const openverse = await withTimeout(searchOpenverseCandidates(query), FETCH_MS);
+  if (openverse) scored.push(...openverse);
+
+  scored.sort((a, b) => b.score - a.score);
+
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const item of scored) {
+    const key = normalizeUrlKey(item.url);
+    if (!key || seen.has(key) || exclude.has(key)) continue;
+    seen.add(key);
+    out.push(item.url);
+    if (out.length >= limit) break;
+  }
+  return out;
+}
+
+function normalizeUrlKey(url: string) {
+  return url.trim().split("?")[0].toLowerCase();
 }
 
 function normalizeQuery(raw: string) {
@@ -138,7 +169,9 @@ type WikidataEntity = {
   };
 };
 
-async function searchWikidataImage(query: string): Promise<string | null> {
+async function searchWikidataCandidates(
+  query: string
+): Promise<Array<{ url: string; score: number }>> {
   const searchUrl = new URL("https://www.wikidata.org/w/api.php");
   searchUrl.searchParams.set("action", "wbsearchentities");
   searchUrl.searchParams.set("search", query);
@@ -153,11 +186,11 @@ async function searchWikidataImage(query: string): Promise<string | null> {
     headers: UA,
     next: { revalidate: 86400 },
   });
-  if (!searchRes.ok) return null;
+  if (!searchRes.ok) return [];
 
   const searchData = (await searchRes.json()) as { search?: WikiSearchHit[] };
   const hits = searchData.search ?? [];
-  if (hits.length === 0) return null;
+  if (hits.length === 0) return [];
 
   const ids = hits.map((h) => h.id);
   const entityUrl = new URL("https://www.wikidata.org/w/api.php");
@@ -172,7 +205,7 @@ async function searchWikidataImage(query: string): Promise<string | null> {
     headers: UA,
     next: { revalidate: 86400 },
   });
-  if (!entityRes.ok) return null;
+  if (!entityRes.ok) return [];
 
   const entityData = (await entityRes.json()) as {
     entities?: Record<string, WikidataEntity>;
@@ -203,14 +236,16 @@ async function searchWikidataImage(query: string): Promise<string | null> {
       .map((a) => (a.value ?? "").toLowerCase().trim())
       .filter(Boolean);
 
-    // Fallback when Wikidata invents new P31 classes: exact label + concrete sense.
     const concreteFallback =
       label === query && CONCRETE_DESC.test(description) && !ABSTRACT_DESC.test(description);
     if (!allowedType && !concreteFallback) continue;
     if (ABSTRACT_DESC.test(description) && !allowedType) continue;
 
-    const filename = entity.claims?.P18?.[0]?.mainsnak?.datavalue?.value;
-    if (!filename || !isRasterImageFile(filename)) continue;
+    const filenames = (entity.claims?.P18 ?? [])
+      .map((c) => c.mainsnak?.datavalue?.value)
+      .filter((f): f is string => typeof f === "string" && isRasterImageFile(f));
+
+    if (filenames.length === 0) continue;
 
     let score = 0;
     if (label === query) score += 30;
@@ -220,12 +255,18 @@ async function searchWikidataImage(query: string): Promise<string | null> {
     if (allowedType) score += 10;
 
     if (score < 50) continue;
-    candidates.push({ id: hit.id, score, file: filename });
+    filenames.forEach((file, i) => {
+      candidates.push({ id: hit.id, score: score - i, file });
+    });
   }
 
   candidates.sort((a, b) => b.score - a.score);
-  const best = candidates[0];
-  return best ? commonsFileUrl(best.file) : null;
+  return candidates.map((c) => ({ url: commonsFileUrl(c.file), score: c.score }));
+}
+
+async function searchWikidataImage(query: string): Promise<string | null> {
+  const list = await searchWikidataCandidates(query);
+  return list[0]?.url ?? null;
 }
 
 async function searchWikipediaSummary(query: string): Promise<string | null> {
@@ -297,8 +338,14 @@ type OpenverseResult = {
 };
 
 async function searchOpenverseClear(query: string): Promise<string | null> {
-  // Skip Openverse for likely-abstract words — prefers placeholder over random stock.
-  if (isLikelyAbstract(query)) return null;
+  const list = await searchOpenverseCandidates(query);
+  return list[0]?.url ?? null;
+}
+
+async function searchOpenverseCandidates(
+  query: string
+): Promise<Array<{ url: string; score: number }>> {
+  if (isLikelyAbstract(query)) return [];
 
   const queries = [
     `"${query} object"`,
@@ -307,25 +354,25 @@ async function searchOpenverseClear(query: string): Promise<string | null> {
     `"${query}"`,
   ];
 
-  let bestUrl: string | null = null;
-  let bestScore = -1;
+  const scored: Array<{ url: string; score: number }> = [];
+  const seen = new Set<string>();
 
   for (const q of queries) {
     const results = await fetchOpenverseResults(q);
-    for (const r of results.slice(0, 10)) {
+    for (const r of results.slice(0, 12)) {
       const score = scoreOpenverse(query, r);
       if (score < 40) continue;
       const url = r.url || r.thumbnail;
       if (!url) continue;
-      if (score > bestScore) {
-        bestScore = score;
-        bestUrl = url;
-      }
+      const key = normalizeUrlKey(url);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      scored.push({ url, score });
     }
-    if (bestScore >= 50 && bestUrl) return bestUrl;
   }
 
-  return bestScore >= 40 ? bestUrl : null;
+  scored.sort((a, b) => b.score - a.score);
+  return scored;
 }
 
 function isLikelyAbstract(query: string) {

@@ -79,21 +79,45 @@ export function AddWordForm({ demo = false }: { demo?: boolean }) {
   const [turkish, setTurkish] = useState("");
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [swapping, setSwapping] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [alreadyOwned, setAlreadyOwned] = useState(false);
+  const [imagePool, setImagePool] = useState<string[]>([]);
+  const [imageIndex, setImageIndex] = useState(0);
+  const [triedUrls, setTriedUrls] = useState<string[]>([]);
+
+  async function fetchImagePool(english: string, exclude: string[] = []) {
+    const params = new URLSearchParams({ q: english, pool: "1" });
+    if (exclude.length > 0) params.set("exclude", exclude.join("|"));
+    const imgRes = await fetch(`/api/word-image?${params.toString()}`);
+    const imgData = (await imgRes.json()) as {
+      image_url?: string | null;
+      candidates?: string[];
+    };
+    const pool = (imgData.candidates ?? []).filter(Boolean);
+    if (pool.length === 0 && imgData.image_url) pool.push(imgData.image_url);
+    return pool;
+  }
 
   async function onLookup(event: FormEvent) {
     event.preventDefault();
     setError("");
     setSuccess("");
     setLookup(null);
+    setAlreadyOwned(false);
+    setImagePool([]);
+    setImageIndex(0);
+    setTriedUrls([]);
     setLoading(true);
     try {
       if (demo) {
         const result = await demoLookupEnglish(query);
-        const imgRes = await fetch(`/api/word-image?q=${encodeURIComponent(result.english)}`);
-        const imgData = (await imgRes.json()) as { image_url?: string | null };
-        setLookup({ ...result, image_url: imgData.image_url ?? null });
+        const pool = await fetchImagePool(result.english);
+        setImagePool(pool);
+        setImageIndex(0);
+        setTriedUrls(pool.slice(0, 1));
+        setLookup({ ...result, image_url: pool[0] ?? null });
         setTurkish(result.turkish);
         return;
       }
@@ -103,10 +127,33 @@ export function AddWordForm({ demo = false }: { demo?: boolean }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "lookup", english: query }),
       });
-      const data = await res.json();
+      const data = (await res.json()) as {
+        lookup?: WordLookupResult;
+        alreadyOwned?: boolean;
+        message?: string;
+        error?: string;
+      };
       if (!res.ok) throw new Error(data.error || "Bulunamadı");
-      setLookup(data.lookup);
-      setTurkish(data.lookup.turkish);
+      if (!data.lookup) throw new Error("Bulunamadı");
+
+      const result = data.lookup;
+      const owned = Boolean(data.alreadyOwned);
+      setAlreadyOwned(owned);
+
+      if (owned) {
+        setLookup({ ...result, image_url: result.image_url ?? null });
+        setTurkish(result.turkish);
+        setError(data.message || `"${result.english}" zaten listende — tekrar eklenmez.`);
+        return;
+      }
+
+      const pool = await fetchImagePool(result.english);
+      const nextPool = pool.length > 0 ? pool : result.image_url ? [result.image_url] : [];
+      setImagePool(nextPool);
+      setImageIndex(0);
+      setTriedUrls(nextPool.slice(0, 1));
+      setLookup({ ...result, image_url: nextPool[0] ?? null });
+      setTurkish(result.turkish);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Bulunamadı");
     } finally {
@@ -114,8 +161,42 @@ export function AddWordForm({ demo = false }: { demo?: boolean }) {
     }
   }
 
+  async function swapImage() {
+    if (!lookup || swapping || alreadyOwned) return;
+    setSwapping(true);
+    setError("");
+    try {
+      const nextIndex = imageIndex + 1;
+      if (nextIndex < imagePool.length) {
+        setImageIndex(nextIndex);
+        const url = imagePool[nextIndex];
+        setTriedUrls((prev) => (prev.includes(url) ? prev : [...prev, url]));
+        setLookup({ ...lookup, image_url: url });
+        return;
+      }
+
+      const exclude = triedUrls.length > 0 ? triedUrls : imagePool;
+      const more = await fetchImagePool(lookup.english, exclude);
+      if (more.length === 0) {
+        setError("Başka uygun görsel bulunamadı.");
+        setLookup({ ...lookup, image_url: null });
+        return;
+      }
+
+      const merged = [...imagePool, ...more];
+      setImagePool(merged);
+      setImageIndex(imagePool.length);
+      setTriedUrls((prev) => [...prev, more[0]]);
+      setLookup({ ...lookup, image_url: more[0] });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Görsel değiştirilemedi");
+    } finally {
+      setSwapping(false);
+    }
+  }
+
   async function onSave() {
-    if (!lookup) return;
+    if (!lookup || alreadyOwned) return;
     setSaving(true);
     setError("");
     setSuccess("");
@@ -126,6 +207,9 @@ export function AddWordForm({ demo = false }: { demo?: boolean }) {
         setQuery("");
         setLookup(null);
         setTurkish("");
+        setImagePool([]);
+        setImageIndex(0);
+        setTriedUrls([]);
         return;
       }
 
@@ -141,16 +225,27 @@ export function AddWordForm({ demo = false }: { demo?: boolean }) {
           audio_url: lookup.audio_url,
         }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Kaydedilemedi");
-      setSuccess(
-        data.alreadyHad
-          ? `"${lookup.english}" zaten listende.`
-          : `"${lookup.english}" listene eklendi.`
-      );
+      const data = (await res.json()) as {
+        error?: string;
+        alreadyHad?: boolean;
+        ok?: boolean;
+      };
+      if (!res.ok) {
+        if (data.alreadyHad) {
+          setAlreadyOwned(true);
+          setError(data.error || "Bu kelime zaten listende.");
+          return;
+        }
+        throw new Error(data.error || "Kaydedilemedi");
+      }
+      setSuccess(`"${lookup.english}" listene eklendi.`);
       setQuery("");
       setLookup(null);
       setTurkish("");
+      setAlreadyOwned(false);
+      setImagePool([]);
+      setImageIndex(0);
+      setTriedUrls([]);
       router.refresh();
       window.dispatchEvent(new Event("profile-updated"));
     } catch (e) {
@@ -182,18 +277,39 @@ export function AddWordForm({ demo = false }: { demo?: boolean }) {
         </button>
       </form>
 
-      {error && <p className="mt-3 text-sm font-bold text-[#b91c1c]">{error}</p>}
+      {error && (
+        <p
+          className={`mt-3 text-sm font-bold ${
+            alreadyOwned ? "text-[#b45309]" : "text-[#b91c1c]"
+          }`}
+        >
+          {error}
+        </p>
+      )}
       {success && <p className="mt-3 text-sm font-bold text-[#15803d]">{success}</p>}
 
       {lookup && (
         <div className="mt-4 space-y-3 rounded-xl border border-[#e2e8f0] bg-[#f8fafc] p-4">
-          <div className="overflow-hidden rounded-xl border border-[#e2e8f0] bg-white">
-            <WordImage
-              english={lookup.english}
-              imageUrl={lookup.image_url}
-              className="h-36 w-full object-cover"
-            />
-          </div>
+          {!alreadyOwned && (
+            <>
+              <div className="overflow-hidden rounded-xl border border-[#e2e8f0] bg-white">
+                <WordImage
+                  english={lookup.english}
+                  imageUrl={lookup.image_url}
+                  className="h-36 w-full object-cover"
+                />
+              </div>
+
+              <button
+                type="button"
+                onClick={() => void swapImage()}
+                disabled={swapping}
+                className="w-full rounded-xl border border-[#e2e8f0] bg-white px-4 py-2.5 text-sm font-bold text-[#0369a1] transition hover:border-[#1cb0f6] hover:bg-[#e8f6fe] disabled:opacity-50"
+              >
+                {swapping ? "Yeni görsel aranıyor…" : "Görseli değiştir"}
+              </button>
+            </>
+          )}
 
           <div className="flex items-start justify-between gap-3">
             <div>
@@ -201,6 +317,7 @@ export function AddWordForm({ demo = false }: { demo?: boolean }) {
               {lookup.phonetic && (
                 <p className="text-xs font-bold text-[#64748b]">{lookup.phonetic}</p>
               )}
+              <p className="mt-1 text-sm font-semibold text-[#64748b]">{lookup.turkish}</p>
             </div>
             <button
               type="button"
@@ -212,31 +329,39 @@ export function AddWordForm({ demo = false }: { demo?: boolean }) {
             </button>
           </div>
 
-          <label className="block">
-            <span className="text-[10px] font-black uppercase tracking-wide text-[#64748b]">
-              Türkçe anlam (düzenleyebilirsin)
-            </span>
-            <input
-              value={turkish}
-              onChange={(e) => setTurkish(e.target.value)}
-              className="mt-1 w-full rounded-xl border border-[#e2e8f0] bg-white px-3 py-2 text-sm font-bold text-[#0f172a] outline-none focus:border-[#1cb0f6]"
-            />
-          </label>
-
-          {lookup.example_sentence && (
-            <p className="text-sm font-semibold italic text-[#64748b]">
-              “{lookup.example_sentence}”
+          {alreadyOwned ? (
+            <p className="rounded-xl border border-[#fde68a] bg-[#fffbeb] px-3 py-2 text-center text-sm font-bold text-[#a16207]">
+              Bu kelime zaten listenizde — tekrar eklenemez.
             </p>
-          )}
+          ) : (
+            <>
+              <label className="block">
+                <span className="text-[10px] font-black uppercase tracking-wide text-[#64748b]">
+                  Türkçe anlam (düzenleyebilirsin)
+                </span>
+                <input
+                  value={turkish}
+                  onChange={(e) => setTurkish(e.target.value)}
+                  className="mt-1 w-full rounded-xl border border-[#e2e8f0] bg-white px-3 py-2 text-sm font-bold text-[#0f172a] outline-none focus:border-[#1cb0f6]"
+                />
+              </label>
 
-          <button
-            type="button"
-            disabled={saving || !turkish.trim()}
-            onClick={onSave}
-            className="w-full rounded-2xl bg-[#58cc02] py-3 text-sm font-black uppercase tracking-wide text-[#14260a] shadow-[0_3px_0_#46a302] disabled:opacity-50"
-          >
-            {saving ? "Kaydediliyor..." : "Listeme ekle"}
-          </button>
+              {lookup.example_sentence && (
+                <p className="text-sm font-semibold italic text-[#64748b]">
+                  “{lookup.example_sentence}”
+                </p>
+              )}
+
+              <button
+                type="button"
+                disabled={saving || !turkish.trim()}
+                onClick={() => void onSave()}
+                className="w-full rounded-2xl bg-[#58cc02] py-3 text-sm font-black uppercase tracking-wide text-[#14260a] shadow-[0_3px_0_#46a302] disabled:opacity-50"
+              >
+                {saving ? "Kaydediliyor..." : "Listeme ekle"}
+              </button>
+            </>
+          )}
         </div>
       )}
     </div>

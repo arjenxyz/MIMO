@@ -13,6 +13,11 @@ import type {
   Word,
 } from "@/types";
 import { calculateSM2, calculateXP, checkLevelUp } from "@/lib/srs";
+import {
+  englishKeysMatch,
+  englishLookupVariants,
+  normalizeEnglishKey,
+} from "@/lib/wordNormalize";
 
 export function todayISO(): string {
   return format(new Date(), "yyyy-MM-dd");
@@ -177,6 +182,65 @@ export async function assignNewWords(
   if (insertError) throw insertError;
 }
 
+/** Thorough scan: user's list + global words table (normalized / variants). */
+export async function findExistingUserWord(
+  supabase: SupabaseClient,
+  userId: string,
+  englishRaw: string
+): Promise<{ word: Word; alreadyOwned: boolean } | null> {
+  const key = normalizeEnglishKey(englishRaw);
+  if (!key) return null;
+
+  const variants = englishLookupVariants(englishRaw);
+
+  const { data: ownedRows, error: ownedError } = await supabase
+    .from("user_words")
+    .select("id, words(*)")
+    .eq("user_id", userId);
+
+  if (ownedError) throw ownedError;
+
+  for (const row of ownedRows ?? []) {
+    const word = row.words as Word | Word[] | null | undefined;
+    const w = Array.isArray(word) ? word[0] : word;
+    if (!w?.english) continue;
+    if (englishKeysMatch(w.english, englishRaw)) {
+      return { word: w, alreadyOwned: true };
+    }
+  }
+
+  // Exact / variant hit in global pool (not yet on user's list).
+  const { data: poolHits, error: poolError } = await supabase
+    .from("words")
+    .select("*")
+    .in("english", variants);
+
+  if (poolError) throw poolError;
+
+  if (poolHits && poolHits.length > 0) {
+    const best =
+      poolHits.find((w) => normalizeEnglishKey(w.english) === key) ?? poolHits[0];
+    return { word: best as Word, alreadyOwned: false };
+  }
+
+  // Broader scan for spaced / punctuated mismatches not covered by variants.
+  const { data: looseHits, error: looseError } = await supabase
+    .from("words")
+    .select("*")
+    .ilike("english", `%${key.replace(/\s+/g, "%")}%`)
+    .limit(40);
+
+  if (looseError) throw looseError;
+
+  for (const hit of looseHits ?? []) {
+    if (englishKeysMatch(hit.english, englishRaw)) {
+      return { word: hit as Word, alreadyOwned: false };
+    }
+  }
+
+  return null;
+}
+
 export async function addWordToUserList(
   supabase: SupabaseClient,
   userId: string,
@@ -189,17 +253,17 @@ export async function addWordToUserList(
     difficulty?: number;
   }
 ): Promise<{ word: Word; alreadyHad: boolean }> {
-  const english = input.english.trim().toLowerCase();
+  const english = normalizeEnglishKey(input.english);
+  if (!english) {
+    throw new Error("Geçerli bir İngilizce kelime gir.");
+  }
 
-  const { data: existingWord, error: findError } = await supabase
-    .from("words")
-    .select("*")
-    .eq("english", english)
-    .maybeSingle();
+  const existing = await findExistingUserWord(supabase, userId, english);
+  if (existing?.alreadyOwned) {
+    return { word: existing.word, alreadyHad: true };
+  }
 
-  if (findError) throw findError;
-
-  let word = existingWord as Word | null;
+  let word = existing?.word ?? null;
 
   if (!word) {
     const { data: created, error: createError } = await supabase
@@ -214,8 +278,20 @@ export async function addWordToUserList(
       })
       .select("*")
       .single();
-    if (createError) throw createError;
-    word = created as Word;
+
+    if (createError) {
+      // Unique race: another insert won — reuse that row.
+      if (createError.code === "23505") {
+        const again = await findExistingUserWord(supabase, userId, english);
+        if (again?.alreadyOwned) return { word: again.word, alreadyHad: true };
+        if (again?.word) word = again.word;
+        else throw createError;
+      } else {
+        throw createError;
+      }
+    } else {
+      word = created as Word;
+    }
   } else {
     const patch: Record<string, string | null> = {};
     if (!word.turkish && input.turkish) patch.turkish = input.turkish.trim();
@@ -256,7 +332,12 @@ export async function addWordToUserList(
     last_answered: todayISO(),
   });
 
-  if (insertError) throw insertError;
+  if (insertError) {
+    if (insertError.code === "23505") {
+      return { word, alreadyHad: true };
+    }
+    throw insertError;
+  }
   return { word, alreadyHad: false };
 }
 
