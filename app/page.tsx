@@ -116,11 +116,9 @@ export default async function DashboardPage() {
   });
 
   return (
-    <main className="relative mx-auto min-h-screen max-w-2xl overflow-x-clip px-4 pb-10 pt-5 lg:pt-8">
-      <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-72 bg-[radial-gradient(ellipse_at_top,_rgba(253,134,10,0.12),_transparent_55%)]" />
-
+    <main className="relative mx-auto min-h-screen max-w-2xl overflow-x-clip bg-[#f3f4f6] px-4 pb-10 pt-5 text-[#0f172a] lg:pt-8">
       {demo && (
-        <div className="mb-4 rounded-2xl border border-[#ffc800]/40 bg-[#ffc800]/10 px-4 py-2 text-center text-xs font-extrabold text-[#ffc800]">
+        <div className="mb-4 rounded-2xl border border-[#fde68a] bg-[#fffbeb] px-4 py-2 text-center text-xs font-extrabold text-[#a16207]">
           Demo modu — giriş yok, örnek verilerle tasarım yapıyorsun
         </div>
       )}
@@ -135,9 +133,9 @@ export default async function DashboardPage() {
       />
 
       {showLoadWords && (
-        <section className="mt-6 rounded-[1.75rem] border-2 border-dashed border-duo-border bg-duo-card/80 p-5">
-          <h2 className="text-base font-black text-white">Kelime havuzu boş</h2>
-          <p className="mt-1 text-sm font-semibold text-duo-muted">
+        <section className="mt-6 rounded-2xl border border-dashed border-[#cbd5e1] bg-white p-5 shadow-sm">
+          <h2 className="text-base font-black text-[#1e3a5f]">Kelime havuzu boş</h2>
+          <p className="mt-1 text-sm font-semibold text-[#64748b]">
             Yeni kelimeler yükle, yolun ilk adımı dolsun.
           </p>
           <div className="mt-4">

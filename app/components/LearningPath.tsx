@@ -14,39 +14,34 @@ export type PathNode = {
 
 const TONE = {
   green: {
-    ring: "ring-[#58cc02]",
     fill: "bg-[#58cc02]",
-    shadow: "shadow-[0_6px_0_#46a302]",
+    shadow: "shadow-[0_5px_0_#46a302]",
     soft: "text-[#58cc02]",
-    glow: "shadow-[0_0_0_8px_rgba(88,204,2,0.18)]",
+    glow: "shadow-[0_0_0_6px_rgba(88,204,2,0.16)]",
   },
   blue: {
-    ring: "ring-[#1cb0f6]",
     fill: "bg-[#1cb0f6]",
-    shadow: "shadow-[0_6px_0_#1899d6]",
+    shadow: "shadow-[0_5px_0_#1899d6]",
     soft: "text-[#1cb0f6]",
-    glow: "shadow-[0_0_0_8px_rgba(28,176,246,0.2)]",
+    glow: "shadow-[0_0_0_6px_rgba(28,176,246,0.16)]",
   },
   purple: {
-    ring: "ring-[#ce82ff]",
-    fill: "bg-[#ce82ff]",
-    shadow: "shadow-[0_6px_0_#a568cc]",
-    soft: "text-[#ce82ff]",
-    glow: "shadow-[0_0_0_8px_rgba(206,130,255,0.2)]",
+    fill: "bg-[#7c3aed]",
+    shadow: "shadow-[0_5px_0_#6d28d9]",
+    soft: "text-[#7c3aed]",
+    glow: "shadow-[0_0_0_6px_rgba(124,58,237,0.14)]",
   },
   orange: {
-    ring: "ring-[#ff9600]",
-    fill: "bg-[#ff9600]",
-    shadow: "shadow-[0_6px_0_#e08600]",
-    soft: "text-[#ff9600]",
-    glow: "shadow-[0_0_0_8px_rgba(255,150,0,0.2)]",
+    fill: "bg-[#f59e0b]",
+    shadow: "shadow-[0_5px_0_#d97706]",
+    soft: "text-[#d97706]",
+    glow: "shadow-[0_0_0_6px_rgba(245,158,11,0.16)]",
   },
   cyan: {
-    ring: "ring-[#00cd9c]",
-    fill: "bg-[#00cd9c]",
-    shadow: "shadow-[0_6px_0_#00a87f]",
-    soft: "text-[#00cd9c]",
-    glow: "shadow-[0_0_0_8px_rgba(0,205,156,0.2)]",
+    fill: "bg-[#0d9488]",
+    shadow: "shadow-[0_5px_0_#0f766e]",
+    soft: "text-[#0d9488]",
+    glow: "shadow-[0_0_0_6px_rgba(13,148,136,0.14)]",
   },
 };
 
@@ -141,23 +136,20 @@ export function LearningPath({
 }) {
   return (
     <section className="relative min-w-0 overflow-x-clip">
-      <div className="relative overflow-hidden rounded-[1.75rem] border-2 border-duo-border bg-gradient-to-br from-[#24353d] via-[#1a2a31] to-[#152229] p-5 sm:p-6">
-        <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-[#fd860a]/10 blur-2xl" />
-        <div className="pointer-events-none absolute -bottom-16 left-8 h-36 w-36 rounded-full bg-[#58cc02]/10 blur-2xl" />
-
+      <div className="relative overflow-hidden rounded-2xl border border-[#e5e7eb] bg-white p-5 shadow-sm sm:p-6">
         <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-black uppercase tracking-[0.18em] text-[#fd860a]">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#1cb0f6]">
               Bugünün yolu
             </p>
-            <h1 className="mt-1 text-2xl font-black tracking-tight text-white sm:text-3xl">
+            <h1 className="mt-1 text-2xl font-black tracking-tight text-[#1e3a5f] sm:text-3xl">
               {unitTitle}
             </h1>
-            <p className="mt-1.5 max-w-md text-sm font-bold text-duo-muted">{unitHint}</p>
+            <p className="mt-1.5 max-w-md text-sm font-semibold text-[#64748b]">{unitHint}</p>
           </div>
           <Link
             href={primaryHref}
-            className="inline-flex shrink-0 items-center justify-center rounded-2xl bg-[#58cc02] px-8 py-3.5 text-sm font-black uppercase tracking-wide text-[#14260a] shadow-[0_5px_0_#46a302] transition active:translate-y-1 active:shadow-none"
+            className="inline-flex shrink-0 items-center justify-center rounded-2xl bg-[#58cc02] px-8 py-3.5 text-sm font-black uppercase tracking-wide text-[#14260a] shadow-[0_3px_0_#46a302] transition active:translate-y-0.5 active:shadow-none"
           >
             {primaryLabel}
           </Link>
@@ -166,16 +158,16 @@ export function LearningPath({
 
       <div className="relative mx-auto mt-8 max-w-sm overflow-x-clip px-2 pb-6 sm:max-w-md">
         <div
-          className="pointer-events-none absolute bottom-10 left-1/2 top-6 w-[3px] -translate-x-1/2 rounded-full bg-gradient-to-b from-[#37464f] via-[#2a3940] to-transparent"
+          className="pointer-events-none absolute bottom-10 left-1/2 top-6 w-[3px] -translate-x-1/2 rounded-full bg-gradient-to-b from-[#cbd5e1] via-[#e2e8f0] to-transparent"
           aria-hidden
         />
 
         <div className="relative mb-12 flex justify-center">
-          <div className="relative max-w-[260px]">
-            <div className="rounded-2xl border-2 border-duo-border bg-duo-card px-4 py-3 text-center text-sm font-extrabold leading-snug text-white shadow-[0_6px_0_rgba(0,0,0,0.25)]">
+          <div className="relative max-w-[280px]">
+            <div className="rounded-2xl border border-[#e5e7eb] bg-white px-4 py-3 text-center text-sm font-extrabold leading-snug text-[#0f172a] shadow-sm">
               {greeting}
             </div>
-            <div className="absolute left-1/2 top-full h-3 w-3 -translate-x-1/2 -translate-y-1/2 rotate-45 border-b-2 border-r-2 border-duo-border bg-duo-card" />
+            <div className="absolute left-1/2 top-full h-3 w-3 -translate-x-1/2 -translate-y-1/2 rotate-45 border-b border-r border-[#e5e7eb] bg-white" />
           </div>
         </div>
 
@@ -199,9 +191,9 @@ export function LearningPath({
                   <Link
                     href={node.href}
                     aria-current={isActive ? "step" : undefined}
-                    className={`group relative flex h-[4.75rem] w-[4.75rem] items-center justify-center rounded-full border-[5px] border-[#0f1a1e] transition duration-200 hover:-translate-y-0.5 active:translate-y-1 active:shadow-none ${tone.fill} ${tone.shadow} ${
+                    className={`group relative flex h-[4.75rem] w-[4.75rem] items-center justify-center rounded-full border-[4px] border-white transition duration-200 hover:-translate-y-0.5 active:translate-y-1 active:shadow-none ${tone.fill} ${tone.shadow} ${
                       isActive ? `${tone.glow} mimo-path-pulse` : ""
-                    } ${isUpcoming ? "opacity-50 grayscale-[40%]" : ""}`}
+                    } ${isUpcoming ? "opacity-45 grayscale-[30%]" : ""}`}
                   >
                     {isDone ? (
                       <CheckIcon />
@@ -215,7 +207,7 @@ export function LearningPath({
                   <div className="mt-3 max-w-[7.5rem] text-center">
                     <p
                       className={`text-[15px] font-black leading-tight ${
-                        isActive ? "text-white" : "text-white/90"
+                        isActive ? "text-[#0f172a]" : "text-[#334155]"
                       }`}
                     >
                       {node.title}

@@ -40,7 +40,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0f1a1e",
+  themeColor: "#f3f4f6",
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
@@ -53,7 +53,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="tr">
-      <body className={`${nunito.variable} ${nunito.className} bg-duo-bg text-white antialiased`}>
+      <body className={`${nunito.variable} ${nunito.className} bg-[#f3f4f6] text-[#0f172a] antialiased`}>
         <Navbar />
         {children}
       </body>

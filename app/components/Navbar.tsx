@@ -8,7 +8,6 @@ import { DEMO_PROFILE, isDemoMode } from "@/lib/demo";
 import { createClient } from "@/lib/supabase/client";
 import type { Profile } from "@/types";
 
-const HIDDEN_PATHS = ["/login", "/register", "/onboarding", "/auth", "/sounds/practice", "/det"];
 const FALLBACK_AVATAR = "/mimo-avatar.png";
 
 function detectDemo() {
@@ -159,12 +158,10 @@ export function Navbar() {
     return () => document.removeEventListener("pointerdown", onPointerDown);
   }, []);
 
-  // Auth / DET: asla koyu navbar gösterme.
-  // Pathname henüz gelmeden de gizle — login üstünde siyah şerit flash'ını önler.
+  // Üst bar yalnızca ana sayfada. Pathname henüz yokken de gizle (flash önleme).
   const path =
     pathname || (typeof window !== "undefined" ? window.location.pathname : "");
-  const hideChrome = !path || HIDDEN_PATHS.some((prefix) => path.startsWith(prefix));
-  if (hideChrome) {
+  if (path !== "/") {
     return null;
   }
 
@@ -172,7 +169,7 @@ export function Navbar() {
   if (!ready || !profile) {
     return (
       <>
-        <header className="fixed inset-x-0 top-0 z-50 h-14 border-b-2 border-duo-border/80 bg-[#0f1a1e]" />
+        <header className="fixed inset-x-0 top-0 z-50 h-14 border-b border-[#e5e7eb] bg-white" />
         <div className="h-14 shrink-0" aria-hidden />
       </>
     );
@@ -194,22 +191,22 @@ export function Navbar() {
 
   return (
     <>
-      <header className="fixed inset-x-0 top-0 z-50 border-b-2 border-duo-border/80 bg-[#0f1a1e]/95 backdrop-blur-md">
+      <header className="fixed inset-x-0 top-0 z-50 border-b border-[#e5e7eb] bg-white/95 backdrop-blur-md">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-3 px-4">
           <Link
             href="/"
-            className="flex items-center gap-2.5 rounded-xl px-1 py-1 transition hover:bg-white/5"
+            className="flex items-center gap-2.5 rounded-xl px-1 py-1 transition hover:bg-[#f8fafc]"
           >
             <Image
               src={FALLBACK_AVATAR}
               alt=""
               width={36}
               height={36}
-              className="h-9 w-9 rounded-full object-cover ring-2 ring-[#fd860a]/45"
+              className="h-9 w-9 rounded-full object-cover ring-2 ring-[#1cb0f6]/35"
             />
-            <span className="text-xl font-black tracking-tight text-white">MIMO</span>
+            <span className="text-xl font-black tracking-tight text-[#1e3a5f]">MIMO</span>
             {demo && (
-              <span className="rounded-full bg-[#ffc800]/15 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-[#ffc800]">
+              <span className="rounded-full bg-[#fffbeb] px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-[#a16207]">
                 Demo
               </span>
             )}
@@ -217,7 +214,7 @@ export function Navbar() {
 
           <div className="flex items-center gap-2">
             <div
-              className="flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 font-black text-[#ff9600]"
+              className="flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 font-black text-[#ea580c]"
               title="Günlük seri"
             >
               <svg
@@ -226,7 +223,7 @@ export function Navbar() {
                 viewBox="0 0 24 24"
                 fill="currentColor"
                 aria-hidden
-                className="text-[#ff9600]"
+                className="text-[#ea580c]"
               >
                 <path d="M12 2c1.5 3.5-.5 5.5-2 7.2C8.2 11 7 12.8 7 15.2 7 18.4 9.2 21 12 21s5-2.6 5-5.8c0-2.8-1.4-4.6-3.2-6.5C12.2 7 11 5.2 12 2z" />
               </svg>
@@ -236,24 +233,24 @@ export function Navbar() {
             <details ref={detailsRef} className="relative">
               <summary
                 aria-label="Profil menüsü"
-                className="flex h-10 w-10 cursor-pointer list-none items-center justify-center overflow-hidden rounded-full ring-2 ring-[#fd860a]/50 transition hover:ring-[#fd860a] [&::-webkit-details-marker]:hidden"
+                className="flex h-10 w-10 cursor-pointer list-none items-center justify-center overflow-hidden rounded-full ring-2 ring-[#cbd5e1] transition hover:ring-[#1cb0f6] [&::-webkit-details-marker]:hidden"
               >
                 <UserAvatar src={avatarUrl} name={displayName} size={40} />
               </summary>
               <div
                 role="menu"
-                className="absolute right-0 top-12 z-[200] w-52 overflow-hidden rounded-2xl border-2 border-duo-border bg-duo-card shadow-xl"
+                className="absolute right-0 top-12 z-[200] w-52 overflow-hidden rounded-2xl border border-[#e5e7eb] bg-white shadow-lg"
               >
-                <div className="flex items-center gap-3 border-b border-duo-border px-4 py-3">
-                  <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full ring-2 ring-[#fd860a]/40">
+                <div className="flex items-center gap-3 border-b border-[#e5e7eb] px-4 py-3">
+                  <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full ring-2 ring-[#e2e8f0]">
                     <UserAvatar src={avatarUrl} name={displayName} size={36} />
                   </div>
-                  <p className="truncate text-sm font-extrabold text-duo-muted">{displayName}</p>
+                  <p className="truncate text-sm font-extrabold text-[#64748b]">{displayName}</p>
                 </div>
                 <Link
                   href="/words/add"
                   role="menuitem"
-                  className="block border-b border-duo-border px-4 py-3 text-sm font-extrabold text-[#1cb0f6] hover:bg-white/5"
+                  className="block border-b border-[#e5e7eb] px-4 py-3 text-sm font-extrabold text-[#0369a1] hover:bg-[#f8fafc]"
                   onClick={() => detailsRef.current?.removeAttribute("open")}
                 >
                   Kelime ekle
@@ -262,7 +259,7 @@ export function Navbar() {
                   type="button"
                   role="menuitem"
                   onClick={signOut}
-                  className="w-full px-4 py-3 text-left text-sm font-extrabold text-[#ff4b4b] hover:bg-white/5"
+                  className="w-full px-4 py-3 text-left text-sm font-extrabold text-[#b91c1c] hover:bg-[#f8fafc]"
                 >
                   {demo ? "Giriş ekranı" : "Çıkış yap"}
                 </button>
