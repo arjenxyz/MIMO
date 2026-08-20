@@ -2,11 +2,13 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ClozePassage, scoreCloze } from "@/app/components/det/ClozePassage";
+import { extractGaps, formatTimer, parseClozePassage } from "@/lib/detCloze";
 import { DEMO_DET_READ_COMPLETE, isDemoMode } from "@/lib/demo";
 import { createClient } from "@/lib/supabase/client";
 import type { DETExercise } from "@/types";
 
-const QUESTION_SECONDS = 30;
+const PASSAGE_SECONDS = 3 * 60;
 
 function shuffle<T>(items: T[]) {
   const copy = [...items];
@@ -17,51 +19,28 @@ function shuffle<T>(items: T[]) {
   return copy;
 }
 
-function normalizeAnswer(value: string) {
-  return value.trim().toLowerCase().replace(/\s+/g, " ");
-}
-
-function renderCloze(text: string) {
-  const parts = text.split("___");
-  if (parts.length === 1) return <span>{text}</span>;
-  return (
-    <span>
-      {parts.map((part, index) => (
-        <span key={index}>
-          {part}
-          {index < parts.length - 1 && (
-            <span className="mx-1 inline-block min-w-[4.5rem] border-b-2 border-[#1cb0f6] px-1 text-center text-[#1cb0f6]">
-              ???
-            </span>
-          )}
-        </span>
-      ))}
-    </span>
-  );
-}
-
 export default function ReadCompletePage() {
   const [exercises, setExercises] = useState<DETExercise[]>([]);
   const [index, setIndex] = useState(0);
-  const [answer, setAnswer] = useState("");
+  const [values, setValues] = useState<Record<string, string>>({});
   const [checked, setChecked] = useState(false);
-  const [wasCorrect, setWasCorrect] = useState(false);
+  const [paused, setPaused] = useState(false);
+  const [secondsLeft, setSecondsLeft] = useState(PASSAGE_SECONDS);
   const [correctCount, setCorrectCount] = useState(0);
   const [wrongCount, setWrongCount] = useState(0);
-  const [secondsLeft, setSecondsLeft] = useState(QUESTION_SECONDS);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [demo, setDemo] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
-  const submittingRef = useRef(false);
-  const answerRef = useRef("");
+  const timedOutRef = useRef(false);
 
   const finished = exercises.length > 0 && index >= exercises.length;
   const current = !finished ? exercises[index] : null;
 
-  useEffect(() => {
-    answerRef.current = answer;
-  }, [answer]);
+  const gaps = useMemo(() => {
+    if (!current) return [];
+    return extractGaps(parseClozePassage(current.question_text, current.correct_answer));
+  }, [current]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -101,8 +80,9 @@ export default function ReadCompletePage() {
       if (exError) throw exError;
       const list = (data as DETExercise[]) ?? [];
       if (list.length === 0) {
-        setExercises([]);
-        setError("Henüz soru yok. `npm run generate-cloze` ile üret veya schema örneklerini ekle.");
+        setExercises(shuffle(DEMO_DET_READ_COMPLETE));
+        setDemo(true);
+        setError("Havuz boş — demo pasajlar gösteriliyor.");
         return;
       }
       setExercises(shuffle(list));
@@ -119,60 +99,52 @@ export default function ReadCompletePage() {
     load();
   }, [load]);
 
-  const submitAnswer = useCallback(
-    async (raw: string, timedOut = false) => {
-      if (!current || checked || submittingRef.current) return;
-      submittingRef.current = true;
+  useEffect(() => {
+    setValues({});
+    setChecked(false);
+    setPaused(false);
+    setSecondsLeft(PASSAGE_SECONDS);
+    timedOutRef.current = false;
+  }, [index, current?.id]);
 
-      const normalized = normalizeAnswer(raw);
-      const correct =
-        !timedOut &&
-        normalized.length > 0 &&
-        normalized === normalizeAnswer(current.correct_answer);
-
+  const finalize = useCallback(
+    async (timedOut = false) => {
+      if (!current || checked) return;
       setChecked(true);
-      setWasCorrect(correct);
-      setCorrectCount((n) => n + (correct ? 1 : 0));
-      setWrongCount((n) => n + (correct ? 0 : 1));
+      timedOutRef.current = timedOut;
+
+      const score = scoreCloze(gaps, values);
+      setCorrectCount((n) => n + score.correct);
+      setWrongCount((n) => n + score.wrong);
 
       if (!demo && userId) {
         try {
           const supabase = createClient();
+          const userAnswer = gaps
+            .map((g) => `${g.answer.slice(0, g.shown)}${(values[g.id] || "").replace(/·/g, "")}`)
+            .join(" | ");
           await supabase.from("user_det_answers").insert({
             user_id: userId,
             exercise_id: current.id,
-            user_answer: timedOut ? raw || "(süre doldu)" : raw,
-            is_correct: correct,
+            user_answer: timedOut ? `${userAnswer} (süre doldu)` : userAnswer,
+            is_correct: score.wrong === 0 && score.total > 0,
           });
         } catch {
-          // UI devam etsin
+          // ignore
         }
       }
-
-      submittingRef.current = false;
-
-      if (timedOut) {
-        window.setTimeout(() => {
-          setAnswer("");
-          setChecked(false);
-          setWasCorrect(false);
-          setSecondsLeft(QUESTION_SECONDS);
-          setIndex((i) => i + 1);
-        }, 900);
-      }
     },
-    [checked, current, demo, userId]
+    [checked, current, demo, gaps, userId, values]
   );
 
   useEffect(() => {
-    if (loading || finished || checked || !current) return;
+    if (loading || finished || checked || paused || !current) return;
 
-    setSecondsLeft(QUESTION_SECONDS);
     const timer = window.setInterval(() => {
       setSecondsLeft((s) => {
         if (s <= 1) {
           window.clearInterval(timer);
-          void submitAnswer(answerRef.current, true);
+          void finalize(true);
           return 0;
         }
         return s - 1;
@@ -180,14 +152,9 @@ export default function ReadCompletePage() {
     }, 1000);
 
     return () => window.clearInterval(timer);
-  }, [checked, current, finished, index, loading, submitAnswer]);
+  }, [checked, current, finalize, finished, loading, paused]);
 
   function goNext() {
-    setAnswer("");
-    setChecked(false);
-    setWasCorrect(false);
-    setSecondsLeft(QUESTION_SECONDS);
-    submittingRef.current = false;
     setIndex((i) => i + 1);
   }
 
@@ -199,35 +166,35 @@ export default function ReadCompletePage() {
 
   if (loading) {
     return (
-      <main className="mx-auto flex min-h-[60vh] max-w-lg items-center justify-center px-4">
-        <p className="text-sm font-black uppercase tracking-widest text-duo-muted">Yükleniyor…</p>
+      <main className="flex min-h-screen items-center justify-center bg-[#f3f4f6] text-[#64748b]">
+        <p className="text-sm font-bold uppercase tracking-widest">Loading…</p>
       </main>
     );
   }
 
   if (finished) {
     return (
-      <main className="mx-auto min-h-screen max-w-lg px-4 pb-10 pt-6">
-        <section className="rounded-[1.75rem] border-2 border-[#58cc02]/40 bg-gradient-to-br from-[#58cc02]/15 to-duo-card p-6 text-center">
-          <p className="text-xs font-black uppercase tracking-[0.18em] text-[#58cc02]">
+      <main className="min-h-screen bg-[#f3f4f6] px-4 py-8 text-[#0f172a]">
+        <div className="mx-auto max-w-xl rounded-2xl border border-[#e2e8f0] bg-white p-6 text-center shadow-sm">
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#1cb0f6]">
             Read and Complete
           </p>
-          <h1 className="mt-3 text-2xl font-black text-white">Tebrikler!</h1>
-          <p className="mt-2 text-sm font-bold text-duo-muted">
+          <h1 className="mt-3 text-2xl font-black">Well done!</h1>
+          <p className="mt-2 text-sm font-semibold text-[#64748b]">
             Bugünkü Read and Complete alıştırmalarını tamamladın.
           </p>
           <div className="mt-6 grid grid-cols-3 gap-3">
-            <div className="rounded-2xl border-2 border-duo-border bg-[#0f1a1e] p-3">
-              <p className="text-[10px] font-black uppercase text-duo-muted">Doğru</p>
+            <div className="rounded-xl bg-[#ecfce5] p-3">
+              <p className="text-[10px] font-bold uppercase text-[#3f6212]">Doğru</p>
               <p className="mt-1 text-2xl font-black text-[#58cc02]">{correctCount}</p>
             </div>
-            <div className="rounded-2xl border-2 border-duo-border bg-[#0f1a1e] p-3">
-              <p className="text-[10px] font-black uppercase text-duo-muted">Yanlış</p>
+            <div className="rounded-xl bg-[#ffe8e8] p-3">
+              <p className="text-[10px] font-bold uppercase text-[#9f1239]">Yanlış</p>
               <p className="mt-1 text-2xl font-black text-[#ff4b4b]">{wrongCount}</p>
             </div>
-            <div className="rounded-2xl border-2 border-duo-border bg-[#0f1a1e] p-3">
-              <p className="text-[10px] font-black uppercase text-duo-muted">Başarı</p>
-              <p className="mt-1 text-2xl font-black text-white">%{accuracy}</p>
+            <div className="rounded-xl bg-[#e8f6fe] p-3">
+              <p className="text-[10px] font-bold uppercase text-[#075985]">Başarı</p>
+              <p className="mt-1 text-2xl font-black text-[#0ea5e9]">%{accuracy}</p>
             </div>
           </div>
           <div className="mt-6 flex flex-col gap-2">
@@ -237,131 +204,108 @@ export default function ReadCompletePage() {
                 setIndex(0);
                 setCorrectCount(0);
                 setWrongCount(0);
-                setAnswer("");
-                setChecked(false);
                 void load();
               }}
-              className="rounded-2xl bg-[#58cc02] px-4 py-3 text-sm font-black uppercase tracking-wide text-[#14260a] shadow-[0_4px_0_#46a302]"
+              className="rounded-2xl bg-[#1cb0f6] px-4 py-3 text-sm font-black uppercase tracking-wide text-white"
             >
               Tekrar çöz
             </button>
             <Link
               href="/"
-              className="rounded-2xl border-2 border-duo-border px-4 py-3 text-sm font-black uppercase tracking-wide text-duo-muted"
+              className="rounded-2xl border border-[#e2e8f0] px-4 py-3 text-sm font-bold text-[#64748b]"
             >
               Ana sayfa
             </Link>
           </div>
-        </section>
+        </div>
       </main>
     );
   }
 
   return (
-    <main className="mx-auto min-h-screen max-w-lg px-4 pb-10 pt-6">
-      <div className="mb-5 flex items-center justify-between gap-3">
-        <div>
-          <p className="text-xs font-black uppercase tracking-[0.18em] text-[#1cb0f6]">
-            DET · Read and Complete
-          </p>
-          <h1 className="mt-1 text-xl font-black text-white">Boşluk doldur</h1>
-        </div>
-        <Link
-          href="/"
-          className="rounded-xl border-2 border-duo-border bg-duo-card px-3 py-2 text-xs font-black uppercase tracking-wide text-duo-muted"
-        >
-          Ana sayfa
-        </Link>
-      </div>
-
-      {demo && (
-        <p className="mb-4 rounded-2xl border border-[#ffc800]/40 bg-[#ffc800]/10 px-3 py-2 text-center text-xs font-extrabold text-[#ffc800]">
-          Demo sorular — canlıda Supabase havuzundan gelir
-        </p>
-      )}
-
-      {error && !exercises.length && (
-        <p className="mb-4 text-sm font-bold text-[#ff4b4b]">{error}</p>
-      )}
-
-      {current && (
-        <section className="rounded-[1.75rem] border-2 border-duo-border bg-duo-card p-5">
-          <div className="flex items-center justify-between gap-3">
-            <p className="text-xs font-black uppercase tracking-wide text-duo-muted">
-              Soru {index + 1} / {exercises.length}
-            </p>
+    <main className="min-h-screen bg-[#f3f4f6] text-[#0f172a]">
+      <div className="mx-auto max-w-3xl px-4 pb-10 pt-5">
+        <div className="mb-6 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
             <p
-              className={`rounded-xl px-3 py-1 text-sm font-black tabular-nums ${
-                secondsLeft <= 5 ? "bg-[#ff4b4b]/20 text-[#ff4b4b]" : "bg-[#1cb0f6]/15 text-[#1cb0f6]"
+              className={`text-2xl font-black tabular-nums tracking-tight ${
+                secondsLeft <= 30 ? "text-[#ff4b4b]" : "text-[#1e3a5f]"
               }`}
             >
-              {secondsLeft}s
+              {formatTimer(secondsLeft)}
             </p>
-          </div>
-
-          {current.topic && (
-            <p className="mt-2 text-[10px] font-black uppercase tracking-wide text-[#ce82ff]">
-              {current.topic}
-            </p>
-          )}
-
-          <p className="mt-4 text-lg font-extrabold leading-relaxed text-white">
-            {renderCloze(current.question_text)}
-          </p>
-
-          <label className="mt-5 block">
-            <span className="text-[10px] font-black uppercase tracking-wide text-duo-muted">
-              Cevabın
-            </span>
-            <input
-              value={answer}
-              onChange={(e) => setAnswer(e.target.value)}
-              disabled={checked}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !checked) {
-                  e.preventDefault();
-                  void submitAnswer(answer);
-                }
-              }}
-              placeholder="Eksik kelimeyi yaz"
-              className="mt-1 w-full rounded-2xl border-2 border-duo-border bg-[#0f1a1e] px-4 py-3 text-base font-bold text-white outline-none placeholder:text-duo-muted focus:border-[#1cb0f6] disabled:opacity-70"
-              autoFocus
-            />
-          </label>
-
-          {!checked ? (
             <button
               type="button"
-              disabled={!answer.trim()}
-              onClick={() => void submitAnswer(answer)}
-              className="mt-4 w-full rounded-2xl bg-[#1cb0f6] py-3.5 text-sm font-black uppercase tracking-wide text-white shadow-[0_4px_0_#1899d6] disabled:opacity-50"
+              aria-label={paused ? "Devam" : "Duraklat"}
+              onClick={() => setPaused((p) => !p)}
+              disabled={checked}
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-[#d0d7de] bg-white text-[#1e3a5f] shadow-sm disabled:opacity-50"
             >
-              Kontrol Et
+              {paused ? "▶" : "❚❚"}
             </button>
-          ) : (
-            <div className="mt-4 space-y-3">
-              <p
-                className={`rounded-2xl border-2 px-4 py-3 text-sm font-extrabold ${
-                  wasCorrect
-                    ? "border-[#58cc02]/50 bg-[#58cc02]/15 text-[#58cc02]"
-                    : "border-[#ff4b4b]/50 bg-[#ff4b4b]/15 text-[#ff4b4b]"
-                }`}
-              >
-                {wasCorrect
-                  ? "Doğru!"
-                  : `Yanlış. Doğru cevap: ${current.correct_answer}`}
-              </p>
-              <button
-                type="button"
-                onClick={goNext}
-                className="w-full rounded-2xl bg-[#58cc02] py-3.5 text-sm font-black uppercase tracking-wide text-[#14260a] shadow-[0_4px_0_#46a302]"
-              >
-                {index + 1 >= exercises.length ? "Sonuçları gör" : "Sonraki Soru"}
-              </button>
+          </div>
+          <Link href="/" className="text-sm font-bold text-[#64748b] hover:text-[#0f172a]">
+            Çık
+          </Link>
+        </div>
+
+        <p className="mb-5 text-center text-base font-bold text-[#0f172a] sm:text-lg">
+          Type the missing letters to complete the text below.
+        </p>
+
+        {(demo || error) && (
+          <p className="mb-4 text-center text-xs font-semibold text-[#b45309]">
+            {error || "Demo pasaj — canlıda Supabase havuzundan gelir"}
+          </p>
+        )}
+
+        {current && (
+          <section className="rounded-2xl border border-[#e5e7eb] bg-white px-5 py-6 shadow-sm sm:px-8 sm:py-8">
+            <h1 className="mb-5 text-center text-lg font-black text-[#1e3a5f] sm:text-xl">
+              {current.topic || "Read and Complete"}
+            </h1>
+
+            <ClozePassage
+              questionText={current.question_text}
+              fallbackAnswer={current.correct_answer}
+              values={values}
+              onChange={(id, value) => setValues((prev) => ({ ...prev, [id]: value }))}
+              disabled={checked || paused}
+              showResults={checked}
+            />
+
+            <div className="mt-8 flex flex-col gap-2 sm:flex-row sm:justify-center">
+              {!checked ? (
+                <button
+                  type="button"
+                  onClick={() => void finalize(false)}
+                  className="rounded-2xl bg-[#1cb0f6] px-8 py-3 text-sm font-black uppercase tracking-wide text-white shadow-[0_3px_0_#1899d6]"
+                >
+                  Kontrol Et
+                </button>
+              ) : (
+                <>
+                  <p className="mb-2 w-full text-center text-sm font-bold text-[#64748b] sm:mb-0">
+                    {timedOutRef.current ? "Süre doldu. " : ""}
+                    Bu pasajda {scoreCloze(gaps, values).correct}/{gaps.length} boşluk doğru.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={goNext}
+                    className="rounded-2xl bg-[#58cc02] px-8 py-3 text-sm font-black uppercase tracking-wide text-[#14260a] shadow-[0_3px_0_#46a302]"
+                  >
+                    {index + 1 >= exercises.length ? "Sonuçlar" : "Sonraki pasaj"}
+                  </button>
+                </>
+              )}
             </div>
-          )}
-        </section>
-      )}
+          </section>
+        )}
+
+        <p className="mt-4 text-center text-xs font-semibold text-[#94a3b8]">
+          Pasaj {Math.min(index + 1, exercises.length)} / {exercises.length}
+        </p>
+      </div>
     </main>
   );
 }

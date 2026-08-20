@@ -29,7 +29,7 @@ const TOPICS = [
   "Politics",
 ] as const;
 
-type ClozeItem = { question: string; answer: string };
+type ClozeItem = { title: string; question: string; answer: string };
 
 function requireEnv(name: string) {
   const value = process.env[name];
@@ -56,21 +56,37 @@ function extractJsonArray(text: string): ClozeItem[] {
   return parsed
     .map((row) => {
       if (!row || typeof row !== "object") return null;
-      const q = (row as { question?: unknown; answer?: unknown }).question;
-      const a = (row as { question?: unknown; answer?: unknown }).answer;
+      const obj = row as { title?: unknown; question?: unknown; answer?: unknown };
+      const q = obj.question;
+      const a = obj.answer;
+      const title = typeof obj.title === "string" ? obj.title.trim() : "";
       if (typeof q !== "string" || typeof a !== "string") return null;
-      if (!q.includes("___")) return null;
-      return { question: q.trim(), answer: a.trim() };
+      if (!q.includes("[[") || !q.includes("]]")) return null;
+      return { title: title || "Read and Complete", question: q.trim(), answer: a.trim() };
     })
     .filter((row): row is ClozeItem => Boolean(row));
 }
 
 async function generateForTopic(model: ReturnType<GoogleGenerativeAI["getGenerativeModel"]>, topic: string) {
-  const prompt = `Generate 10 C1-C2 level English cloze (fill-in-the-blank) questions about ${topic}. 
-Each question should be a sentence with a missing word or phrase, marked with '___'. 
-Provide the output as a JSON array where each object has 'question' (the sentence with '___') and 'answer' (the correct missing word/phrase).
-Example: {"question": "The ___ of the experiment was surprising.", "answer": "outcome"}
-Make sure the missing word is academic and suitable for Duolingo English Test 120+ level.
+  const prompt = `Generate 3 C1-C2 level English "Read and Complete" PASSAGES about ${topic}, in Duolingo English Test style.
+
+Each passage must:
+- Have a short academic title
+- Be 2-4 sentences long
+- Contain 5 to 8 incomplete words marked exactly like this: [[fullword:shownCount]]
+  Example: [[send:2]] renders as "se" + 3 letter boxes (for n,d)
+  Example: [[constraints:5]] renders as "constr" + 5 letter boxes
+- shownCount must be an integer >= 1 and less than the word length
+- Prefer academic vocabulary suitable for DET 120+
+
+Return ONLY valid JSON array of objects with:
+- "title": string
+- "question": the full passage string including [[word:n]] markers
+- "answer": pipe-separated full words in order, e.g. "send|to|data"
+
+Example object:
+{"title":"European Space Agency's Mission to Mars","question":"The agency plans to [[send:2]] a rover [[to:1]] Mars.","answer":"send|to"}
+
 Only return valid JSON, no other text.`;
 
   const result = await model.generateContent(prompt);
@@ -117,7 +133,7 @@ async function main() {
         question_text: item.question,
         correct_answer: item.answer,
         difficulty: Math.random() < 0.5 ? 4 : 5,
-        topic,
+        topic: item.title,
       }));
 
       const { error } = await supabase.from("det_exercises").insert(rows);

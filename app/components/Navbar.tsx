@@ -8,7 +8,7 @@ import { DEMO_PROFILE, isDemoMode } from "@/lib/demo";
 import { createClient } from "@/lib/supabase/client";
 import type { Profile } from "@/types";
 
-const HIDDEN_PATHS = ["/login", "/register", "/onboarding", "/auth", "/sounds/practice"];
+const HIDDEN_PATHS = ["/login", "/register", "/onboarding", "/auth", "/sounds/practice", "/det"];
 const FALLBACK_AVATAR = "/mimo-avatar.png";
 
 function detectDemo() {

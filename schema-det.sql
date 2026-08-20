@@ -66,20 +66,27 @@ CREATE POLICY "Users can insert own DET answers"
   ON public.user_det_answers FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
--- Örnek Read and Complete soruları (type_name = read_complete)
+-- Örnek Read and Complete pasajları (DET harf-kutusu formatı: [[word:shownCount]])
 INSERT INTO public.det_exercises (question_type_id, question_text, correct_answer, difficulty, topic)
 SELECT t.id, q.question_text, q.correct_answer, q.difficulty, q.topic
 FROM public.det_question_types t
 CROSS JOIN (
   VALUES
-    ('The ___ of the experiment was surprising.', 'outcome', 4, 'Science'),
-    ('Researchers failed to ___ for confounding variables.', 'account', 5, 'Science'),
-    ('The committee reached a ___ after lengthy deliberation.', 'consensus', 4, 'Politics'),
-    ('Economic growth may ___ environmental degradation if unchecked.', 'exacerbate', 5, 'Environment'),
-    ('Her argument lacks ___ evidence to support the claim.', 'empirical', 4, 'Education')
+    (
+      'The European Space Agency plans to [[send:2]] a rover [[to:1]] Mars to collect [[data:2]] from the planet''s surface. This mission will mark a new chapter in the [[history:4]] of space exploration.',
+      'send|to|data|history',
+      4,
+      'European Space Agency''s Mission to Mars'
+    ),
+    (
+      'Recent studies suggest that regular exercise can [[improve:3]] cognitive [[function:4]] in older adults. Researchers observed a notable [[decline:3]] in memory loss among participants who remained physically [[active:3]].',
+      'improve|function|decline|active',
+      4,
+      'Exercise and Cognitive Health'
+    )
 ) AS q(question_text, correct_answer, difficulty, topic)
 WHERE t.type_name = 'read_complete'
   AND NOT EXISTS (
     SELECT 1 FROM public.det_exercises e
-    WHERE e.question_text = q.question_text
+    WHERE e.topic = q.topic
   );
