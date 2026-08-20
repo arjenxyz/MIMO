@@ -7,6 +7,8 @@ const withPWA = withPWAInit({
   // App Router + auth redirects: NEVER use document fallback (serves wrong HTML for /login).
   cacheStartUrl: false,
   dynamicStartUrl: true,
+  // Keep default Workbox routes and prepend our auth NetworkOnly rule.
+  extendDefaultRuntimeCaching: true,
   workboxOptions: {
     cleanupOutdatedCaches: true,
     skipWaiting: true,
@@ -24,7 +26,6 @@ const withPWA = withPWAInit({
         method: "GET",
       },
     ],
-    extendDefaultRuntimeCaching: true,
   },
 });
 
