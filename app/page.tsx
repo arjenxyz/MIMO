@@ -5,7 +5,6 @@ import { LearningPath, type PathNode } from "@/app/components/LearningPath";
 import { LoadWordsButton } from "@/app/components/LoadWordsButton";
 import { DEMO_DUE, DEMO_PROFILE, isDemoMode } from "@/lib/demo";
 import {
-  getDueGrammar,
   getDueWords,
   getProfile,
   syncDailyStreak,
@@ -30,7 +29,6 @@ export default async function DashboardPage() {
 
   let profile: Profile = DEMO_PROFILE;
   let dueWordCount = DEMO_DUE.words;
-  let dueGrammarCount = DEMO_DUE.grammar;
   let showLoadWords = false;
   let showAddWord = !demo;
 
@@ -55,11 +53,9 @@ export default async function DashboardPage() {
 
     liveProfile = await syncDailyStreak(supabase, liveProfile);
     const dueWords = await getDueWords(supabase, user.id);
-    const dueGrammar = await getDueGrammar(supabase, user.id);
 
     profile = liveProfile;
     dueWordCount = dueWords.length;
-    dueGrammarCount = dueGrammar.length;
     showLoadWords = dueWords.length === 0;
     showAddWord = true;
   }
