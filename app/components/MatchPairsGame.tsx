@@ -32,6 +32,9 @@ type Board = {
 const SESSION_SECONDS = 120;
 const BOARD_PAIRS = 5;
 const MILESTONES = [5, 10, 35];
+const SHUFFLE_EVERY_SEC = 10;
+const SHUFFLE_DURATION_MS = 2500;
+const SHUFFLE_STEPS = 7;
 
 function shuffle<T>(items: T[]) {
   const copy = [...items];
@@ -40,6 +43,29 @@ function shuffle<T>(items: T[]) {
     [copy[i], copy[j]] = [copy[j], copy[i]];
   }
   return copy;
+}
+
+/** Independent column shuffles; avoid same-word same-row when possible. */
+function deepShuffleBoard(board: Board): Board {
+  const en = shuffle(board.en);
+  let tr = shuffle(board.tr);
+
+  for (let attempt = 0; attempt < 12; attempt++) {
+    const aligned = en.some((tile, i) => tile.wordId === tr[i]?.wordId);
+    if (!aligned) break;
+    tr = shuffle(tr);
+  }
+
+  // Extra derange pass: swap any remaining aligned rows.
+  for (let i = 0; i < tr.length; i++) {
+    if (en[i]?.wordId !== tr[i]?.wordId) continue;
+    const swapWith = tr.findIndex((t, j) => j !== i && t.wordId !== en[i].wordId && en[j]?.wordId !== tr[i].wordId);
+    if (swapWith >= 0) {
+      [tr[i], tr[swapWith]] = [tr[swapWith], tr[i]];
+    }
+  }
+
+  return { en, tr };
 }
 
 function primaryTurkish(turkish: string) {
@@ -66,10 +92,10 @@ function makeTrTile(word: MatchWord): Tile {
 }
 
 function boardFromWords(words: MatchWord[]): Board {
-  return {
-    en: shuffle(words.map(makeEnTile)),
-    tr: shuffle(words.map(makeTrTile)),
-  };
+  return deepShuffleBoard({
+    en: words.map(makeEnTile),
+    tr: words.map(makeTrTile),
+  });
 }
 
 function pickFreshWords(pool: MatchWord[], excludeIds: Set<number>, count: number) {
@@ -88,8 +114,9 @@ export function MatchPairsGame({ words }: { words: MatchWord[] }) {
     [words]
   );
 
-  const [phase, setPhase] = useState<"ready" | "running" | "done">("ready");
+  const [phase, setPhase] = useState<"ready" | "running" | "shuffling" | "done">("ready");
   const [secondsLeft, setSecondsLeft] = useState(SESSION_SECONDS);
+  const [shuffleIn, setShuffleIn] = useState(SHUFFLE_EVERY_SEC);
   const [board, setBoard] = useState<Board>({ en: [], tr: [] });
   const [selected, setSelected] = useState<string[]>([]);
   const [flash, setFlash] = useState<Record<string, "ok" | "bad">>({});
@@ -99,8 +126,41 @@ export function MatchPairsGame({ words }: { words: MatchWord[] }) {
   const [bestCombo, setBestCombo] = useState(0);
   const [misses, setMisses] = useState(0);
   const boardWordIdsRef = useRef<Set<number>>(new Set());
+  const shuffleTimersRef = useRef<number[]>([]);
+
+  const clearShuffleTimers = useCallback(() => {
+    for (const id of shuffleTimersRef.current) window.clearTimeout(id);
+    shuffleTimersRef.current = [];
+  }, []);
+
+  const runShuffleSequence = useCallback(() => {
+    clearShuffleTimers();
+    setSelected([]);
+    setFlash({});
+    setLocked(true);
+    setPhase("shuffling");
+
+    const stepMs = Math.floor(SHUFFLE_DURATION_MS / SHUFFLE_STEPS);
+
+    for (let step = 0; step < SHUFFLE_STEPS; step++) {
+      const id = window.setTimeout(() => {
+        setBoard((prev) => deepShuffleBoard(prev));
+      }, step * stepMs);
+      shuffleTimersRef.current.push(id);
+    }
+
+    const doneId = window.setTimeout(() => {
+      setBoard((prev) => deepShuffleBoard(prev));
+      setShuffleIn(SHUFFLE_EVERY_SEC);
+      setLocked(false);
+      setPhase("running");
+      shuffleTimersRef.current = [];
+    }, SHUFFLE_DURATION_MS);
+    shuffleTimersRef.current.push(doneId);
+  }, [clearShuffleTimers]);
 
   const startGame = useCallback(() => {
+    clearShuffleTimers();
     const starter = pickFreshWords(pool, new Set(), BOARD_PAIRS);
     boardWordIdsRef.current = new Set(starter.map((w) => w.id));
     setBoard(boardFromWords(starter));
@@ -112,9 +172,13 @@ export function MatchPairsGame({ words }: { words: MatchWord[] }) {
     setBestCombo(0);
     setMisses(0);
     setSecondsLeft(SESSION_SECONDS);
+    setShuffleIn(SHUFFLE_EVERY_SEC);
     setPhase("running");
-  }, [pool]);
+  }, [clearShuffleTimers, pool]);
 
+  useEffect(() => () => clearShuffleTimers(), [clearShuffleTimers]);
+
+  // Main race timer — paused while shuffling.
   useEffect(() => {
     if (phase !== "running") return;
     if (secondsLeft <= 0) {
@@ -124,6 +188,17 @@ export function MatchPairsGame({ words }: { words: MatchWord[] }) {
     const t = window.setTimeout(() => setSecondsLeft((s) => s - 1), 1000);
     return () => window.clearTimeout(t);
   }, [phase, secondsLeft]);
+
+  // Visible 10s shuffle countdown — also paused while shuffling.
+  useEffect(() => {
+    if (phase !== "running") return;
+    if (shuffleIn <= 0) {
+      runShuffleSequence();
+      return;
+    }
+    const t = window.setTimeout(() => setShuffleIn((s) => s - 1), 1000);
+    return () => window.clearTimeout(t);
+  }, [phase, shuffleIn, runShuffleSequence]);
 
   const progressPct = useMemo(() => {
     const goal = MILESTONES[MILESTONES.length - 1];
@@ -138,7 +213,6 @@ export function MatchPairsGame({ words }: { words: MatchWord[] }) {
       return;
     }
 
-    // Same side: switch selection to this tile.
     if (selected.length === 1) {
       const first = findTile(board, selected[0]);
       if (first && first.side === tile.side) {
@@ -193,7 +267,6 @@ export function MatchPairsGame({ words }: { words: MatchWord[] }) {
 
           const nextEn = [...prev.en];
           const nextTr = [...prev.tr];
-          // Only these two slots change — other tiles keep their places.
           nextEn[enIdx] = makeEnTile(replacement);
           nextTr[trIdx] = makeTrTile(replacement);
           return { en: nextEn, tr: nextTr };
@@ -227,12 +300,15 @@ export function MatchPairsGame({ words }: { words: MatchWord[] }) {
           if (state === "ok") style = "border-[#58cc02] bg-[#ecfce5] text-[#15803d]";
           else if (state === "bad") style = "border-[#ff4b4b] bg-[#ffe8e8] text-[#b91c1c]";
           else if (isSel) style = "border-[#1cb0f6] bg-[#e8f6fe] text-[#0f172a]";
+          else if (phase === "shuffling") {
+            style = "border-[#cbd5e1] bg-[#f8fafc] text-[#334155] animate-pulse";
+          }
 
           return (
             <button
               key={tile.uid}
               type="button"
-              disabled={locked && !state}
+              disabled={phase !== "running" || (locked && !state)}
               onClick={() => onTap(tile)}
               className={`flex min-h-[3.25rem] w-full items-center justify-center rounded-xl border px-2 py-3 text-center text-[15px] font-extrabold leading-snug transition sm:min-h-[3.5rem] sm:text-base ${style}`}
             >
@@ -273,8 +349,7 @@ export function MatchPairsGame({ words }: { words: MatchWord[] }) {
             <PracticeExamEyebrow>Hızlı Eşleştir</PracticeExamEyebrow>
             <h1 className="mt-3 text-2xl font-black text-[#1e3a5f]">Eşleşen çiftlere dokun</h1>
             <p className="mt-2 text-sm font-semibold text-[#64748b]">
-              Sol İngilizce, sağ Türkçe. Doğru eşleşince yalnız o çift yenilenir — kombo seni yarışta
-              tutar.
+              Sol İngilizce, sağ Türkçe. Her 10 saniyede tahta karışır — süre durur, kombon kalır.
             </p>
             <p className="mt-3 text-xs font-bold text-[#94a3b8]">Havuz: {pool.length} kelime</p>
             <div className="mt-6 flex flex-col items-center gap-2">
@@ -322,6 +397,8 @@ export function MatchPairsGame({ words }: { words: MatchWord[] }) {
     );
   }
 
+  const shuffling = phase === "shuffling";
+
   return (
     <PracticeExamMain>
       <div className="mx-auto flex min-h-screen max-w-lg flex-col px-4 pb-8 pt-4">
@@ -353,29 +430,58 @@ export function MatchPairsGame({ words }: { words: MatchWord[] }) {
           <p
             className={`shrink-0 text-lg font-black tabular-nums ${
               secondsLeft <= 20 ? "text-[#ff4b4b]" : "text-[#1e3a5f]"
-            }`}
+            } ${shuffling ? "opacity-50" : ""}`}
           >
             {formatTimer(secondsLeft)}
           </p>
         </div>
 
         <h1 className="text-center text-xl font-black text-[#0f172a] sm:text-2xl">
-          Eşleşen çiftlere dokun
+          {shuffling ? "Karıştırılıyor…" : "Eşleşen çiftlere dokun"}
         </h1>
-        <p className="mt-1 flex items-center justify-center gap-1.5 text-sm font-black uppercase tracking-wide text-[#64748b]">
-          <span aria-hidden className="text-[#f59e0b]">
-            ⚡
-          </span>
-          Kombo x{combo}
-        </p>
 
-        <div className="mt-5 flex flex-1 gap-2.5 sm:gap-3">
+        <div className="mt-2 flex items-center justify-center gap-4">
+          <p className="flex items-center gap-1.5 text-sm font-black uppercase tracking-wide text-[#64748b]">
+            <span aria-hidden className="text-[#f59e0b]">
+              ⚡
+            </span>
+            Kombo x{combo}
+          </p>
+
+          <div
+            className={`flex h-9 min-w-[2.5rem] items-center justify-center rounded-full border px-2.5 text-sm font-black tabular-nums ${
+              shuffling
+                ? "border-[#1cb0f6] bg-[#e8f6fe] text-[#0369a1]"
+                : shuffleIn <= 3
+                  ? "border-[#ff4b4b] bg-[#ffe8e8] text-[#b91c1c]"
+                  : "border-[#e2e8f0] bg-white text-[#1e3a5f]"
+            }`}
+            title="Sonraki karıştırma"
+            aria-label={shuffling ? "Karıştırılıyor" : `${shuffleIn} saniye sonra karışır`}
+          >
+            {shuffling ? "…" : shuffleIn}
+          </div>
+        </div>
+
+        <div className="relative mt-5 flex flex-1 gap-2.5 sm:gap-3">
           {renderColumn(board.en, "English")}
           {renderColumn(board.tr, "Türkçe")}
+
+          {shuffling && (
+            <div className="pointer-events-none absolute inset-0 flex items-center justify-center rounded-2xl bg-[#f3f4f6]/55 backdrop-blur-[1px]">
+              <div className="rounded-2xl border border-[#e2e8f0] bg-white px-5 py-3 text-center shadow-sm">
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#1cb0f6]">
+                  Karıştırma
+                </p>
+                <p className="mt-1 text-sm font-black text-[#1e3a5f]">Süre durdu · kombo korunuyor</p>
+              </div>
+            </div>
+          )}
         </div>
 
         <p className="mt-4 text-center text-xs font-semibold text-[#94a3b8]">
           {matches} eşleşme · hedef {MILESTONES.join(" / ")}
+          {!shuffling && ` · karışmaya ${shuffleIn}s`}
         </p>
       </div>
     </PracticeExamMain>
