@@ -4,7 +4,6 @@ import { Mascot } from "@/app/components/Mascot";
 export type PathNode = {
   id: string;
   title: string;
-  subtitle: string;
   href: string;
   badge?: string;
   tone: "green" | "blue" | "purple" | "orange" | "cyan";

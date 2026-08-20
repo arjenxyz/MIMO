@@ -92,7 +92,6 @@ export default async function DashboardPage() {
     {
       id: "words",
       title: "Kelimeler",
-      subtitle: dueWordCount > 0 ? `${dueWordCount} bekleyen` : "Hepsi güncel",
       href: "/quiz",
       badge: dueWordCount > 0 ? "Tekrar" : "Hazır",
       tone: "blue",
@@ -101,7 +100,6 @@ export default async function DashboardPage() {
     {
       id: "grammar",
       title: "Gramer",
-      subtitle: dueGrammarCount > 0 ? `${dueGrammarCount} bekleyen` : "Rahat nefes",
       href: "/quiz/grammar",
       badge: dueGrammarCount > 0 ? "Pratik" : "Hazır",
       tone: "purple",
@@ -110,7 +108,6 @@ export default async function DashboardPage() {
     {
       id: "sounds",
       title: "Sesler",
-      subtitle: "Dinle ve ayırt et",
       href: "/sounds",
       badge: "+10 XP",
       tone: "cyan",
@@ -119,7 +116,6 @@ export default async function DashboardPage() {
     {
       id: "reading",
       title: "Okuma",
-      subtitle: `Seviye ${profile.level} hikayeler`,
       href: "/reading",
       badge: "Hikaye",
       tone: "orange",
