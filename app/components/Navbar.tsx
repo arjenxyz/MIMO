@@ -121,15 +121,6 @@ export function Navbar() {
             <span className="text-sm tabular-nums">{profile.daily_streak}</span>
           </div>
           <div
-            className="flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 font-black text-[#ffc800]"
-            title="Toplam XP"
-          >
-            <span className="text-lg" aria-hidden>
-              ⚡
-            </span>
-            <span className="text-sm tabular-nums">{profile.xp}</span>
-          </div>
-          <div
             className="flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 font-black text-[#ce82ff]"
             title="Seviye"
           >
