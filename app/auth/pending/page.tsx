@@ -5,12 +5,11 @@ import { Suspense, useEffect, useState } from "react";
 import { AuthShell } from "@/app/components/AuthShell";
 import { createClient } from "@/lib/supabase/client";
 
-type Provider = "google" | "discord" | "spotify" | "github";
+type Provider = "google" | "discord" | "github";
 
 const LABELS: Record<Provider, string> = {
   google: "Google",
   discord: "Discord",
-  spotify: "Spotify",
   github: "GitHub",
 };
 

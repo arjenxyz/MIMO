@@ -28,7 +28,7 @@ DISCORD_WEBHOOK_URL=
 2. SQL Editor'e `schema.sql` içeriğini yapıştırıp çalıştır.
 3. Authentication > Providers içinde şunları aç (ücretsiz):
    - **Google** (ana giriş)
-   - **Discord**, **Spotify**, **GitHub** (Diğer seçenekler modalı)
+   - **Discord**, **GitHub** (Diğer seçenekler modalı)
 4. Apple şu an UI'da "Geçerli değil" olarak pasif; provider açmana gerek yok.
 5. Her aktif provider için Redirect URL:
    - `https://<PROJECT_REF>.supabase.co/auth/v1/callback`
@@ -36,7 +36,7 @@ DISCORD_WEBHOOK_URL=
    - Local: `http://localhost:3000/auth/callback`
    - Prod: `https://senin-projen.vercel.app/auth/callback`
 
-Giriş ekranı: Google + pasif Apple + "Diğer seçenekler" (Discord / Spotify / GitHub).
+Giriş ekranı: Google + pasif Apple + "Diğer seçenekler" (Discord / GitHub).
 
 ## 3) Geliştirme sunucusu
 
@@ -61,7 +61,7 @@ Tarayıcıda [http://localhost:3000](http://localhost:3000) açılır. Giriş yo
 ## Modüller
 
 - `/onboarding` — turuncu “Merhaba!” ekranı + Mimo görseli
-- `/login` — Google + pasif Apple + Diğer seçenekler modalı (Discord / Spotify / GitHub)
+- `/login` — Google + pasif Apple + Diğer seçenekler modalı (Discord / GitHub)
 - `/` — XP, level, streak, günlük görevler
 - `/quiz` — kelime + dinleme (Web Speech API)
 - `/quiz/grammar` — gramer SM-2
