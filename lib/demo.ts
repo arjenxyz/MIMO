@@ -1,4 +1,12 @@
-import type { DailyQuests, DueGrammarItem, DueWordItem, Profile, SoundWithProgress, Story } from "@/types";
+import type {
+  DailyQuests,
+  DETExercise,
+  DueGrammarItem,
+  DueWordItem,
+  Profile,
+  SoundWithProgress,
+  Story,
+} from "@/types";
 
 /** Local development: skip auth and use sample data. */
 export function isDemoMode(hostname?: string | null) {
@@ -187,4 +195,52 @@ export const DEMO_SOUNDS: SoundWithProgress[] = [
   { id: 4, ipa: "i", example_word: "sheep", category: "vowel", sort_order: 4, mastery: 0 },
   { id: 5, ipa: "θ", example_word: "think", category: "consonant", sort_order: 5, mastery: 15 },
   { id: 6, ipa: "ʃ", example_word: "shoe", category: "consonant", sort_order: 6, mastery: 5 },
+];
+
+export const DEMO_DET_READ_COMPLETE: DETExercise[] = [
+  {
+    id: 1,
+    question_type_id: 1,
+    question_text: "The ___ of the experiment was surprising.",
+    correct_answer: "outcome",
+    difficulty: 4,
+    topic: "Science",
+    created_at: today(),
+  },
+  {
+    id: 2,
+    question_type_id: 1,
+    question_text: "Researchers failed to ___ for confounding variables.",
+    correct_answer: "account",
+    difficulty: 5,
+    topic: "Science",
+    created_at: today(),
+  },
+  {
+    id: 3,
+    question_type_id: 1,
+    question_text: "The committee reached a ___ after lengthy deliberation.",
+    correct_answer: "consensus",
+    difficulty: 4,
+    topic: "Politics",
+    created_at: today(),
+  },
+  {
+    id: 4,
+    question_type_id: 1,
+    question_text: "Economic growth may ___ environmental degradation if unchecked.",
+    correct_answer: "exacerbate",
+    difficulty: 5,
+    topic: "Environment",
+    created_at: today(),
+  },
+  {
+    id: 5,
+    question_type_id: 1,
+    question_text: "Her argument lacks ___ evidence to support the claim.",
+    correct_answer: "empirical",
+    difficulty: 4,
+    topic: "Education",
+    created_at: today(),
+  },
 ];

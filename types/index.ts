@@ -149,3 +149,28 @@ export interface SoundSessionQuestion {
   options: [string, string];
   correct: string;
 }
+
+export interface DETQuestionType {
+  id: number;
+  type_name: "read_complete" | "read_select" | "listen_type" | "write_photo" | "speak_photo";
+  description: string;
+}
+
+export interface DETExercise {
+  id: number;
+  question_type_id: number;
+  question_text: string;
+  correct_answer: string;
+  difficulty: 1 | 2 | 3 | 4 | 5;
+  topic?: string | null;
+  created_at: string;
+}
+
+export interface UserDETAnswer {
+  id: number;
+  user_id: string;
+  exercise_id: number;
+  user_answer: string;
+  is_correct: boolean;
+  answered_at: string;
+}
