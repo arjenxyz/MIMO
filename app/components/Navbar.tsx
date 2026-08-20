@@ -159,7 +159,8 @@ export function Navbar() {
     return () => document.removeEventListener("pointerdown", onPointerDown);
   }, []);
 
-  if (HIDDEN_PATHS.some((path) => pathname.startsWith(path))) {
+  // Pathname henüz yokken koyu navbar göstermeyelim — login/auth flash bozuluyor.
+  if (!pathname || HIDDEN_PATHS.some((path) => pathname.startsWith(path))) {
     return null;
   }
 
