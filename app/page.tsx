@@ -10,7 +10,6 @@ import {
   getProfile,
   syncDailyStreak,
 } from "@/lib/db";
-import { xpInCurrentLevel } from "@/lib/srs";
 import { createClient } from "@/lib/supabase/server";
 import type { Profile } from "@/types";
 import { redirect } from "next/navigation";
@@ -65,7 +64,6 @@ export default async function DashboardPage() {
     showAddWord = true;
   }
 
-  const xpNow = xpInCurrentLevel(profile.xp);
   const hour = new Date().getHours();
   const greeting = greetingFor(hour, profile.username);
 
@@ -156,54 +154,32 @@ export default async function DashboardPage() {
         />
 
         <aside className="space-y-5 lg:sticky lg:top-20">
-          <section className="rounded-[1.75rem] border-2 border-duo-border bg-duo-card p-5">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-black uppercase tracking-[0.16em] text-duo-muted">
-                  Seviye ilerlemesi
-                </p>
-                <p className="mt-1 text-2xl font-black text-white">Level {profile.level}</p>
-              </div>
-              <div className="relative flex h-16 w-16 items-center justify-center">
-                <svg className="absolute inset-0 -rotate-90" viewBox="0 0 36 36" aria-hidden>
-                  <circle
-                    cx="18"
-                    cy="18"
-                    r="15.5"
-                    fill="none"
-                    stroke="#37464f"
-                    strokeWidth="3"
-                  />
-                  <circle
-                    cx="18"
-                    cy="18"
-                    r="15.5"
-                    fill="none"
-                    stroke="#ffc800"
-                    strokeWidth="3"
-                    strokeLinecap="round"
-                    strokeDasharray={`${xpNow} ${100 - xpNow}`}
-                  />
-                </svg>
-                <span className="text-xs font-black text-[#ffc800]">{xpNow}</span>
-              </div>
-            </div>
-            <div className="mt-4">
-              <div className="mb-1 flex justify-between text-xs font-extrabold">
-                <span className="text-[#ffc800]">{xpNow}/100 XP</span>
-                <span className="text-duo-muted">Toplam {profile.xp}</span>
-              </div>
-              <div className="h-3 overflow-hidden rounded-full bg-[#0f1a1e]">
-                <div
-                  className="h-full rounded-full bg-gradient-to-r from-[#ffc800] to-[#ff9600]"
-                  style={{ width: `${xpNow}%` }}
-                />
-              </div>
-            </div>
-            <p className="mt-4 flex items-center gap-2 text-sm font-black text-[#ff9600]">
-              <span aria-hidden>🔥</span>
-              {profile.daily_streak} günlük seri
+          <section className="overflow-hidden rounded-[1.75rem] border-2 border-[#ff9600]/35 bg-gradient-to-br from-[#ff9600]/15 via-duo-card to-duo-card p-5">
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-[#ff9600]">
+              Günlük seri
             </p>
+            <div className="mt-3 flex items-center gap-4">
+              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-[#ff9600]/20 text-3xl shadow-inner">
+                🔥
+              </div>
+              <div className="min-w-0">
+                <p className="text-3xl font-black tabular-nums text-white">
+                  {profile.daily_streak}
+                  <span className="ml-1 text-base font-extrabold text-duo-muted">gün</span>
+                </p>
+                <p className="mt-0.5 text-sm font-bold text-duo-muted">
+                  {profile.daily_streak > 0
+                    ? "Serin devam ediyor — bugün de bir pratik yap."
+                    : "Bugün ilk adımı at, seriyi başlat."}
+                </p>
+              </div>
+            </div>
+            <Link
+              href={primaryHref}
+              className="mt-5 flex w-full items-center justify-center rounded-2xl bg-[#ff9600] px-4 py-3 text-sm font-black uppercase tracking-wide text-[#2a1600] shadow-[0_4px_0_#e08600] transition active:translate-y-1 active:shadow-none"
+            >
+              {primaryLabel}
+            </Link>
           </section>
 
           {showAddWord ? (
