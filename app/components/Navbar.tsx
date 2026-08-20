@@ -9,12 +9,87 @@ import { createClient } from "@/lib/supabase/client";
 import type { Profile } from "@/types";
 
 const HIDDEN_PATHS = ["/login", "/register", "/onboarding", "/auth", "/sounds/practice"];
+const FALLBACK_AVATAR = "/mimo-avatar.png";
 
 function detectDemo() {
   if (typeof window !== "undefined") {
     return isDemoMode(window.location.hostname);
   }
   return isDemoMode(null);
+}
+
+function avatarFromUser(user: {
+  user_metadata?: Record<string, unknown> | null;
+  identities?: Array<{ identity_data?: Record<string, unknown> | null }> | null;
+} | null) {
+  if (!user) return null;
+  const meta = user.user_metadata ?? {};
+  const identity = user.identities?.[0]?.identity_data ?? {};
+  const candidates = [
+    meta.avatar_url,
+    meta.picture,
+    meta.avatar,
+    identity.avatar_url,
+    identity.picture,
+    identity.avatar,
+  ];
+  for (const value of candidates) {
+    if (typeof value === "string" && value.startsWith("http")) return value;
+  }
+  return null;
+}
+
+function UserAvatar({
+  src,
+  name,
+  size,
+  className = "",
+}: {
+  src: string | null;
+  name: string;
+  size: number;
+  className?: string;
+}) {
+  const [broken, setBroken] = useState(false);
+  const showImage = Boolean(src) && !broken;
+
+  if (showImage && src) {
+    // Remote OAuth avatars — plain img avoids next/image host allowlist issues.
+    if (src.startsWith("http")) {
+      return (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={src}
+          alt={name}
+          width={size}
+          height={size}
+          referrerPolicy="no-referrer"
+          onError={() => setBroken(true)}
+          className={`pointer-events-none h-full w-full object-cover ${className}`}
+        />
+      );
+    }
+    return (
+      <Image
+        src={src}
+        alt={name}
+        width={size}
+        height={size}
+        className={`pointer-events-none h-full w-full object-cover ${className}`}
+      />
+    );
+  }
+
+  const initial = (name.trim().charAt(0) || "?").toUpperCase();
+  return (
+    <span
+      aria-hidden
+      className={`flex h-full w-full items-center justify-center bg-[#fd860a] text-sm font-black text-[#2a1600] ${className}`}
+      style={{ fontSize: Math.round(size * 0.42) }}
+    >
+      {initial}
+    </span>
+  );
 }
 
 export function Navbar() {
@@ -25,6 +100,7 @@ export function Navbar() {
   const [profile, setProfile] = useState<Profile | null>(() =>
     detectDemo() ? DEMO_PROFILE : null
   );
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [ready, setReady] = useState(() => detectDemo());
 
   const loadProfile = useCallback(async () => {
@@ -33,6 +109,7 @@ export function Navbar() {
 
     if (localDemo) {
       setProfile(DEMO_PROFILE);
+      setAvatarUrl(null);
       setReady(true);
       return;
     }
@@ -44,13 +121,16 @@ export function Navbar() {
       } = await supabase.auth.getUser();
       if (!user) {
         setProfile(null);
+        setAvatarUrl(null);
         setReady(true);
         return;
       }
+      setAvatarUrl(avatarFromUser(user));
       const { data } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();
       setProfile((data as Profile | null) ?? null);
     } catch {
       setProfile(null);
+      setAvatarUrl(null);
     } finally {
       setReady(true);
     }
@@ -99,6 +179,8 @@ export function Navbar() {
     router.refresh();
   }
 
+  const displayName = profile.username || "Öğrenci";
+
   return (
     <header className="sticky top-0 z-50 border-b-2 border-duo-border/80 bg-[#0f1a1e]/95 backdrop-blur-md">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-3 px-4">
@@ -107,7 +189,7 @@ export function Navbar() {
           className="flex items-center gap-2.5 rounded-xl px-1 py-1 transition hover:bg-white/5"
         >
           <Image
-            src="/mimo-avatar.png"
+            src={FALLBACK_AVATAR}
             alt=""
             width={36}
             height={36}
@@ -137,21 +219,18 @@ export function Navbar() {
               aria-label="Profil menüsü"
               className="flex h-10 w-10 cursor-pointer list-none items-center justify-center overflow-hidden rounded-full ring-2 ring-[#fd860a]/50 transition hover:ring-[#fd860a] [&::-webkit-details-marker]:hidden"
             >
-              <Image
-                src="/mimo-avatar.png"
-                alt=""
-                width={40}
-                height={40}
-                className="pointer-events-none h-full w-full object-cover"
-              />
+              <UserAvatar src={avatarUrl} name={displayName} size={40} />
             </summary>
             <div
               role="menu"
               className="absolute right-0 top-12 z-[200] w-52 overflow-hidden rounded-2xl border-2 border-duo-border bg-duo-card shadow-xl"
             >
-              <p className="border-b border-duo-border px-4 py-3 text-sm font-extrabold text-duo-muted">
-                {profile.username || "Öğrenci"}
-              </p>
+              <div className="flex items-center gap-3 border-b border-duo-border px-4 py-3">
+                <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full ring-2 ring-[#fd860a]/40">
+                  <UserAvatar src={avatarUrl} name={displayName} size={36} />
+                </div>
+                <p className="truncate text-sm font-extrabold text-duo-muted">{displayName}</p>
+              </div>
               <Link
                 href="/words/add"
                 role="menuitem"
