@@ -5,7 +5,72 @@ import { useRouter } from "next/navigation";
 import { playWordAudio } from "@/lib/speak";
 import type { WordLookupResult } from "@/lib/wordLookup";
 
-export function AddWordForm() {
+async function demoLookupEnglish(raw: string): Promise<WordLookupResult> {
+  const word = raw.trim().toLowerCase().replace(/\s+/g, " ");
+  if (!word || word.length > 60 || !/^[a-z][a-z\s'-]*$/i.test(word)) {
+    throw new Error("Geçerli bir İngilizce kelime gir.");
+  }
+
+  let phonetic: string | null = null;
+  let audio_url: string | null = null;
+  let example_sentence: string | null = null;
+  let english = word;
+
+  try {
+    const dictRes = await fetch(
+      `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`
+    );
+    if (dictRes.ok) {
+      const data = (await dictRes.json()) as Array<{
+        word?: string;
+        phonetic?: string;
+        phonetics?: Array<{ text?: string; audio?: string }>;
+        meanings?: Array<{ definitions?: Array<{ example?: string }> }>;
+      }>;
+      const entry = data[0];
+      if (entry) {
+        english = (entry.word || word).toLowerCase();
+        phonetic = entry.phonetic || entry.phonetics?.find((p) => p.text)?.text || null;
+        const audioRaw = entry.phonetics?.find((p) => p.audio)?.audio || null;
+        audio_url = audioRaw ? (audioRaw.startsWith("//") ? `https:${audioRaw}` : audioRaw) : null;
+        outer: for (const meaning of entry.meanings ?? []) {
+          for (const def of meaning.definitions ?? []) {
+            if (def.example) {
+              example_sentence = def.example;
+              break outer;
+            }
+          }
+        }
+      }
+    }
+  } catch {
+    // ignore — translation may still work
+  }
+
+  const url = new URL("https://api.mymemory.translated.net/get");
+  url.searchParams.set("q", english);
+  url.searchParams.set("langpair", "en|tr");
+  const trRes = await fetch(url.toString());
+  if (!trRes.ok) throw new Error("Türkçe anlam bulunamadı.");
+  const trData = (await trRes.json()) as {
+    responseData?: { translatedText?: string };
+  };
+  const turkish = trData.responseData?.translatedText?.trim();
+  if (!turkish || turkish.toLowerCase() === english.toLowerCase()) {
+    throw new Error("Türkçe anlam bulunamadı. Kelimeyi kontrol et.");
+  }
+
+  return {
+    english,
+    turkish,
+    example_sentence,
+    phonetic,
+    audio_url,
+    source: "dictionary+mymemory",
+  };
+}
+
+export function AddWordForm({ demo = false }: { demo?: boolean }) {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [lookup, setLookup] = useState<WordLookupResult | null>(null);
@@ -22,6 +87,13 @@ export function AddWordForm() {
     setLookup(null);
     setLoading(true);
     try {
+      if (demo) {
+        const result = await demoLookupEnglish(query);
+        setLookup(result);
+        setTurkish(result.turkish);
+        return;
+      }
+
       const res = await fetch("/api/words", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -44,6 +116,15 @@ export function AddWordForm() {
     setError("");
     setSuccess("");
     try {
+      if (demo) {
+        await new Promise((r) => setTimeout(r, 350));
+        setSuccess(`"${lookup.english}" listene eklendi. (Demo — kaydedilmedi)`);
+        setQuery("");
+        setLookup(null);
+        setTurkish("");
+        return;
+      }
+
       const res = await fetch("/api/words", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -98,12 +179,8 @@ export function AddWordForm() {
         </button>
       </form>
 
-      {error && (
-        <p className="mt-3 text-sm font-bold text-[#ff4b4b]">{error}</p>
-      )}
-      {success && (
-        <p className="mt-3 text-sm font-bold text-[#58cc02]">{success}</p>
-      )}
+      {error && <p className="mt-3 text-sm font-bold text-[#ff4b4b]">{error}</p>}
+      {success && <p className="mt-3 text-sm font-bold text-[#58cc02]">{success}</p>}
 
       {lookup && (
         <div className="mt-4 space-y-3 rounded-2xl border-2 border-duo-border bg-[#0f1a1e]/80 p-4">

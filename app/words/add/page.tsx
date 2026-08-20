@@ -1,5 +1,5 @@
-import { headers } from "next/headers";
 import Link from "next/link";
+import { headers } from "next/headers";
 import { AddWordForm } from "@/app/components/AddWordForm";
 import { isDemoMode } from "@/lib/demo";
 import { createClient } from "@/lib/supabase/server";
@@ -40,16 +40,7 @@ export default async function AddWordPage() {
         </Link>
       </div>
 
-      {demo ? (
-        <section className="rounded-[1.75rem] border-2 border-dashed border-duo-border bg-duo-card/60 p-5">
-          <h2 className="text-base font-black text-white">Demo’da kapalı</h2>
-          <p className="mt-1 text-sm font-semibold text-duo-muted">
-            Canlıda otomatik anlam + ses ile kendi kelimeni ekleyebilirsin.
-          </p>
-        </section>
-      ) : (
-        <AddWordForm />
-      )}
+      <AddWordForm demo={demo} />
     </main>
   );
 }
