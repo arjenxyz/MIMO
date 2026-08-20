@@ -2,6 +2,14 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
+import {
+  PracticeExamCard,
+  PracticeExamEyebrow,
+  PracticeExamGhostLink,
+  PracticeExamMain,
+  PracticeExamPrimaryButton,
+  PracticeExamTopBar,
+} from "@/app/components/PracticeExamChrome";
 import { LoadingScreen } from "@/app/components/LoadingScreen";
 import type { SoundSessionQuestion } from "@/types";
 
@@ -46,7 +54,6 @@ export function SoundListenQuiz() {
         }
       }
     }
-    // Short delay so loading screen feels intentional
     const t = setTimeout(load, 700);
     return () => {
       cancelled = true;
@@ -97,136 +104,145 @@ export function SoundListenQuiz() {
 
   if (error) {
     return (
-      <main className="mx-auto flex min-h-[70vh] max-w-lg flex-col items-center justify-center px-4 text-center">
-        <p className="font-bold text-red-500">{error}</p>
-        <p className="mt-2 text-sm font-semibold text-duo-muted">
-          Supabase’de <code className="rounded bg-duo-surface px-1">schema-sounds.sql</code> çalıştırıldığından emin ol.
-        </p>
-        <Link href="/sounds" className="mt-6 font-extrabold text-[#fd860a]">
-          Geri dön
-        </Link>
-      </main>
+      <PracticeExamMain>
+        <div className="mx-auto max-w-xl px-4 py-8">
+          <PracticeExamCard className="text-center">
+            <p className="font-bold text-[#b91c1c]">{error}</p>
+            <p className="mt-2 text-sm font-semibold text-[#64748b]">
+              Supabase’de schema-sounds.sql çalıştırıldığından emin ol.
+            </p>
+            <div className="mt-6">
+              <PracticeExamGhostLink href="/sounds">Geri dön</PracticeExamGhostLink>
+            </div>
+          </PracticeExamCard>
+        </div>
+      </PracticeExamMain>
     );
   }
 
   if (!questions.length) {
     return (
-      <main className="mx-auto flex min-h-[70vh] max-w-lg flex-col items-center justify-center px-4 text-center">
-        <p className="font-bold text-duo-muted">Henüz soru yok. Seed verisini yükle.</p>
-        <Link href="/sounds" className="mt-6 font-extrabold text-[#fd860a]">
-          Geri dön
-        </Link>
-      </main>
+      <PracticeExamMain>
+        <div className="mx-auto max-w-xl px-4 py-8">
+          <PracticeExamCard className="text-center">
+            <p className="font-bold text-[#64748b]">Henüz soru yok. Seed verisini yükle.</p>
+            <div className="mt-6">
+              <PracticeExamGhostLink href="/sounds">Geri dön</PracticeExamGhostLink>
+            </div>
+          </PracticeExamCard>
+        </div>
+      </PracticeExamMain>
     );
   }
 
   if (done) {
     return (
-      <main className="mx-auto flex min-h-[70vh] max-w-lg flex-col items-center justify-center px-4 text-center">
-        <h1 className="text-3xl font-black text-[#1f2937]">Harika!</h1>
-        <p className="mt-2 font-bold text-[#6b7280]">
-          {correctCount}/{questions.length} doğru · +{xpAwarded} XP
-        </p>
-        <Link
-          href="/sounds"
-          className="mt-8 rounded-full bg-[#fd860a] px-8 py-3 text-sm font-black text-white shadow-[0_4px_0_#d66f08]"
-        >
-          Seslere dön
-        </Link>
-      </main>
+      <PracticeExamMain>
+        <div className="mx-auto max-w-xl px-4 py-8">
+          <PracticeExamCard className="text-center">
+            <PracticeExamEyebrow>Listen and Select</PracticeExamEyebrow>
+            <h1 className="mt-3 text-2xl font-black">Well done!</h1>
+            <p className="mt-2 text-sm font-semibold text-[#64748b]">
+              {correctCount}/{questions.length} doğru · +{xpAwarded} XP
+            </p>
+            <div className="mt-6 flex flex-col gap-2">
+              <PracticeExamGhostLink href="/sounds">Seslere dön</PracticeExamGhostLink>
+              <PracticeExamGhostLink href="/">Ana sayfa</PracticeExamGhostLink>
+            </div>
+          </PracticeExamCard>
+        </div>
+      </PracticeExamMain>
     );
   }
 
-  const progress = ((index + (checked ? 1 : 0)) / questions.length) * 100;
-
   return (
-    <main className="mx-auto flex min-h-[calc(100vh-4rem)] max-w-lg flex-col px-4 py-4">
-      <div className="mb-8 flex items-center gap-3">
-        <Link
-          href="/sounds"
-          aria-label="Kapat"
-          className="flex h-10 w-10 items-center justify-center rounded-full text-2xl font-black text-[#9ca3af]"
-        >
-          ×
-        </Link>
-        <div className="h-4 flex-1 overflow-hidden rounded-full bg-[#e5e7eb]">
-          <div
-            className="h-full rounded-full bg-[#58cc02] transition-all duration-300"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-      </div>
-
-      <h1 className="text-center text-2xl font-black text-[#1f2937] sm:text-3xl">
-        Ne duyuyorsun?
-      </h1>
-
-      <div className="mt-10 flex justify-center">
-        <button
-          type="button"
-          aria-label="Sesi çal"
-          onClick={() => speak(current.playWord)}
-          className="flex h-28 w-28 items-center justify-center rounded-[1.75rem] bg-[#1cb0f6] text-white shadow-[0_6px_0_#1899d6] transition active:translate-y-1 active:shadow-none"
-        >
-          <svg viewBox="0 0 24 24" className="h-12 w-12 fill-current" aria-hidden>
-            <path d="M3 10v4h4l5 5V5L7 10H3zm13.5 2a4.5 4.5 0 0 0-2.3-3.9v7.8A4.5 4.5 0 0 0 16.5 12zM14 3.2v2.1a7 7 0 0 1 0 13.4v2.1a9 9 0 0 0 0-17.6z" />
-          </svg>
-        </button>
-      </div>
-
-      <div className="mt-10 space-y-3">
-        {current.options.map((option) => {
-          const isSelected = selected === option;
-          const isAnswer = option === current.correct;
-          let border = "border-[#e5e7eb]";
-          let bg = "bg-white";
-          if (checked) {
-            if (isAnswer) {
-              border = "border-[#58cc02]";
-              bg = "bg-[#d7ffb8]";
-            } else if (isSelected) {
-              border = "border-[#ff4b4b]";
-              bg = "bg-[#ffdfe0]";
-            }
-          } else if (isSelected) {
-            border = "border-[#1cb0f6]";
-            bg = "bg-[#ddf4ff]";
+    <PracticeExamMain>
+      <div className="mx-auto max-w-3xl px-4 pb-10 pt-5">
+        <PracticeExamTopBar
+          exitHref="/sounds"
+          left={
+            <p className="text-sm font-bold text-[#64748b]">
+              Ses {Math.min(index + 1, questions.length)} / {questions.length}
+            </p>
           }
+        />
 
-          return (
+        <p className="mb-5 text-center text-base font-bold text-[#0f172a] sm:text-lg">
+          Listen carefully and choose what you hear.
+        </p>
+
+        <PracticeExamCard>
+          <div className="flex justify-center">
             <button
-              key={option}
               type="button"
-              disabled={checked}
-              onClick={() => setSelected(option)}
-              className={`flex w-full items-center justify-center rounded-2xl border-2 ${border} ${bg} px-4 py-4 text-lg font-extrabold text-[#1f2937] transition disabled:opacity-100`}
+              aria-label="Sesi çal"
+              onClick={() => speak(current.playWord)}
+              className="flex h-24 w-24 items-center justify-center rounded-2xl bg-[#1cb0f6] text-white shadow-[0_3px_0_#1899d6] transition active:translate-y-0.5 active:shadow-none"
             >
-              {option}
+              <svg viewBox="0 0 24 24" className="h-10 w-10 fill-current" aria-hidden>
+                <path d="M3 10v4h4l5 5V5L7 10H3zm13.5 2a4.5 4.5 0 0 0-2.3-3.9v7.8A4.5 4.5 0 0 0 16.5 12zM14 3.2v2.1a7 7 0 0 1 0 13.4v2.1a9 9 0 0 0 0-17.6z" />
+              </svg>
             </button>
-          );
-        })}
-      </div>
+          </div>
 
-      <div className="mt-auto pb-6 pt-8">
-        {!checked ? (
-          <button
-            type="button"
-            disabled={!selected}
-            onClick={submitAnswer}
-            className="w-full rounded-2xl bg-[#58cc02] py-4 text-sm font-black uppercase tracking-wide text-white shadow-[0_4px_0_#46a302] disabled:bg-[#e5e7eb] disabled:text-[#afafaf] disabled:shadow-none"
-          >
-            Kontrol et
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={goNext}
-            className="w-full rounded-2xl bg-[#58cc02] py-4 text-sm font-black uppercase tracking-wide text-white shadow-[0_4px_0_#46a302]"
-          >
-            {index + 1 >= questions.length ? "Bitir" : "Devam"}
-          </button>
-        )}
+          <div className="mt-8 space-y-2.5">
+            {current.options.map((option) => {
+              const isSelected = selected === option;
+              const isAnswer = option === current.correct;
+              let style =
+                "border-[#e2e8f0] bg-[#f8fafc] text-[#0f172a] hover:border-[#cbd5e1]";
+              if (checked) {
+                if (isAnswer) style = "border-[#58cc02] bg-[#ecfce5] text-[#15803d]";
+                else if (isSelected) style = "border-[#ff4b4b] bg-[#ffe8e8] text-[#b91c1c]";
+                else style = "border-[#e2e8f0] bg-white text-[#94a3b8]";
+              } else if (isSelected) {
+                style = "border-[#1cb0f6] bg-[#e8f6fe] text-[#0f172a]";
+              }
+
+              return (
+                <button
+                  key={option}
+                  type="button"
+                  disabled={checked}
+                  onClick={() => setSelected(option)}
+                  className={`flex w-full items-center justify-center rounded-xl border px-4 py-3.5 text-lg font-extrabold transition ${style}`}
+                >
+                  {option}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="mt-8 flex flex-col items-center gap-3">
+            {!checked ? (
+              <PracticeExamPrimaryButton
+                disabled={!selected}
+                onClick={() => void submitAnswer()}
+                variant="green"
+              >
+                Kontrol et
+              </PracticeExamPrimaryButton>
+            ) : (
+              <>
+                {selected !== current.correct && (
+                  <p className="text-center text-sm font-bold text-[#64748b]">
+                    Doğru cevap: <span className="text-[#0369a1]">{current.correct}</span>
+                  </p>
+                )}
+                <PracticeExamPrimaryButton onClick={() => void goNext()} variant="green">
+                  {index + 1 >= questions.length ? "Sonuçlar" : "Devam"}
+                </PracticeExamPrimaryButton>
+              </>
+            )}
+          </div>
+        </PracticeExamCard>
+
+        <p className="mt-4 text-center text-xs font-semibold text-[#94a3b8]">
+          <Link href="/sounds" className="hover:text-[#64748b]">
+            Seslere dön
+          </Link>
+        </p>
       </div>
-    </main>
+    </PracticeExamMain>
   );
 }

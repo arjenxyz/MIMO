@@ -1,9 +1,17 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { PhotoEvaluation } from "@/app/api/evaluate-photo/route";
+import {
+  PracticeExamCard,
+  PracticeExamEyebrow,
+  PracticeExamGhostLink,
+  PracticeExamMain,
+  PracticeExamPrimaryButton,
+  PracticeExamTopBar,
+} from "@/app/components/PracticeExamChrome";
+import { formatTimer } from "@/lib/detCloze";
 import { getRandomImage, stabilizePicsumUrl } from "@/lib/image-api";
 
 type Phase = "ready" | "running" | "evaluating" | "done";
@@ -11,12 +19,12 @@ type Phase = "ready" | "running" | "evaluating" | "done";
 const WRITE_SECONDS = 60;
 
 const CEFR_COLOR: Record<string, string> = {
-  A1: "bg-[#ff4b4b]/15 text-[#ff4b4b] border-[#ff4b4b]/40",
-  A2: "bg-[#ff9600]/15 text-[#ff9600] border-[#ff9600]/40",
-  B1: "bg-[#ffc800]/15 text-[#ffc800] border-[#ffc800]/40",
-  B2: "bg-[#58cc02]/15 text-[#58cc02] border-[#58cc02]/40",
-  C1: "bg-[#1cb0f6]/15 text-[#1cb0f6] border-[#1cb0f6]/40",
-  C2: "bg-[#ce82ff]/15 text-[#ce82ff] border-[#ce82ff]/40",
+  A1: "bg-[#ffe8e8] text-[#b91c1c] border-[#fecaca]",
+  A2: "bg-[#fff4e5] text-[#c2410c] border-[#fed7aa]",
+  B1: "bg-[#fef9c3] text-[#a16207] border-[#fde68a]",
+  B2: "bg-[#ecfce5] text-[#3f6212] border-[#bbf7d0]",
+  C1: "bg-[#e8f6fe] text-[#075985] border-[#bae6fd]",
+  C2: "bg-[#f3e8ff] text-[#6b21a8] border-[#e9d5ff]",
 };
 
 function isB2OrAbove(level: string) {
@@ -41,9 +49,6 @@ export default function PhotoPracticePage() {
   const lastEvalAtRef = useRef(0);
   const [cooldownSec, setCooldownSec] = useState(0);
 
-  const progress =
-    phase === "running" ? secondsLeft / WRITE_SECONDS : phase === "ready" ? 1 : 0;
-
   useEffect(() => {
     answerRef.current = answer;
   }, [answer]);
@@ -60,49 +65,52 @@ export default function PhotoPracticePage() {
     return () => window.clearTimeout(t);
   }, [cooldownSec]);
 
-  const runEvaluation = useCallback(async (text: string) => {
-    if (evaluatingRef.current || sessionEvalStartedRef.current) return;
-    if (text.trim().length < 20) {
-      setError("Değerlendirme için biraz daha uzun yaz (en az birkaç cümle).");
-      return;
-    }
+  const runEvaluation = useCallback(
+    async (text: string) => {
+      if (evaluatingRef.current || sessionEvalStartedRef.current) return;
+      if (text.trim().length < 20) {
+        setError("Değerlendirme için biraz daha uzun yaz (en az birkaç cümle).");
+        return;
+      }
 
-    const sinceLast = Date.now() - lastEvalAtRef.current;
-    if (lastEvalAtRef.current && sinceLast < 20_000) {
-      const wait = Math.ceil((20_000 - sinceLast) / 1000);
-      setCooldownSec(wait);
-      setError(`Token koruması: ${wait} sn sonra yeni değerlendirme yapabilirsin.`);
-      return;
-    }
+      const sinceLast = Date.now() - lastEvalAtRef.current;
+      if (lastEvalAtRef.current && sinceLast < 20_000) {
+        const wait = Math.ceil((20_000 - sinceLast) / 1000);
+        setCooldownSec(wait);
+        setError(`Token koruması: ${wait} sn sonra yeni değerlendirme yapabilirsin.`);
+        return;
+      }
 
-    sessionEvalStartedRef.current = true;
-    evaluatingRef.current = true;
-    lastEvalAtRef.current = Date.now();
-    setCooldownSec(20);
-    setPhase("evaluating");
-    setError("");
-    setEvaluation(null);
+      sessionEvalStartedRef.current = true;
+      evaluatingRef.current = true;
+      lastEvalAtRef.current = Date.now();
+      setCooldownSec(20);
+      setPhase("evaluating");
+      setError("");
+      setEvaluation(null);
 
-    const imageForAi = lockedImageRef.current || imageUrl;
+      const imageForAi = lockedImageRef.current || imageUrl;
 
-    try {
-      const res = await fetch("/api/evaluate-photo", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ answer: text, mode: "write", imageUrl: imageForAi }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Değerlendirme başarısız");
-      setEvaluation(data.evaluation as PhotoEvaluation);
-      setPhase("done");
-    } catch (e) {
-      sessionEvalStartedRef.current = false;
-      setError(e instanceof Error ? e.message : "Değerlendirme başarısız");
-      setPhase("running");
-    } finally {
-      evaluatingRef.current = false;
-    }
-  }, [imageUrl]);
+      try {
+        const res = await fetch("/api/evaluate-photo", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ answer: text, mode: "write", imageUrl: imageForAi }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Değerlendirme başarısız");
+        setEvaluation(data.evaluation as PhotoEvaluation);
+        setPhase("done");
+      } catch (e) {
+        sessionEvalStartedRef.current = false;
+        setError(e instanceof Error ? e.message : "Değerlendirme başarısız");
+        setPhase("running");
+      } finally {
+        evaluatingRef.current = false;
+      }
+    },
+    [imageUrl]
+  );
 
   useEffect(() => {
     if (phase !== "running") return;
@@ -137,261 +145,224 @@ export default function PhotoPracticePage() {
     evaluatingRef.current = false;
   }
 
-  const photoPanel = (
-    <div className="overflow-hidden rounded-[1.75rem] border-2 border-duo-border bg-[#0f1a1e] lg:self-start">
-      <div className="relative h-[220px] w-full bg-black/40 sm:h-[260px] lg:h-[min(300px,40dvh)]">
-        {imageUrl ? (
-          <Image
-            src={imageUrl}
-            alt="Practice photo"
-            fill
-            unoptimized
-            sizes="(max-width: 1024px) 100vw, 480px"
-            className="object-cover"
-            priority
-            onLoadingComplete={(img) => {
-              const stable = stabilizePicsumUrl(img.currentSrc || img.src, 900, 600);
-              lockedImageRef.current = stable;
-              if (stable !== imageUrl) setImageUrl(stable);
-            }}
-          />
-        ) : (
-          <div className="flex h-full items-center justify-center text-sm font-bold text-duo-muted">
-            Görsel yükleniyor…
-          </div>
-        )}
-      </div>
-    </div>
-  );
+  const showTimer = phase === "running" || phase === "evaluating";
 
   return (
-    <main className="mx-auto min-h-screen max-w-6xl px-4 pb-10 pt-5">
-      <div className="mb-5 flex items-center justify-between gap-3">
-        <div>
-          <p className="text-xs font-black uppercase tracking-[0.18em] text-[#fd860a]">
-            DET · Photo
-          </p>
-          <h1 className="mt-1 text-2xl font-black text-white">Görsel Betimleme</h1>
-        </div>
-        <Link
-          href="/"
-          className="rounded-xl border-2 border-duo-border bg-duo-card px-3 py-2 text-xs font-black uppercase tracking-wide text-duo-muted"
-        >
-          Ana sayfa
-        </Link>
-      </div>
+    <PracticeExamMain>
+      <div className="mx-auto max-w-3xl px-4 pb-10 pt-5">
+        <PracticeExamTopBar
+          left={
+            showTimer ? (
+              <p
+                className={`text-2xl font-black tabular-nums tracking-tight ${
+                  secondsLeft <= 10 ? "text-[#ff4b4b]" : "text-[#1e3a5f]"
+                }`}
+              >
+                {formatTimer(secondsLeft)}
+              </p>
+            ) : (
+              <PracticeExamEyebrow>Write About the Photo</PracticeExamEyebrow>
+            )
+          }
+        />
 
-      <div className="grid gap-5 lg:grid-cols-2 lg:items-start lg:gap-8">
-        {photoPanel}
+        <p className="mb-5 text-center text-base font-bold text-[#0f172a] sm:text-lg">
+          Describe the photo in English. Be clear and specific.
+        </p>
 
-        <div className="min-w-0">
-          {phase === "ready" && (
-            <section className="space-y-4 rounded-[1.75rem] border-2 border-duo-border bg-duo-card p-5 sm:p-6">
-              <div>
-                <p className="text-base font-black text-white">Fotoğrafı İngilizce anlat</p>
-                <p className="mt-1 text-sm font-semibold text-duo-muted">
-                  60 saniye içinde gördüğünü yaz. Gemini B2 seviyesini değerlendirir.
-                </p>
+        <PracticeExamCard className="!px-0 !py-0 overflow-hidden sm:!px-0 sm:!py-0">
+          <div className="relative h-[220px] w-full bg-[#e2e8f0] sm:h-[280px]">
+            {imageUrl ? (
+              <Image
+                src={imageUrl}
+                alt="Practice photo"
+                fill
+                unoptimized
+                sizes="(max-width: 768px) 100vw, 768px"
+                className="object-cover"
+                priority
+                onLoadingComplete={(img) => {
+                  const stable = stabilizePicsumUrl(img.currentSrc || img.src, 900, 600);
+                  lockedImageRef.current = stable;
+                  if (stable !== imageUrl) setImageUrl(stable);
+                }}
+              />
+            ) : (
+              <div className="flex h-full items-center justify-center text-sm font-bold text-[#64748b]">
+                Görsel yükleniyor…
               </div>
+            )}
+          </div>
 
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={startSession}
-                  disabled={!imageUrl || cooldownSec > 0}
-                  className="flex-1 rounded-2xl bg-[#58cc02] py-4 text-sm font-black uppercase tracking-wide text-[#14260a] shadow-[0_4px_0_#46a302] disabled:opacity-50"
-                >
-                  {cooldownSec > 0 ? `Bekle (${cooldownSec}s)` : `Başlat (${WRITE_SECONDS}s)`}
-                </button>
-                <button
-                  type="button"
-                  onClick={resetWithNewImage}
-                  disabled={!imageUrl}
-                  className="shrink-0 rounded-2xl border-2 border-duo-border px-5 py-4 text-sm font-black uppercase tracking-wide text-duo-muted transition hover:border-white/25 hover:text-white disabled:opacity-50"
-                >
-                  Geç
-                </button>
-              </div>
-            </section>
-          )}
-
-          {(phase === "running" || phase === "evaluating") && (
-            <section className="space-y-4 rounded-[1.75rem] border-2 border-duo-border bg-duo-card p-5 sm:p-6">
-              <div>
-                <div className="mb-2 flex items-center justify-between text-sm font-black">
-                  <span className="text-duo-muted">Yazma</span>
-                  <span className={secondsLeft <= 10 ? "text-[#ff4b4b]" : "text-white"}>
-                    {secondsLeft}s
-                  </span>
+          <div className="px-5 py-6 sm:px-8 sm:py-8">
+            {phase === "ready" && (
+              <div className="space-y-5 text-center">
+                <div>
+                  <h1 className="text-lg font-black text-[#1e3a5f] sm:text-xl">
+                    Fotoğrafı İngilizce anlat
+                  </h1>
+                  <p className="mt-2 text-sm font-semibold text-[#64748b]">
+                    60 saniye içinde gördüğünü yaz. Gemini seviyenizi değerlendirir.
+                  </p>
                 </div>
-                <div className="h-3 overflow-hidden rounded-full bg-[#0f1a1e]">
-                  <div
-                    className={`h-full rounded-full transition-all ${
-                      secondsLeft <= 10 ? "bg-[#ff4b4b]" : "bg-[#1cb0f6]"
-                    }`}
-                    style={{ width: `${Math.max(0, progress * 100)}%` }}
-                  />
-                </div>
-              </div>
-
-              <label className="block">
-                <span className="text-[10px] font-black uppercase tracking-wide text-duo-muted">
-                  Cevabın ({wordCount(answer)} kelime)
-                </span>
-                <textarea
-                  value={answer}
-                  onChange={(e) => setAnswer(e.target.value)}
-                  disabled={phase !== "running"}
-                  rows={8}
-                  placeholder="Describe the photo in English…"
-                  className="mt-1 w-full resize-none rounded-2xl border-2 border-duo-border bg-[#0f1a1e] px-4 py-3 text-sm font-bold leading-relaxed text-white outline-none placeholder:text-duo-muted focus:border-[#1cb0f6] disabled:opacity-70"
-                />
-              </label>
-
-              {error && phase === "running" && (
-                <p className="text-sm font-bold text-[#ff9600]">{error}</p>
-              )}
-
-              {phase === "running" && (
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => void runEvaluation(answer)}
-                    disabled={answer.trim().length < 20 || sessionEvalStartedRef.current}
-                    className="flex-1 rounded-2xl bg-[#58cc02] py-3.5 text-sm font-black uppercase tracking-wide text-[#14260a] shadow-[0_4px_0_#46a302] disabled:opacity-50"
+                <div className="flex flex-col items-center gap-2 sm:flex-row sm:justify-center">
+                  <PracticeExamPrimaryButton
+                    onClick={startSession}
+                    disabled={!imageUrl || cooldownSec > 0}
+                    variant="green"
+                    className="w-full sm:w-auto"
                   >
-                    Bitir ve Değerlendir
-                  </button>
+                    {cooldownSec > 0 ? `Bekle (${cooldownSec}s)` : `Başlat (${WRITE_SECONDS}s)`}
+                  </PracticeExamPrimaryButton>
                   <button
                     type="button"
                     onClick={resetWithNewImage}
-                    className="shrink-0 rounded-2xl border-2 border-duo-border px-5 py-3.5 text-sm font-black uppercase tracking-wide text-duo-muted transition hover:border-white/25 hover:text-white"
+                    disabled={!imageUrl}
+                    className="w-full rounded-2xl border border-[#e2e8f0] px-6 py-3 text-sm font-bold text-[#64748b] disabled:opacity-50 sm:w-auto"
                   >
                     Geç
                   </button>
                 </div>
-              )}
+              </div>
+            )}
 
-              {phase === "evaluating" && (
-                <p className="text-center text-sm font-black uppercase tracking-widest text-[#fd860a]">
-                  Değerlendiriliyor…
-                </p>
-              )}
-            </section>
-          )}
+            {(phase === "running" || phase === "evaluating") && (
+              <div className="space-y-4">
+                <label className="block text-left">
+                  <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#64748b]">
+                    Cevabın · {wordCount(answer)} kelime
+                  </span>
+                  <textarea
+                    value={answer}
+                    onChange={(e) => setAnswer(e.target.value)}
+                    disabled={phase !== "running"}
+                    rows={8}
+                    placeholder="Describe the photo in English…"
+                    className="mt-2 w-full resize-none rounded-xl border border-[#e2e8f0] bg-[#f8fafc] px-4 py-3 text-sm font-semibold leading-relaxed text-[#0f172a] outline-none placeholder:text-[#94a3b8] focus:border-[#1cb0f6] disabled:opacity-70"
+                  />
+                </label>
 
-          {phase === "done" && (
-            <section className="space-y-4">
-              {error && (
-                <p className="rounded-2xl border-2 border-[#ff4b4b]/40 bg-[#ff4b4b]/10 px-4 py-3 text-sm font-bold text-[#ff4b4b]">
-                  {error}
-                </p>
-              )}
+                {error && phase === "running" && (
+                  <p className="text-center text-sm font-bold text-[#b45309]">{error}</p>
+                )}
 
-              {evaluation && (
-                <div className="space-y-4 rounded-[1.75rem] border-2 border-duo-border bg-duo-card p-5 sm:p-6">
-                  <div className="flex flex-wrap items-center gap-3">
-                    <span
-                      className={`rounded-full border-2 px-4 py-1.5 text-sm font-black ${
-                        CEFR_COLOR[evaluation.cefr_level] || CEFR_COLOR.B1
-                      }`}
+                {phase === "running" && (
+                  <div className="flex flex-col items-center gap-2 sm:flex-row sm:justify-center">
+                    <PracticeExamPrimaryButton
+                      onClick={() => void runEvaluation(answer)}
+                      disabled={answer.trim().length < 20 || sessionEvalStartedRef.current}
+                      variant="green"
+                      className="w-full sm:w-auto"
                     >
-                      {evaluation.cefr_level}
-                    </span>
-                    <p className="text-2xl font-black text-white">
-                      {evaluation.score}
-                      <span className="text-sm font-extrabold text-duo-muted"> / 10</span>
+                      Bitir ve Değerlendir
+                    </PracticeExamPrimaryButton>
+                    <button
+                      type="button"
+                      onClick={resetWithNewImage}
+                      className="w-full rounded-2xl border border-[#e2e8f0] px-6 py-3 text-sm font-bold text-[#64748b] sm:w-auto"
+                    >
+                      Geç
+                    </button>
+                  </div>
+                )}
+
+                {phase === "evaluating" && (
+                  <p className="text-center text-sm font-bold text-[#64748b]">
+                    Değerlendiriliyor…
+                  </p>
+                )}
+              </div>
+            )}
+
+            {phase === "done" && evaluation && (
+              <div className="space-y-5 text-left">
+                <div className="flex flex-wrap items-center justify-center gap-3">
+                  <span
+                    className={`rounded-full border px-4 py-1.5 text-sm font-black ${
+                      CEFR_COLOR[evaluation.cefr_level] || CEFR_COLOR.B1
+                    }`}
+                  >
+                    {evaluation.cefr_level}
+                  </span>
+                  <p className="text-2xl font-black text-[#1e3a5f]">
+                    {evaluation.score}
+                    <span className="text-sm font-bold text-[#64748b]"> / 10</span>
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="rounded-xl bg-[#e8f6fe] p-3 text-center">
+                    <p className="text-[10px] font-bold uppercase text-[#075985]">Kelime</p>
+                    <p className="mt-1 text-xl font-black text-[#0ea5e9]">
+                      {evaluation.vocabulary_score}/10
                     </p>
                   </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="rounded-2xl border-2 border-duo-border bg-[#0f1a1e] p-3">
-                      <p className="text-[10px] font-black uppercase text-duo-muted">Kelime</p>
-                      <p className="mt-1 text-xl font-black text-[#1cb0f6]">
-                        {evaluation.vocabulary_score}/10
-                      </p>
-                    </div>
-                    <div className="rounded-2xl border-2 border-duo-border bg-[#0f1a1e] p-3">
-                      <p className="text-[10px] font-black uppercase text-duo-muted">Tutarlılık</p>
-                      <p className="mt-1 text-xl font-black text-[#ce82ff]">
-                        {evaluation.coherence_score}/10
-                      </p>
-                    </div>
+                  <div className="rounded-xl bg-[#f3e8ff] p-3 text-center">
+                    <p className="text-[10px] font-bold uppercase text-[#6b21a8]">Tutarlılık</p>
+                    <p className="mt-1 text-xl font-black text-[#7c3aed]">
+                      {evaluation.coherence_score}/10
+                    </p>
                   </div>
-
-                  <p className="text-sm font-semibold leading-relaxed text-duo-muted">
-                    {evaluation.feedback}
-                  </p>
-
-                  {evaluation.grammar_errors.length > 0 && (
-                    <div>
-                      <p className="text-[10px] font-black uppercase tracking-wide text-[#ff4b4b]">
-                        Gramer hataları
-                      </p>
-                      <ul className="mt-2 space-y-1">
-                        {evaluation.grammar_errors.map((item) => (
-                          <li key={item} className="text-sm font-bold text-white">
-                            • {item}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-
-                  {!isB2OrAbove(evaluation.cefr_level) && (
-                    <div className="rounded-2xl border-2 border-[#ff9600]/40 bg-[#ff9600]/10 p-4">
-                      <p className="text-sm font-black text-[#ff9600]">
-                        B2 seviyesine ulaşmak için şu gelişim alanlarına odaklanmalısın:
-                      </p>
-                      <ul className="mt-2 space-y-1">
-                        {evaluation.suggestions.map((item) => (
-                          <li key={item} className="text-sm font-bold text-white">
-                            • {item}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-
-                  {isB2OrAbove(evaluation.cefr_level) && evaluation.suggestions.length > 0 && (
-                    <div>
-                      <p className="text-[10px] font-black uppercase tracking-wide text-[#58cc02]">
-                        Öneriler
-                      </p>
-                      <ul className="mt-2 space-y-1">
-                        {evaluation.suggestions.map((item) => (
-                          <li key={item} className="text-sm font-bold text-white">
-                            • {item}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-
-                  {evaluation.improved_version && (
-                    <div className="rounded-2xl border-2 border-[#58cc02]/35 bg-[#58cc02]/10 p-4">
-                      <p className="text-[10px] font-black uppercase tracking-wide text-[#58cc02]">
-                        Şöyle yazabilirdin
-                      </p>
-                      <p className="mt-2 text-sm font-bold leading-relaxed text-white">
-                        {evaluation.improved_version}
-                      </p>
-                    </div>
-                  )}
                 </div>
-              )}
 
-              <button
-                type="button"
-                onClick={resetWithNewImage}
-                className="w-full rounded-2xl bg-[#1cb0f6] py-4 text-sm font-black uppercase tracking-wide text-white shadow-[0_4px_0_#1899d6]"
-              >
-                Yeni Görsel
-              </button>
-            </section>
-          )}
-        </div>
+                <p className="text-sm font-semibold leading-relaxed text-[#64748b]">
+                  {evaluation.feedback}
+                </p>
+
+                {evaluation.grammar_errors.length > 0 && (
+                  <div className="rounded-xl border border-[#e2e8f0] bg-[#f8fafc] px-4 py-3">
+                    <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#b91c1c]">
+                      Gramer hataları
+                    </p>
+                    <ul className="mt-2 space-y-1">
+                      {evaluation.grammar_errors.map((item) => (
+                        <li key={item} className="text-sm font-semibold text-[#0f172a]">
+                          • {item}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {evaluation.suggestions.length > 0 && (
+                  <div className="rounded-xl border border-[#e2e8f0] bg-[#f8fafc] px-4 py-3">
+                    <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#64748b]">
+                      {isB2OrAbove(evaluation.cefr_level) ? "Öneriler" : "B2 için gelişim"}
+                    </p>
+                    <ul className="mt-2 space-y-1">
+                      {evaluation.suggestions.map((item) => (
+                        <li key={item} className="text-sm font-semibold text-[#0f172a]">
+                          • {item}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {evaluation.improved_version && (
+                  <div className="rounded-xl border border-[#bbf7d0] bg-[#ecfce5] px-4 py-3">
+                    <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#3f6212]">
+                      Şöyle yazabilirdin
+                    </p>
+                    <p className="mt-2 text-sm font-semibold leading-relaxed text-[#14532d]">
+                      {evaluation.improved_version}
+                    </p>
+                  </div>
+                )}
+
+                {error && <p className="text-center text-sm font-bold text-[#b91c1c]">{error}</p>}
+
+                <div className="flex flex-col gap-2 pt-1">
+                  <PracticeExamPrimaryButton onClick={resetWithNewImage} className="w-full">
+                    Yeni Görsel
+                  </PracticeExamPrimaryButton>
+                  <PracticeExamGhostLink href="/">Ana sayfa</PracticeExamGhostLink>
+                </div>
+              </div>
+            )}
+          </div>
+        </PracticeExamCard>
       </div>
-    </main>
+    </PracticeExamMain>
   );
 }

@@ -1,9 +1,17 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ContinueButton } from "@/app/components/ContinueButton";
 import { LevelUpModal } from "@/app/components/LevelUpModal";
+import {
+  PracticeExamCard,
+  PracticeExamEyebrow,
+  PracticeExamGhostLink,
+  PracticeExamMain,
+  PracticeExamPrimaryButton,
+  PracticeExamTopBar,
+} from "@/app/components/PracticeExamChrome";
 import { WordImage } from "@/app/components/WordImage";
 import {
   assignNewWords,
@@ -166,11 +174,6 @@ export default function WordQuizPage() {
     return () => window.clearTimeout(t);
   }, [word?.id, word?.english, word?.audio_url]);
 
-  const progressPct = useMemo(() => {
-    if (!items.length) return 0;
-    return Math.round((index / items.length) * 100);
-  }, [index, items.length]);
-
   function listen() {
     if (!word) return;
     playWordAudio(word.english, word.audio_url);
@@ -220,154 +223,160 @@ export default function WordQuizPage() {
 
   if (loading) {
     return (
-      <main className="flex min-h-[70vh] items-center justify-center font-extrabold text-duo-muted">
-        Kelimeler hazırlanıyor...
-      </main>
+      <PracticeExamMain>
+        <div className="mx-auto max-w-3xl px-4 pb-10 pt-16 text-center">
+          <p className="text-sm font-bold text-[#64748b]">Kelimeler hazırlanıyor…</p>
+        </div>
+      </PracticeExamMain>
     );
   }
 
   if (finished) {
     return (
-      <main className="mx-auto flex min-h-[70vh] max-w-lg flex-col items-center justify-center px-4 text-center">
-        <h1 className="text-3xl font-black text-white">Bugünlük kelimelerin bitti!</h1>
-        <p className="mt-2 text-sm font-bold text-duo-muted">Serini bozma, yarın yine buradayız.</p>
-        <div className="mt-6 w-full">
-          <ContinueButton href="/">Ana Sayfaya Dön</ContinueButton>
+      <PracticeExamMain>
+        <div className="mx-auto max-w-xl px-4 py-8">
+          <PracticeExamCard className="text-center">
+            <PracticeExamEyebrow>Word Quiz</PracticeExamEyebrow>
+            <h1 className="mt-3 text-2xl font-black">Well done!</h1>
+            <p className="mt-2 text-sm font-semibold text-[#64748b]">
+              Bugünlük kelime alıştırmalarını tamamladın.
+            </p>
+            <div className="mt-6">
+              <PracticeExamGhostLink href="/">Ana sayfa</PracticeExamGhostLink>
+            </div>
+          </PracticeExamCard>
         </div>
-      </main>
+      </PracticeExamMain>
     );
   }
 
   if (!word) {
     return (
-      <main className="mx-auto flex min-h-[70vh] max-w-lg flex-col items-center justify-center px-4 text-center">
-        <h1 className="text-2xl font-black">Şu an eklenecek kelime kalmadı.</h1>
-        <div className="mt-6 w-full">
-          <ContinueButton href="/">Ana Sayfaya Dön</ContinueButton>
+      <PracticeExamMain>
+        <div className="mx-auto max-w-xl px-4 py-8">
+          <PracticeExamCard className="text-center">
+            <h1 className="text-2xl font-black">Şu an eklenecek kelime kalmadı.</h1>
+            <div className="mt-6">
+              <PracticeExamGhostLink href="/">Ana sayfa</PracticeExamGhostLink>
+            </div>
+          </PracticeExamCard>
         </div>
-      </main>
+      </PracticeExamMain>
     );
   }
 
   return (
-    <main className="mx-auto min-h-screen max-w-xl px-4 py-5 pb-28 lg:pb-8">
-      <div className="mb-5">
-        <div className="mb-2 flex items-center justify-between text-xs font-black uppercase tracking-wide text-duo-muted">
-          <span>
-            {Math.min(index + 1, items.length)} / {items.length}
-          </span>
-          <button
-            type="button"
-            onClick={listen}
-            className="rounded-xl border-2 border-duo-border bg-duo-card px-3 py-1.5 text-[11px] font-black text-white transition hover:border-[#1cb0f6]"
-          >
-            Tekrar dinle
-          </button>
-        </div>
-        <div className="h-3 overflow-hidden rounded-full bg-[#0f1a1e]">
-          <div
-            className="h-full rounded-full bg-[#58cc02] transition-all duration-300"
-            style={{ width: `${Math.max(8, progressPct)}%` }}
-          />
-        </div>
-      </div>
+    <PracticeExamMain>
+      <div className="mx-auto max-w-3xl px-4 pb-10 pt-5">
+        <PracticeExamTopBar
+          left={
+            <p className="text-sm font-bold text-[#64748b]">
+              Kelime {Math.min(index + 1, items.length)} / {items.length}
+            </p>
+          }
+        />
 
-      <section className="overflow-hidden rounded-[1.75rem] border-2 border-duo-border bg-duo-card">
-        <div className="relative h-48 w-full bg-[#0f1a1e] sm:h-56">
-          <WordImage
-            english={word.english}
-            className="h-full w-full object-cover"
-            alt={`${word.english} görseli`}
-          />
-          <button
-            type="button"
-            onClick={listen}
-            aria-label="Kelimeyi dinle"
-            className="absolute bottom-3 right-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#1cb0f6] text-white shadow-[0_4px_0_#1899d6] transition active:translate-y-1 active:shadow-none"
-          >
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden>
-              <path
-                d="M11 5 6 9H2v6h4l5 4V5z"
-                stroke="currentColor"
-                strokeWidth="2.2"
-                strokeLinejoin="round"
-              />
-              <path
-                d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"
-                stroke="currentColor"
-                strokeWidth="2.2"
-                strokeLinecap="round"
-              />
-            </svg>
-          </button>
-        </div>
+        <p className="mb-5 text-center text-base font-bold text-[#0f172a] sm:text-lg">
+          Choose the correct Turkish meaning.
+        </p>
 
-        <div className="p-5 sm:p-6">
-          <p className="text-center text-xs font-black uppercase tracking-[0.16em] text-duo-muted">
-            Doğru Türkçe anlamı seç
-          </p>
-          <h1 className="mt-2 text-center text-3xl font-black tracking-tight text-white sm:text-4xl">
-            {word.english}
-          </h1>
-          {word.phonetic && (
-            <p className="mt-1 text-center text-sm font-bold text-duo-muted">{word.phonetic}</p>
-          )}
-
-          <div className="mt-5 grid gap-2.5">
-            {choices.map((option) => {
-              const isPick = selected === option;
-              const isRight = option.toLowerCase() === correctLabel.toLowerCase();
-              let style =
-                "border-duo-border bg-[#0f1a1e] text-white hover:border-white/25 active:translate-y-0.5";
-              if (checked) {
-                if (isRight) style = "border-[#58cc02] bg-[#58cc02]/15 text-[#58cc02]";
-                else if (isPick) style = "border-[#ff4b4b] bg-[#ff4b4b]/15 text-[#ff4b4b]";
-                else style = "border-duo-border bg-[#0f1a1e] text-duo-muted opacity-60";
-              } else if (isPick) {
-                style = "border-[#1cb0f6] bg-[#1cb0f6]/15 text-white";
-              }
-
-              return (
-                <button
-                  key={option}
-                  type="button"
-                  disabled={checked}
-                  onClick={() => pick(option)}
-                  className={`rounded-2xl border-2 px-4 py-3.5 text-left text-base font-extrabold transition ${style}`}
-                >
-                  {option}
-                </button>
-              );
-            })}
+        <PracticeExamCard className="!px-0 !py-0 overflow-hidden sm:!px-0 sm:!py-0">
+          <div className="relative h-48 w-full bg-[#e2e8f0] sm:h-56">
+            <WordImage
+              english={word.english}
+              className="h-full w-full object-cover"
+              alt={`${word.english} görseli`}
+            />
+            <button
+              type="button"
+              onClick={listen}
+              aria-label="Kelimeyi dinle"
+              className="absolute bottom-3 right-3 flex h-11 w-11 items-center justify-center rounded-full bg-[#1cb0f6] text-white shadow-[0_3px_0_#1899d6]"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
+                <path
+                  d="M11 5 6 9H2v6h4l5 4V5z"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                />
+              </svg>
+            </button>
           </div>
 
-          {checked && (
-            <div className="mt-5 space-y-3">
-              <div
-                className={`rounded-2xl px-4 py-3 text-sm font-extrabold ${
-                  correct
-                    ? "bg-[#58cc02]/15 text-[#58cc02]"
-                    : "bg-[#ff4b4b]/15 text-[#ff4b4b]"
-                }`}
-              >
-                {correct ? "Harika! Doğru." : `Yanlış. Doğru cevap: ${correctLabel}`}
-              </div>
-              <button
-                type="button"
-                disabled={saving}
-                onClick={() => void continueNext()}
-                className="w-full rounded-2xl bg-[#58cc02] py-4 text-sm font-black uppercase tracking-wide text-[#14260a] shadow-[0_4px_0_#46a302] disabled:opacity-50"
-              >
-                {saving ? "..." : index + 1 >= items.length ? "Bitir" : "Devam"}
-              </button>
-            </div>
-          )}
+          <div className="px-5 py-6 sm:px-8 sm:py-8">
+            <h1 className="text-center text-3xl font-black tracking-tight text-[#1e3a5f] sm:text-4xl">
+              {word.english}
+            </h1>
+            {word.phonetic && (
+              <p className="mt-1 text-center text-sm font-bold text-[#64748b]">{word.phonetic}</p>
+            )}
 
-          {error && <p className="mt-4 text-sm font-bold text-[#ff4b4b]">{error}</p>}
-        </div>
-      </section>
+            <div className="mt-6 grid gap-2.5">
+              {choices.map((option) => {
+                const isPick = selected === option;
+                const isRight = option.toLowerCase() === correctLabel.toLowerCase();
+                let style =
+                  "border-[#e2e8f0] bg-[#f8fafc] text-[#0f172a] hover:border-[#cbd5e1]";
+                if (checked) {
+                  if (isRight) style = "border-[#58cc02] bg-[#ecfce5] text-[#15803d]";
+                  else if (isPick) style = "border-[#ff4b4b] bg-[#ffe8e8] text-[#b91c1c]";
+                  else style = "border-[#e2e8f0] bg-white text-[#94a3b8]";
+                } else if (isPick) {
+                  style = "border-[#1cb0f6] bg-[#e8f6fe] text-[#0f172a]";
+                }
+
+                return (
+                  <button
+                    key={option}
+                    type="button"
+                    disabled={checked}
+                    onClick={() => pick(option)}
+                    className={`rounded-xl border px-4 py-3.5 text-left text-base font-extrabold transition ${style}`}
+                  >
+                    {option}
+                  </button>
+                );
+              })}
+            </div>
+
+            {checked && (
+              <div className="mt-6 flex flex-col items-center gap-3">
+                <p
+                  className={`text-center text-sm font-bold ${
+                    correct ? "text-[#15803d]" : "text-[#b91c1c]"
+                  }`}
+                >
+                  {correct ? "Harika! Doğru." : `Yanlış. Doğru cevap: ${correctLabel}`}
+                </p>
+                <PracticeExamPrimaryButton
+                  disabled={saving}
+                  onClick={() => void continueNext()}
+                  variant="green"
+                >
+                  {saving ? "..." : index + 1 >= items.length ? "Sonuçlar" : "Devam"}
+                </PracticeExamPrimaryButton>
+              </div>
+            )}
+
+            {error && <p className="mt-4 text-center text-sm font-bold text-[#b91c1c]">{error}</p>}
+          </div>
+        </PracticeExamCard>
+
+        <p className="mt-4 text-center text-xs font-semibold text-[#94a3b8]">
+          <Link href="/" className="hover:text-[#64748b]">
+            Ana sayfa
+          </Link>
+        </p>
+      </div>
 
       {levelUp !== null && <LevelUpModal level={levelUp} onClose={() => setLevelUp(null)} />}
-    </main>
+    </PracticeExamMain>
   );
 }
