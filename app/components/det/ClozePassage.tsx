@@ -49,7 +49,8 @@ export function ClozePassage({
     const first = gaps[0];
     if (!first || disabled) return;
     focusCell(first.id, 0);
-  }, [disabled, gaps, questionText]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only autofocus when passage changes
+  }, [disabled, questionText]);
 
   function focusNext(gap: ClozeGap, letterIndex: number) {
     if (letterIndex < gap.missing.length - 1) {

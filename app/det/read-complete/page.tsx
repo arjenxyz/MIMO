@@ -24,9 +24,8 @@ function detectDemoClient() {
 }
 
 export default function ReadCompletePage() {
-  const [exercises, setExercises] = useState<DETExercise[]>(() =>
-    shuffle(DEMO_DET_READ_COMPLETE)
-  );
+  const [mounted, setMounted] = useState(false);
+  const [exercises, setExercises] = useState<DETExercise[]>(DEMO_DET_READ_COMPLETE);
   const [index, setIndex] = useState(0);
   const [values, setValues] = useState<Record<string, string>>({});
   const [checked, setChecked] = useState(false);
@@ -108,6 +107,7 @@ export default function ReadCompletePage() {
   }, []);
 
   useEffect(() => {
+    setMounted(true);
     void loadLive();
   }, [loadLive]);
 
@@ -176,6 +176,16 @@ export default function ReadCompletePage() {
     if (total === 0) return 0;
     return Math.round((correctCount / total) * 100);
   }, [correctCount, wrongCount]);
+
+  if (!mounted) {
+    return (
+      <main className="min-h-screen bg-[#f3f4f6] text-[#0f172a]">
+        <div className="mx-auto max-w-3xl px-4 pb-10 pt-5">
+          <p className="text-center text-sm font-bold text-[#64748b]">Loading…</p>
+        </div>
+      </main>
+    );
+  }
 
   if (finished) {
     return (
