@@ -38,36 +38,75 @@ export function ClozePassage({
   const gaps = useMemo(() => extractGaps(parts), [parts]);
   const inputRefs = useRef<Record<string, Array<HTMLInputElement | null>>>({});
 
+  function focusCell(gapId: string, letterIndex: number) {
+    requestAnimationFrame(() => {
+      inputRefs.current[gapId]?.[letterIndex]?.focus();
+      inputRefs.current[gapId]?.[letterIndex]?.select();
+    });
+  }
+
   useEffect(() => {
     const first = gaps[0];
     if (!first || disabled) return;
-    inputRefs.current[first.id]?.[0]?.focus();
+    focusCell(first.id, 0);
   }, [disabled, gaps, questionText]);
+
+  function focusNext(gap: ClozeGap, letterIndex: number) {
+    if (letterIndex < gap.missing.length - 1) {
+      focusCell(gap.id, letterIndex + 1);
+      return;
+    }
+    const gi = gaps.findIndex((g) => g.id === gap.id);
+    const nextGap = gaps[gi + 1];
+    if (nextGap) focusCell(nextGap.id, 0);
+  }
+
+  function focusPrev(gap: ClozeGap, letterIndex: number) {
+    if (letterIndex > 0) {
+      focusCell(gap.id, letterIndex - 1);
+      return;
+    }
+    const gi = gaps.findIndex((g) => g.id === gap.id);
+    const prevGap = gaps[gi - 1];
+    if (prevGap) focusCell(prevGap.id, prevGap.missing.length - 1);
+  }
 
   function setLetter(gap: ClozeGap, letterIndex: number, raw: string) {
     const ch = raw.replace(/[^a-zA-Z'-]/g, "").slice(-1).toLowerCase();
     const chars = readChars(values[gap.id] || "", gap.missing.length);
     chars[letterIndex] = ch;
     onChange(gap.id, writeChars(chars));
-
-    if (ch && letterIndex < gap.missing.length - 1) {
-      inputRefs.current[gap.id]?.[letterIndex + 1]?.focus();
-    } else if (ch) {
-      const gi = gaps.findIndex((g) => g.id === gap.id);
-      const nextGap = gaps[gi + 1];
-      if (nextGap) inputRefs.current[nextGap.id]?.[0]?.focus();
-    }
+    if (ch) focusNext(gap, letterIndex);
   }
 
   function onKeyDown(gap: ClozeGap, letterIndex: number, event: KeyboardEvent<HTMLInputElement>) {
+    if (event.key === "ArrowRight") {
+      event.preventDefault();
+      focusNext(gap, letterIndex);
+      return;
+    }
+    if (event.key === "ArrowLeft") {
+      event.preventDefault();
+      focusPrev(gap, letterIndex);
+      return;
+    }
     if (event.key !== "Backspace") return;
+
     const chars = readChars(values[gap.id] || "", gap.missing.length);
-    if (chars[letterIndex]) return;
-    if (letterIndex === 0) return;
+    if (chars[letterIndex]) {
+      event.preventDefault();
+      chars[letterIndex] = "";
+      onChange(gap.id, writeChars(chars));
+      return;
+    }
     event.preventDefault();
-    chars[letterIndex - 1] = "";
-    onChange(gap.id, writeChars(chars));
-    inputRefs.current[gap.id]?.[letterIndex - 1]?.focus();
+    if (letterIndex > 0) {
+      chars[letterIndex - 1] = "";
+      onChange(gap.id, writeChars(chars));
+      focusCell(gap.id, letterIndex - 1);
+      return;
+    }
+    focusPrev(gap, letterIndex);
   }
 
   function gapStatus(gap: ClozeGap) {
@@ -77,7 +116,7 @@ export function ClozePassage({
   }
 
   return (
-    <div className="text-[17px] font-semibold leading-[2.15] text-[#334155] sm:text-[18px]">
+    <div className="text-[17px] font-semibold leading-[1.85] text-[#334155] sm:text-[18px] sm:leading-[1.9]">
       {parts.map((part, index) => {
         if (part.kind === "text") {
           return (
@@ -96,32 +135,30 @@ export function ClozePassage({
             ? "border-[#58cc02] bg-[#ecfce5]"
             : status === "bad"
               ? "border-[#ff4b4b] bg-[#ffe8e8]"
-              : "border-[#c5ced6] bg-white";
+              : "border-[#94a3b8] bg-white";
 
         return (
-          <span key={gap.id} className="mx-0.5 inline-flex items-end align-baseline">
+          <span key={gap.id} className="inline whitespace-nowrap align-baseline">
             <span className="text-[#0f172a]">{prefix}</span>
-            <span className="ml-0.5 inline-flex gap-[3px]">
-              {chars.map((display, letterIndex) => (
-                <input
-                  key={`${gap.id}-${letterIndex}`}
-                  ref={(el) => {
-                    if (!inputRefs.current[gap.id]) inputRefs.current[gap.id] = [];
-                    inputRefs.current[gap.id][letterIndex] = el;
-                  }}
-                  type="text"
-                  inputMode="text"
-                  autoComplete="off"
-                  maxLength={1}
-                  disabled={disabled}
-                  value={display}
-                  aria-label={`${gap.answer} letter ${letterIndex + 1}`}
-                  onChange={(e) => setLetter(gap, letterIndex, e.target.value)}
-                  onKeyDown={(e) => onKeyDown(gap, letterIndex, e)}
-                  className={`h-8 w-7 rounded-[6px] border text-center text-[15px] font-bold lowercase text-[#0f172a] outline-none focus:border-[#1cb0f6] focus:ring-2 focus:ring-[#1cb0f6]/20 disabled:opacity-90 sm:h-9 sm:w-8 ${ring}`}
-                />
-              ))}
-            </span>
+            {chars.map((display, letterIndex) => (
+              <input
+                key={`${gap.id}-${letterIndex}`}
+                ref={(el) => {
+                  if (!inputRefs.current[gap.id]) inputRefs.current[gap.id] = [];
+                  inputRefs.current[gap.id][letterIndex] = el;
+                }}
+                type="text"
+                inputMode="text"
+                autoComplete="off"
+                maxLength={1}
+                disabled={disabled}
+                value={display}
+                aria-label={`${gap.answer} letter ${letterIndex + 1}`}
+                onChange={(e) => setLetter(gap, letterIndex, e.target.value)}
+                onKeyDown={(e) => onKeyDown(gap, letterIndex, e)}
+                className={`mx-[1px] inline-block h-[1.15em] w-[0.92em] appearance-none rounded-[3px] border border-solid p-0 text-center text-[0.95em] font-semibold lowercase leading-none text-[#0f172a] align-[-0.12em] outline-none focus:border-[#1cb0f6] focus:ring-1 focus:ring-[#1cb0f6]/30 disabled:opacity-90 ${ring}`}
+              />
+            ))}
           </span>
         );
       })}
