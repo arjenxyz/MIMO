@@ -34,7 +34,7 @@ function wordCount(text: string) {
 export default function PhotoPracticePage() {
   const [mode, setMode] = useState<Mode>("write");
   const [phase, setPhase] = useState<Phase>("ready");
-  const [imageUrl, setImageUrl] = useState(() => getRandomImage(900, 600));
+  const [imageUrl, setImageUrl] = useState("https://picsum.photos/900/600");
   const [answer, setAnswer] = useState("");
   const [secondsLeft, setSecondsLeft] = useState(60);
   const [listening, setListening] = useState(false);
@@ -56,6 +56,10 @@ export default function PhotoPracticePage() {
     return () => {
       recognitionRef.current?.stop();
     };
+  }, []);
+
+  useEffect(() => {
+    setImageUrl(getRandomImage(900, 600));
   }, []);
 
   const stopMic = useCallback(() => {
