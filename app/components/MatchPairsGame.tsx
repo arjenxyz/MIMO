@@ -24,6 +24,11 @@ type Tile = {
   side: "en" | "tr";
 };
 
+type Board = {
+  en: Tile[];
+  tr: Tile[];
+};
+
 const SESSION_SECONDS = 120;
 const BOARD_PAIRS = 5;
 const MILESTONES = [5, 10, 35];
@@ -47,39 +52,45 @@ function nextUid() {
   return `t-${tileSeq}`;
 }
 
-function tilesFromWords(words: MatchWord[]): Tile[] {
-  const tiles: Tile[] = [];
-  for (const w of words) {
-    tiles.push({ uid: nextUid(), wordId: w.id, text: w.english, side: "en" });
-    tiles.push({
-      uid: nextUid(),
-      wordId: w.id,
-      text: primaryTurkish(w.turkish),
-      side: "tr",
-    });
-  }
-  return shuffle(tiles);
+function makeEnTile(word: MatchWord): Tile {
+  return { uid: nextUid(), wordId: word.id, text: word.english, side: "en" };
+}
+
+function makeTrTile(word: MatchWord): Tile {
+  return {
+    uid: nextUid(),
+    wordId: word.id,
+    text: primaryTurkish(word.turkish),
+    side: "tr",
+  };
+}
+
+function boardFromWords(words: MatchWord[]): Board {
+  return {
+    en: shuffle(words.map(makeEnTile)),
+    tr: shuffle(words.map(makeTrTile)),
+  };
 }
 
 function pickFreshWords(pool: MatchWord[], excludeIds: Set<number>, count: number) {
   const available = shuffle(pool.filter((w) => !excludeIds.has(w.id)));
   if (available.length >= count) return available.slice(0, count);
-  // Not enough unused — allow reuse of off-board words only.
   return shuffle(pool).slice(0, Math.min(count, pool.length));
+}
+
+function findTile(board: Board, uid: string): Tile | undefined {
+  return board.en.find((t) => t.uid === uid) ?? board.tr.find((t) => t.uid === uid);
 }
 
 export function MatchPairsGame({ words }: { words: MatchWord[] }) {
   const pool = useMemo(
-    () =>
-      words.filter(
-        (w) => w.english.trim() && primaryTurkish(w.turkish).length > 0
-      ),
+    () => words.filter((w) => w.english.trim() && primaryTurkish(w.turkish).length > 0),
     [words]
   );
 
   const [phase, setPhase] = useState<"ready" | "running" | "done">("ready");
   const [secondsLeft, setSecondsLeft] = useState(SESSION_SECONDS);
-  const [board, setBoard] = useState<Tile[]>([]);
+  const [board, setBoard] = useState<Board>({ en: [], tr: [] });
   const [selected, setSelected] = useState<string[]>([]);
   const [flash, setFlash] = useState<Record<string, "ok" | "bad">>({});
   const [locked, setLocked] = useState(false);
@@ -92,7 +103,7 @@ export function MatchPairsGame({ words }: { words: MatchWord[] }) {
   const startGame = useCallback(() => {
     const starter = pickFreshWords(pool, new Set(), BOARD_PAIRS);
     boardWordIdsRef.current = new Set(starter.map((w) => w.id));
-    setBoard(tilesFromWords(starter));
+    setBoard(boardFromWords(starter));
     setSelected([]);
     setFlash({});
     setLocked(false);
@@ -121,9 +132,19 @@ export function MatchPairsGame({ words }: { words: MatchWord[] }) {
 
   function onTap(tile: Tile) {
     if (phase !== "running" || locked || flash[tile.uid]) return;
+
     if (selected.includes(tile.uid)) {
       setSelected((prev) => prev.filter((id) => id !== tile.uid));
       return;
+    }
+
+    // Same side: switch selection to this tile.
+    if (selected.length === 1) {
+      const first = findTile(board, selected[0]);
+      if (first && first.side === tile.side) {
+        setSelected([tile.uid]);
+        return;
+      }
     }
 
     const next = [...selected, tile.uid];
@@ -133,8 +154,8 @@ export function MatchPairsGame({ words }: { words: MatchWord[] }) {
     }
 
     const [aId, bId] = next;
-    const a = board.find((t) => t.uid === aId);
-    const b = board.find((t) => t.uid === bId);
+    const a = findTile(board, aId);
+    const b = findTile(board, bId);
     if (!a || !b) {
       setSelected([]);
       return;
@@ -151,16 +172,31 @@ export function MatchPairsGame({ words }: { words: MatchWord[] }) {
 
       window.setTimeout(() => {
         setBoard((prev) => {
-          const kept = prev.filter((t) => t.uid !== a.uid && t.uid !== b.uid);
-          const onBoard = new Set(kept.map((t) => t.wordId));
+          const enIdx = prev.en.findIndex((t) => t.uid === a.uid || t.uid === b.uid);
+          const trIdx = prev.tr.findIndex((t) => t.uid === a.uid || t.uid === b.uid);
+          if (enIdx < 0 || trIdx < 0) return prev;
+
+          const onBoard = new Set(prev.en.map((t) => t.wordId));
+          onBoard.delete(prev.en[enIdx].wordId);
+
           const replacement = pickFreshWords(pool, onBoard, 1)[0];
           if (!replacement) {
             boardWordIdsRef.current = onBoard;
-            return kept;
+            return {
+              en: prev.en.filter((_, i) => i !== enIdx),
+              tr: prev.tr.filter((_, i) => i !== trIdx),
+            };
           }
+
           onBoard.add(replacement.id);
           boardWordIdsRef.current = onBoard;
-          return shuffle([...kept, ...tilesFromWords([replacement])]);
+
+          const nextEn = [...prev.en];
+          const nextTr = [...prev.tr];
+          // Only these two slots change — other tiles keep their places.
+          nextEn[enIdx] = makeEnTile(replacement);
+          nextTr[trIdx] = makeTrTile(replacement);
+          return { en: nextEn, tr: nextTr };
         });
         setFlash({});
         setSelected([]);
@@ -176,6 +212,36 @@ export function MatchPairsGame({ words }: { words: MatchWord[] }) {
         setLocked(false);
       }, 420);
     }
+  }
+
+  function renderColumn(tiles: Tile[], label: string) {
+    return (
+      <div className="min-w-0 flex-1 space-y-2.5">
+        <p className="text-center text-[10px] font-black uppercase tracking-[0.14em] text-[#94a3b8]">
+          {label}
+        </p>
+        {tiles.map((tile) => {
+          const isSel = selected.includes(tile.uid);
+          const state = flash[tile.uid];
+          let style = "border-[#e2e8f0] bg-white text-[#0f172a] hover:border-[#cbd5e1]";
+          if (state === "ok") style = "border-[#58cc02] bg-[#ecfce5] text-[#15803d]";
+          else if (state === "bad") style = "border-[#ff4b4b] bg-[#ffe8e8] text-[#b91c1c]";
+          else if (isSel) style = "border-[#1cb0f6] bg-[#e8f6fe] text-[#0f172a]";
+
+          return (
+            <button
+              key={tile.uid}
+              type="button"
+              disabled={locked && !state}
+              onClick={() => onTap(tile)}
+              className={`flex min-h-[3.25rem] w-full items-center justify-center rounded-xl border px-2 py-3 text-center text-[15px] font-extrabold leading-snug transition sm:min-h-[3.5rem] sm:text-base ${style}`}
+            >
+              {tile.text}
+            </button>
+          );
+        })}
+      </div>
+    );
   }
 
   if (pool.length < BOARD_PAIRS) {
@@ -207,12 +273,10 @@ export function MatchPairsGame({ words }: { words: MatchWord[] }) {
             <PracticeExamEyebrow>Hızlı Eşleştir</PracticeExamEyebrow>
             <h1 className="mt-3 text-2xl font-black text-[#1e3a5f]">Eşleşen çiftlere dokun</h1>
             <p className="mt-2 text-sm font-semibold text-[#64748b]">
-              Öğrendiğin kelimeleri {SESSION_SECONDS / 60} dakikada hızlıca pekiştir. Doğru
-              eşleşince yeni çift gelir — kombo seni yarışta tutar.
+              Sol İngilizce, sağ Türkçe. Doğru eşleşince yalnız o çift yenilenir — kombo seni yarışta
+              tutar.
             </p>
-            <p className="mt-3 text-xs font-bold text-[#94a3b8]">
-              Havuz: {pool.length} kelime
-            </p>
+            <p className="mt-3 text-xs font-bold text-[#94a3b8]">Havuz: {pool.length} kelime</p>
             <div className="mt-6 flex flex-col items-center gap-2">
               <PracticeExamPrimaryButton variant="green" onClick={startGame}>
                 Başlat
@@ -305,28 +369,9 @@ export function MatchPairsGame({ words }: { words: MatchWord[] }) {
           Kombo x{combo}
         </p>
 
-        <div className="mt-5 grid flex-1 grid-cols-2 content-start gap-2.5 sm:gap-3">
-          {board.map((tile) => {
-            const isSel = selected.includes(tile.uid);
-            const state = flash[tile.uid];
-            let style =
-              "border-[#e2e8f0] bg-white text-[#0f172a] hover:border-[#cbd5e1]";
-            if (state === "ok") style = "border-[#58cc02] bg-[#ecfce5] text-[#15803d]";
-            else if (state === "bad") style = "border-[#ff4b4b] bg-[#ffe8e8] text-[#b91c1c]";
-            else if (isSel) style = "border-[#1cb0f6] bg-[#e8f6fe] text-[#0f172a]";
-
-            return (
-              <button
-                key={tile.uid}
-                type="button"
-                disabled={locked && !state}
-                onClick={() => onTap(tile)}
-                className={`min-h-[3.25rem] rounded-xl border px-2 py-3 text-center text-[15px] font-extrabold leading-snug transition sm:min-h-[3.5rem] sm:text-base ${style}`}
-              >
-                {tile.text}
-              </button>
-            );
-          })}
+        <div className="mt-5 flex flex-1 gap-2.5 sm:gap-3">
+          {renderColumn(board.en, "English")}
+          {renderColumn(board.tr, "Türkçe")}
         </div>
 
         <p className="mt-4 text-center text-xs font-semibold text-[#94a3b8]">
