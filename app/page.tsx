@@ -83,7 +83,7 @@ export default async function DashboardPage() {
       title: "Kelimeler",
       href: "/quiz",
       tone: "blue",
-      icon: "📚",
+      icon: "books",
       state: activeId === "words" ? "active" : dueWordCount === 0 ? "done" : "upcoming",
     },
     {
@@ -91,7 +91,7 @@ export default async function DashboardPage() {
       title: "Sesler",
       href: "/sounds",
       tone: "cyan",
-      icon: "🔊",
+      icon: "sound",
       state: activeId === "sounds" ? "active" : "upcoming",
     },
     {
@@ -99,7 +99,7 @@ export default async function DashboardPage() {
       title: "Read & Complete",
       href: "/det/read-complete",
       tone: "purple",
-      icon: "📝",
+      icon: "write",
       state: "upcoming",
     },
     {
@@ -107,7 +107,7 @@ export default async function DashboardPage() {
       title: "Görsel Betimleme",
       href: "/photo-practice",
       tone: "orange",
-      icon: "🖼️",
+      icon: "photo",
       state: "upcoming",
     },
   ];

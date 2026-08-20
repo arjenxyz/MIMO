@@ -1,4 +1,7 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
+
+export type PathIconName = "books" | "sound" | "write" | "photo";
 
 export type PathNode = {
   id: string;
@@ -6,7 +9,7 @@ export type PathNode = {
   href: string;
   tone: "green" | "blue" | "purple" | "orange" | "cyan";
   state: "done" | "active" | "upcoming";
-  icon?: string;
+  icon?: PathIconName;
 };
 
 const TONE = {
@@ -48,7 +51,78 @@ const TONE = {
 };
 
 /** Zigzag offsets that stay inside the path column (no horizontal page scroll). */
-const OFFSETS = ["translate-x-0", "-translate-x-14 sm:-translate-x-16", "translate-x-14 sm:translate-x-16", "-translate-x-10 sm:-translate-x-12"];
+const OFFSETS = [
+  "translate-x-0",
+  "-translate-x-14 sm:-translate-x-16",
+  "translate-x-14 sm:translate-x-16",
+  "-translate-x-10 sm:-translate-x-12",
+];
+
+function PathIcon({ name }: { name: PathIconName }) {
+  const common = {
+    width: 28,
+    height: 28,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 2.25,
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+    className: "text-white drop-shadow-sm",
+    "aria-hidden": true as const,
+  };
+
+  const icons: Record<PathIconName, ReactNode> = {
+    books: (
+      <svg {...common}>
+        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+        <path d="M8 7h8M8 11h6" />
+      </svg>
+    ),
+    sound: (
+      <svg {...common}>
+        <path d="M11 5 6 9H2v6h4l5 4V5z" />
+        <path d="M15.5 8.5a5 5 0 0 1 0 7" />
+        <path d="M18.5 5.5a9 9 0 0 1 0 13" />
+      </svg>
+    ),
+    write: (
+      <svg {...common}>
+        <path d="M12 20h9" />
+        <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+      </svg>
+    ),
+    photo: (
+      <svg {...common}>
+        <rect x="3" y="5" width="18" height="14" rx="2" />
+        <circle cx="12" cy="12" r="3.25" />
+        <path d="M3 9h3.5l1.2-2h4.6" />
+      </svg>
+    ),
+  };
+
+  return icons[name];
+}
+
+function CheckIcon() {
+  return (
+    <svg
+      width={28}
+      height={28}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={3}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="text-white drop-shadow-sm"
+      aria-hidden
+    >
+      <path d="M5 12.5 10 17.5 19 7" />
+    </svg>
+  );
+}
 
 export function LearningPath({
   nodes,
@@ -130,22 +204,26 @@ export function LearningPath({
                     } ${isUpcoming ? "opacity-50 grayscale-[40%]" : ""}`}
                   >
                     {isDone ? (
-                      <span className="text-2xl font-black text-white drop-shadow-sm">✓</span>
+                      <CheckIcon />
                     ) : node.icon ? (
-                      <span className="text-[1.65rem] leading-none drop-shadow-sm" aria-hidden>
-                        {node.icon}
-                      </span>
+                      <PathIcon name={node.icon} />
                     ) : (
                       <span className="text-2xl font-black text-white drop-shadow-sm">{index + 1}</span>
                     )}
                   </Link>
 
                   <div className="mt-3 max-w-[7.5rem] text-center">
-                    <p className={`text-[15px] font-black leading-tight ${isActive ? "text-white" : "text-white/90"}`}>
+                    <p
+                      className={`text-[15px] font-black leading-tight ${
+                        isActive ? "text-white" : "text-white/90"
+                      }`}
+                    >
                       {node.title}
                     </p>
                     {isActive && (
-                      <p className={`mt-0.5 text-[11px] font-extrabold uppercase tracking-wide ${tone.soft}`}>
+                      <p
+                        className={`mt-0.5 text-[11px] font-extrabold uppercase tracking-wide ${tone.soft}`}
+                      >
                         Sıradaki
                       </p>
                     )}
