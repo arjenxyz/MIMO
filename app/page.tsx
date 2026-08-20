@@ -3,7 +3,6 @@ import { headers } from "next/headers";
 import { AddWordForm } from "@/app/components/AddWordForm";
 import { LearningPath, type PathNode } from "@/app/components/LearningPath";
 import { LoadWordsButton } from "@/app/components/LoadWordsButton";
-import { StreakWidget } from "@/app/components/StreakWidget";
 import { DEMO_DUE, DEMO_PROFILE, isDemoMode } from "@/lib/demo";
 import {
   getDueGrammar,
@@ -135,14 +134,6 @@ export default async function DashboardPage() {
           Demo modu — giriş yok, örnek verilerle tasarım yapıyorsun
         </div>
       )}
-
-      <div className="mb-6 max-w-md lg:max-w-sm">
-        <StreakWidget
-          dailyStreak={profile.daily_streak}
-          primaryHref={primaryHref}
-          primaryLabel={primaryLabel}
-        />
-      </div>
 
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1.15fr)_minmax(280px,0.85fr)] lg:items-start">
         <LearningPath
