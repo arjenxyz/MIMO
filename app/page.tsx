@@ -96,13 +96,6 @@ export default async function DashboardPage() {
       state: activeId === "words" ? "active" : dueWordCount === 0 ? "done" : "upcoming",
     },
     {
-      id: "grammar",
-      title: "Gramer",
-      href: "/quiz/grammar",
-      tone: "purple",
-      state: activeId === "grammar" ? "active" : dueGrammarCount === 0 ? "done" : "upcoming",
-    },
-    {
       id: "sounds",
       title: "Sesler",
       href: "/sounds",
