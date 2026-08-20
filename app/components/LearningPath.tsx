@@ -5,7 +5,6 @@ export type PathNode = {
   id: string;
   title: string;
   href: string;
-  badge?: string;
   tone: "green" | "blue" | "purple" | "orange" | "cyan";
   state: "done" | "active" | "upcoming";
 };
@@ -123,13 +122,6 @@ export function LearningPath({
 
                 <div className="mt-3 text-center">
                   <p className="text-base font-black text-white">{node.title}</p>
-                  {node.badge && (
-                    <span
-                      className={`mt-2 inline-flex rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wide ${tone.soft}`}
-                    >
-                      {node.badge}
-                    </span>
-                  )}
                 </div>
               </li>
             );

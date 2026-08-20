@@ -3,7 +3,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { DEMO_PROFILE, isDemoMode } from "@/lib/demo";
 import { createClient } from "@/lib/supabase/client";
 import type { Profile } from "@/types";
@@ -20,12 +21,17 @@ function detectDemo() {
 export function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
+  const menuId = useId();
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
   const [demo, setDemo] = useState(detectDemo);
   const [profile, setProfile] = useState<Profile | null>(() =>
     detectDemo() ? DEMO_PROFILE : null
   );
   const [ready, setReady] = useState(() => detectDemo());
   const [menuOpen, setMenuOpen] = useState(false);
+  const [menuPos, setMenuPos] = useState({ top: 0, right: 0 });
+  const [mounted, setMounted] = useState(false);
 
   const loadProfile = useCallback(async () => {
     const localDemo = detectDemo();
@@ -57,6 +63,10 @@ export function Navbar() {
   }, []);
 
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
     loadProfile();
     const onUpdate = () => loadProfile();
     window.addEventListener("profile-updated", onUpdate);
@@ -67,6 +77,48 @@ export function Navbar() {
     setMenuOpen(false);
   }, [pathname]);
 
+  useEffect(() => {
+    if (!menuOpen) return;
+
+    function place() {
+      const rect = buttonRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      setMenuPos({
+        top: rect.bottom + 8,
+        right: Math.max(8, window.innerWidth - rect.right),
+      });
+    }
+
+    place();
+    window.addEventListener("resize", place);
+    window.addEventListener("scroll", place, true);
+
+    function onPointerDown(event: PointerEvent) {
+      const target = event.target as Node;
+      if (buttonRef.current?.contains(target)) return;
+      if (menuRef.current?.contains(target)) return;
+      setMenuOpen(false);
+    }
+
+    function onKey(event: KeyboardEvent) {
+      if (event.key === "Escape") setMenuOpen(false);
+    }
+
+    // Defer so the opening click does not immediately close the menu.
+    const timer = window.setTimeout(() => {
+      document.addEventListener("pointerdown", onPointerDown);
+    }, 0);
+    document.addEventListener("keydown", onKey);
+
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("resize", place);
+      window.removeEventListener("scroll", place, true);
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [menuOpen]);
+
   if (HIDDEN_PATHS.some((path) => pathname.startsWith(path))) {
     return null;
   }
@@ -76,6 +128,7 @@ export function Navbar() {
   }
 
   async function signOut() {
+    setMenuOpen(false);
     if (demo) {
       router.push("/login");
       return;
@@ -100,9 +153,7 @@ export function Navbar() {
             height={36}
             className="h-9 w-9 rounded-full object-cover ring-2 ring-[#fd860a]/45"
           />
-          <span className="text-xl font-black tracking-tight text-white">
-            MIMO
-          </span>
+          <span className="text-xl font-black tracking-tight text-white">MIMO</span>
           {demo && (
             <span className="rounded-full bg-[#ffc800]/15 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-[#ffc800]">
               Demo
@@ -121,52 +172,49 @@ export function Navbar() {
             <span className="text-sm tabular-nums">{profile.daily_streak}</span>
           </div>
 
-          <div className="relative ml-1">
-            <button
-              type="button"
-              aria-label="Profil menüsü"
-              aria-expanded={menuOpen}
-              onClick={(event) => {
-                event.stopPropagation();
-                setMenuOpen((open) => !open);
-              }}
-              className="relative z-[70] flex h-10 w-10 items-center justify-center overflow-hidden rounded-full ring-2 ring-[#fd860a]/50 transition hover:ring-[#fd860a]"
-            >
-              <Image
-                src="/mimo-avatar.png"
-                alt="Profil"
-                width={40}
-                height={40}
-                className="pointer-events-none h-full w-full object-cover"
-              />
-            </button>
-            {menuOpen && (
-              <>
-                <div
-                  aria-hidden
-                  className="fixed inset-0 z-[60]"
-                  onPointerDown={() => setMenuOpen(false)}
-                />
-                <div
-                  role="menu"
-                  className="absolute right-0 top-12 z-[70] w-48 overflow-hidden rounded-2xl border-2 border-duo-border bg-duo-card shadow-xl"
-                  onPointerDown={(event) => event.stopPropagation()}
+          <button
+            ref={buttonRef}
+            type="button"
+            aria-label="Profil menüsü"
+            aria-expanded={menuOpen}
+            aria-haspopup="menu"
+            aria-controls={menuId}
+            onClick={() => setMenuOpen((open) => !open)}
+            className="relative z-[70] flex h-10 w-10 items-center justify-center overflow-hidden rounded-full ring-2 ring-[#fd860a]/50 transition hover:ring-[#fd860a]"
+          >
+            <Image
+              src="/mimo-avatar.png"
+              alt="Profil"
+              width={40}
+              height={40}
+              className="pointer-events-none h-full w-full object-cover"
+            />
+          </button>
+
+          {mounted &&
+            menuOpen &&
+            createPortal(
+              <div
+                ref={menuRef}
+                id={menuId}
+                role="menu"
+                style={{ top: menuPos.top, right: menuPos.right }}
+                className="fixed z-[200] w-48 overflow-hidden rounded-2xl border-2 border-duo-border bg-duo-card shadow-xl"
+              >
+                <p className="border-b border-duo-border px-4 py-3 text-sm font-extrabold text-duo-muted">
+                  {profile.username || "Öğrenci"}
+                </p>
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={signOut}
+                  className="w-full px-4 py-3 text-left text-sm font-extrabold text-[#ff4b4b] hover:bg-white/5"
                 >
-                  <p className="border-b border-duo-border px-4 py-3 text-sm font-extrabold text-duo-muted">
-                    {profile.username || "Öğrenci"}
-                  </p>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    onClick={signOut}
-                    className="w-full px-4 py-3 text-left text-sm font-extrabold text-[#ff4b4b] hover:bg-white/5"
-                  >
-                    {demo ? "Giriş ekranı" : "Çıkış yap"}
-                  </button>
-                </div>
-              </>
+                  {demo ? "Giriş ekranı" : "Çıkış yap"}
+                </button>
+              </div>,
+              document.body
             )}
-          </div>
         </div>
       </div>
     </header>
