@@ -203,7 +203,7 @@ async function searchOpenverseClear(query: string): Promise<string | null> {
       }
     }
 
-    return best?.url ?? null;
+    return best ? best.url : null;
   } catch {
     return null;
   }
