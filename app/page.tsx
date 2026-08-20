@@ -221,8 +221,6 @@ export default async function DashboardPage() {
             </p>
           </section>
 
-          <DailyQuests quests={questsView} bonusJustClaimed={bonusClaimed} />
-
           {showAddWord ? (
             <AddWordForm />
           ) : (
