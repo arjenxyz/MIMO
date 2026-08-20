@@ -8,8 +8,9 @@ import { DEMO_DET_READ_COMPLETE, isDemoMode } from "@/lib/demo";
 import type { DETExercise } from "@/types";
 
 const PASSAGE_SECONDS = 3 * 60;
-const SESSION_SIZE = 5;
-const RECENT_KEY = "mimo-det-rc-recent";
+const SESSION_SIZE = 4;
+const RECENT_TOPICS_KEY = "mimo-det-rc-topics";
+const RECENT_IDS_KEY = "mimo-det-rc-recent";
 
 function shuffle<T>(items: T[]) {
   const copy = [...items];
@@ -20,9 +21,30 @@ function shuffle<T>(items: T[]) {
   return copy;
 }
 
+function readRecentTopics(): string[] {
+  try {
+    const raw = sessionStorage.getItem(RECENT_TOPICS_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as unknown;
+    return Array.isArray(parsed)
+      ? parsed.filter((t): t is string => typeof t === "string" && t.trim().length > 0)
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeRecentTopics(topics: string[]) {
+  try {
+    sessionStorage.setItem(RECENT_TOPICS_KEY, JSON.stringify(topics.slice(-16)));
+  } catch {
+    // ignore
+  }
+}
+
 function readRecentIds(): number[] {
   try {
-    const raw = sessionStorage.getItem(RECENT_KEY);
+    const raw = sessionStorage.getItem(RECENT_IDS_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw) as unknown;
     return Array.isArray(parsed) ? parsed.filter((n): n is number => typeof n === "number") : [];
@@ -33,13 +55,12 @@ function readRecentIds(): number[] {
 
 function writeRecentIds(ids: number[]) {
   try {
-    sessionStorage.setItem(RECENT_KEY, JSON.stringify(ids.slice(-24)));
+    sessionStorage.setItem(RECENT_IDS_KEY, JSON.stringify(ids.slice(-24)));
   } catch {
     // ignore
   }
 }
 
-/** Prefer unseen passages so mobile sessions don't feel stuck on the same 3. */
 function pickSession(pool: DETExercise[], count = SESSION_SIZE) {
   const recent = new Set(readRecentIds());
   const fresh = pool.filter((ex) => !recent.has(ex.id));
@@ -54,6 +75,10 @@ function detectDemoClient() {
   return isDemoMode(window.location.hostname);
 }
 
+function isSyntheticId(id: number) {
+  return id < 0;
+}
+
 export default function ReadCompletePage() {
   const [mounted, setMounted] = useState(false);
   const [exercises, setExercises] = useState<DETExercise[]>([]);
@@ -65,10 +90,13 @@ export default function ReadCompletePage() {
   const [correctCount, setCorrectCount] = useState(0);
   const [wrongCount, setWrongCount] = useState(0);
   const [error, setError] = useState("");
-  const [demo, setDemo] = useState(true);
+  const [demo, setDemo] = useState(false);
+  const [aiSource, setAiSource] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
+  const [generating, setGenerating] = useState(false);
   const timedOutRef = useRef(false);
+  const loadGenRef = useRef(0);
 
   const finished = exercises.length > 0 && index >= exercises.length;
   const current = !finished ? exercises[index] : null;
@@ -78,83 +106,84 @@ export default function ReadCompletePage() {
     return extractGaps(parseClozePassage(current.question_text, current.correct_answer));
   }, [current]);
 
-  const loadLive = useCallback(async () => {
-    const localDemo = detectDemoClient();
-    setDemo(localDemo);
+  const startSession = useCallback((list: DETExercise[], opts?: { demo?: boolean; ai?: boolean; message?: string }) => {
+    setExercises(list);
+    setIndex(0);
+    setCorrectCount(0);
+    setWrongCount(0);
+    setValues({});
+    setChecked(false);
+    setPaused(false);
+    setSecondsLeft(PASSAGE_SECONDS);
+    timedOutRef.current = false;
+    setDemo(Boolean(opts?.demo));
+    setAiSource(Boolean(opts?.ai));
+    setError(opts?.message ?? "");
     setReady(true);
+    setGenerating(false);
 
-    // Local/demo: rotate through a larger demo pool; avoid recent ones.
-    if (localDemo) {
-      setExercises(pickSession(DEMO_DET_READ_COMPLETE));
-      setUserId(null);
-      return;
-    }
-
-    try {
-      const { createClient } = await import("@/lib/supabase/client");
-      const supabase = createClient();
-
-      const userPromise = supabase.auth.getUser();
-      const timeout = new Promise<null>((resolve) => {
-        window.setTimeout(() => resolve(null), 4000);
-      });
-      const raced = await Promise.race([
-        userPromise.then((r) => r).catch(() => null),
-        timeout,
-      ]);
-
-      const user = raced && "data" in raced ? raced.data.user : null;
-      setUserId(user?.id ?? null);
-
-      const { data: typeRow, error: typeError } = await supabase
-        .from("det_question_types")
-        .select("id")
-        .eq("type_name", "read_complete")
-        .maybeSingle();
-
-      if (typeError) throw typeError;
-      if (!typeRow) throw new Error("read_complete tipi bulunamadı. schema-det.sql çalıştır.");
-
-      const { data, error: exError } = await supabase
-        .from("det_exercises")
-        .select("*")
-        .eq("question_type_id", typeRow.id);
-
-      if (exError) throw exError;
-      let list = (data as DETExercise[]) ?? [];
-
-      // Prefer exercises the user has not answered recently.
-      if (user?.id && list.length > SESSION_SIZE) {
-        const { data: answered } = await supabase
-          .from("user_det_answers")
-          .select("exercise_id")
-          .eq("user_id", user.id)
-          .order("answered_at", { ascending: false })
-          .limit(40);
-        const answeredIds = new Set((answered ?? []).map((row) => row.exercise_id as number));
-        const unseen = list.filter((ex) => !answeredIds.has(ex.id));
-        if (unseen.length >= SESSION_SIZE) list = unseen;
-      }
-
-      if (list.length === 0) {
-        setExercises(pickSession(DEMO_DET_READ_COMPLETE));
-        setDemo(true);
-        setError("Havuz boş — demo pasajlar gösteriliyor.");
-        return;
-      }
-      setExercises(pickSession(list));
-      setError("");
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Sorular yüklenemedi");
-      setExercises(pickSession(DEMO_DET_READ_COMPLETE));
-      setDemo(true);
+    const topics = list.map((ex) => ex.topic).filter((t): t is string => Boolean(t));
+    if (topics.length > 0) {
+      writeRecentTopics([...readRecentTopics(), ...topics]);
     }
   }, []);
 
+  const loadAiSession = useCallback(async () => {
+    const gen = ++loadGenRef.current;
+    setGenerating(true);
+    setError("");
+    setReady(true);
+
+    const localDemo = detectDemoClient();
+    if (!localDemo) {
+      try {
+        const { createClient } = await import("@/lib/supabase/client");
+        const supabase = createClient();
+        const { data } = await supabase.auth.getUser();
+        setUserId(data.user?.id ?? null);
+      } catch {
+        setUserId(null);
+      }
+    } else {
+      setUserId(null);
+    }
+
+    try {
+      const res = await fetch("/api/det/generate-cloze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          count: SESSION_SIZE,
+          avoidTopics: readRecentTopics(),
+        }),
+      });
+
+      const payload = (await res.json()) as {
+        exercises?: DETExercise[];
+        error?: string;
+      };
+
+      if (gen !== loadGenRef.current) return;
+
+      if (!res.ok || !payload.exercises?.length) {
+        throw new Error(payload.error || "Yeni pasaj üretilemedi");
+      }
+
+      startSession(payload.exercises, { ai: true });
+    } catch (e) {
+      if (gen !== loadGenRef.current) return;
+      const message = e instanceof Error ? e.message : "Yeni pasaj üretilemedi";
+      startSession(pickSession(DEMO_DET_READ_COMPLETE), {
+        demo: true,
+        message: `${message} — yedek pasajlar gösteriliyor.`,
+      });
+    }
+  }, [startSession]);
+
   useEffect(() => {
     setMounted(true);
-    void loadLive();
-  }, [loadLive]);
+    void loadAiSession();
+  }, [loadAiSession]);
 
   useEffect(() => {
     setValues({});
@@ -174,7 +203,8 @@ export default function ReadCompletePage() {
       setCorrectCount((n) => n + score.correct);
       setWrongCount((n) => n + score.wrong);
 
-      if (!demo && userId) {
+      // AI-generated rows use negative ids — no FK in det_exercises.
+      if (!demo && userId && !isSyntheticId(current.id)) {
         try {
           const { createClient } = await import("@/lib/supabase/client");
           const supabase = createClient();
@@ -196,7 +226,7 @@ export default function ReadCompletePage() {
   );
 
   useEffect(() => {
-    if (!ready || finished || checked || paused || !current) return;
+    if (!ready || generating || finished || checked || paused || !current) return;
 
     const timer = window.setInterval(() => {
       setSecondsLeft((s) => {
@@ -210,7 +240,7 @@ export default function ReadCompletePage() {
     }, 1000);
 
     return () => window.clearInterval(timer);
-  }, [checked, current, finalize, finished, paused, ready]);
+  }, [checked, current, finalize, finished, generating, paused, ready]);
 
   function goNext() {
     setIndex((i) => i + 1);
@@ -227,6 +257,22 @@ export default function ReadCompletePage() {
       <main className="min-h-screen bg-[#f3f4f6] text-[#0f172a]">
         <div className="mx-auto max-w-3xl px-4 pb-10 pt-5">
           <div className="text-center text-sm font-bold text-[#64748b]">Loading…</div>
+        </div>
+      </main>
+    );
+  }
+
+  if (generating) {
+    return (
+      <main className="min-h-screen bg-[#f3f4f6] text-[#0f172a]">
+        <div className="mx-auto max-w-3xl px-4 pb-10 pt-16 text-center">
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#1cb0f6]">
+            Read and Complete
+          </p>
+          <h1 className="mt-3 text-xl font-black">Yeni pasajlar hazırlanıyor…</h1>
+          <p className="mt-2 text-sm font-semibold text-[#64748b]">
+            Yapay zeka her seferinde farklı cümleler üretiyor.
+          </p>
         </div>
       </main>
     );
@@ -261,15 +307,11 @@ export default function ReadCompletePage() {
             <button
               type="button"
               onClick={() => {
-                setIndex(0);
-                setCorrectCount(0);
-                setWrongCount(0);
-                setExercises(pickSession(DEMO_DET_READ_COMPLETE));
-                void loadLive();
+                void loadAiSession();
               }}
               className="rounded-2xl bg-[#1cb0f6] px-4 py-3 text-sm font-black uppercase tracking-wide text-white"
             >
-              Tekrar çöz
+              Yeni pasajlar
             </button>
             <Link
               href="/"
@@ -314,9 +356,9 @@ export default function ReadCompletePage() {
           Type the missing letters to complete the text below.
         </p>
 
-        {(demo || error) && (
-          <p className="mb-4 text-center text-xs font-semibold text-[#b45309]">
-            {error || "Demo pasaj — canlıda Supabase havuzundan gelir"}
+        {(error || aiSource) && (
+          <p className="mb-4 text-center text-xs font-semibold text-[#64748b]">
+            {error || "Yapay zeka ile üretilen yeni pasajlar"}
           </p>
         )}
 
