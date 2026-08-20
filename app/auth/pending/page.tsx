@@ -5,18 +5,29 @@ import { Suspense, useEffect, useState } from "react";
 import { AuthShell } from "@/app/components/AuthShell";
 import { createClient } from "@/lib/supabase/client";
 
-type Provider = "google" | "discord" | "github";
+type ProviderKey = "google" | "discord" | "github" | "linkedin";
 
-const LABELS: Record<Provider, string> = {
+const LABELS: Record<ProviderKey, string> = {
   google: "Google",
   discord: "Discord",
   github: "GitHub",
+  linkedin: "LinkedIn",
+};
+
+const SUPABASE_PROVIDER: Record<
+  ProviderKey,
+  "google" | "discord" | "github" | "linkedin_oidc"
+> = {
+  google: "google",
+  discord: "discord",
+  github: "github",
+  linkedin: "linkedin_oidc",
 };
 
 function PendingContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const provider = (searchParams.get("provider") || "google") as Provider;
+  const providerParam = (searchParams.get("provider") || "google") as ProviderKey;
   const [message, setMessage] = useState("Giriş başlatılıyor...");
 
   useEffect(() => {
@@ -24,20 +35,21 @@ function PendingContent() {
 
     async function start() {
       try {
-        if (!LABELS[provider]) {
+        if (!LABELS[providerParam]) {
           router.replace("/auth/error?message=" + encodeURIComponent("Geçersiz giriş yöntemi."));
           return;
         }
 
-        setMessage(`${LABELS[provider]} hesabına yönlendiriliyorsun...`);
+        setMessage(`${LABELS[providerParam]} hesabına yönlendiriliyorsun...`);
         const supabase = createClient();
         const origin = window.location.origin;
+        const provider = SUPABASE_PROVIDER[providerParam];
         const scopes =
-          provider === "google"
+          providerParam === "google" || providerParam === "linkedin"
             ? "openid email profile"
-            : provider === "discord"
+            : providerParam === "discord"
               ? "identify email"
-              : provider === "github"
+              : providerParam === "github"
                 ? "read:user user:email"
                 : undefined;
 
@@ -74,7 +86,7 @@ function PendingContent() {
     return () => {
       cancelled = true;
     };
-  }, [provider, router]);
+  }, [providerParam, router]);
 
   return <AuthShell title="Bir saniye..." subtitle={message} tone="pending" />;
 }
