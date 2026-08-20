@@ -5,7 +5,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ClozePassage, scoreCloze } from "@/app/components/det/ClozePassage";
 import { extractGaps, formatTimer, parseClozePassage } from "@/lib/detCloze";
 import { DEMO_DET_READ_COMPLETE, isDemoMode } from "@/lib/demo";
-import { createClient } from "@/lib/supabase/client";
 import type { DETExercise } from "@/types";
 
 const PASSAGE_SECONDS = 3 * 60;
@@ -19,8 +18,15 @@ function shuffle<T>(items: T[]) {
   return copy;
 }
 
+function detectDemoClient() {
+  if (typeof window === "undefined") return isDemoMode(null);
+  return isDemoMode(window.location.hostname);
+}
+
 export default function ReadCompletePage() {
-  const [exercises, setExercises] = useState<DETExercise[]>([]);
+  const [exercises, setExercises] = useState<DETExercise[]>(() =>
+    shuffle(DEMO_DET_READ_COMPLETE)
+  );
   const [index, setIndex] = useState(0);
   const [values, setValues] = useState<Record<string, string>>({});
   const [checked, setChecked] = useState(false);
@@ -28,10 +34,10 @@ export default function ReadCompletePage() {
   const [secondsLeft, setSecondsLeft] = useState(PASSAGE_SECONDS);
   const [correctCount, setCorrectCount] = useState(0);
   const [wrongCount, setWrongCount] = useState(0);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [demo, setDemo] = useState(false);
+  const [demo, setDemo] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
+  const [ready, setReady] = useState(false);
   const timedOutRef = useRef(false);
 
   const finished = exercises.length > 0 && index >= exercises.length;
@@ -42,25 +48,32 @@ export default function ReadCompletePage() {
     return extractGaps(parseClozePassage(current.question_text, current.correct_answer));
   }, [current]);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError("");
-    const localDemo = isDemoMode(
-      typeof window !== "undefined" ? window.location.hostname : null
-    );
+  const loadLive = useCallback(async () => {
+    const localDemo = detectDemoClient();
     setDemo(localDemo);
+    setReady(true);
+
+    // Local/demo: keep seeded passages, never wait on Supabase.
+    if (localDemo) {
+      setExercises(shuffle(DEMO_DET_READ_COMPLETE));
+      setUserId(null);
+      return;
+    }
 
     try {
-      if (localDemo) {
-        setExercises(shuffle(DEMO_DET_READ_COMPLETE));
-        setUserId(null);
-        return;
-      }
-
+      const { createClient } = await import("@/lib/supabase/client");
       const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+
+      const userPromise = supabase.auth.getUser();
+      const timeout = new Promise<null>((resolve) => {
+        window.setTimeout(() => resolve(null), 4000);
+      });
+      const raced = await Promise.race([
+        userPromise.then((r) => r).catch(() => null),
+        timeout,
+      ]);
+
+      const user = raced && "data" in raced ? raced.data.user : null;
       setUserId(user?.id ?? null);
 
       const { data: typeRow, error: typeError } = await supabase
@@ -86,18 +99,17 @@ export default function ReadCompletePage() {
         return;
       }
       setExercises(shuffle(list));
+      setError("");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Sorular yüklenemedi");
       setExercises(shuffle(DEMO_DET_READ_COMPLETE));
       setDemo(true);
-    } finally {
-      setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    load();
-  }, [load]);
+    void loadLive();
+  }, [loadLive]);
 
   useEffect(() => {
     setValues({});
@@ -119,6 +131,7 @@ export default function ReadCompletePage() {
 
       if (!demo && userId) {
         try {
+          const { createClient } = await import("@/lib/supabase/client");
           const supabase = createClient();
           const userAnswer = gaps
             .map((g) => `${g.answer.slice(0, g.shown)}${(values[g.id] || "").replace(/·/g, "")}`)
@@ -138,7 +151,7 @@ export default function ReadCompletePage() {
   );
 
   useEffect(() => {
-    if (loading || finished || checked || paused || !current) return;
+    if (!ready || finished || checked || paused || !current) return;
 
     const timer = window.setInterval(() => {
       setSecondsLeft((s) => {
@@ -152,7 +165,7 @@ export default function ReadCompletePage() {
     }, 1000);
 
     return () => window.clearInterval(timer);
-  }, [checked, current, finalize, finished, loading, paused]);
+  }, [checked, current, finalize, finished, paused, ready]);
 
   function goNext() {
     setIndex((i) => i + 1);
@@ -163,14 +176,6 @@ export default function ReadCompletePage() {
     if (total === 0) return 0;
     return Math.round((correctCount / total) * 100);
   }, [correctCount, wrongCount]);
-
-  if (loading) {
-    return (
-      <main className="flex min-h-screen items-center justify-center bg-[#f3f4f6] text-[#64748b]">
-        <p className="text-sm font-bold uppercase tracking-widest">Loading…</p>
-      </main>
-    );
-  }
 
   if (finished) {
     return (
@@ -204,7 +209,8 @@ export default function ReadCompletePage() {
                 setIndex(0);
                 setCorrectCount(0);
                 setWrongCount(0);
-                void load();
+                setExercises(shuffle(DEMO_DET_READ_COMPLETE));
+                void loadLive();
               }}
               className="rounded-2xl bg-[#1cb0f6] px-4 py-3 text-sm font-black uppercase tracking-wide text-white"
             >
@@ -274,7 +280,7 @@ export default function ReadCompletePage() {
               showResults={checked}
             />
 
-            <div className="mt-8 flex flex-col gap-2 sm:flex-row sm:justify-center">
+            <div className="mt-8 flex flex-col items-center gap-3">
               {!checked ? (
                 <button
                   type="button"
@@ -285,7 +291,7 @@ export default function ReadCompletePage() {
                 </button>
               ) : (
                 <>
-                  <p className="mb-2 w-full text-center text-sm font-bold text-[#64748b] sm:mb-0">
+                  <p className="text-center text-sm font-bold text-[#64748b]">
                     {timedOutRef.current ? "Süre doldu. " : ""}
                     Bu pasajda {scoreCloze(gaps, values).correct}/{gaps.length} boşluk doğru.
                   </p>
@@ -303,7 +309,7 @@ export default function ReadCompletePage() {
         )}
 
         <p className="mt-4 text-center text-xs font-semibold text-[#94a3b8]">
-          Pasaj {Math.min(index + 1, exercises.length)} / {exercises.length}
+          Pasaj {Math.min(index + 1, Math.max(exercises.length, 1))} / {exercises.length || 1}
         </p>
       </div>
     </main>

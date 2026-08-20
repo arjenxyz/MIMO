@@ -12,7 +12,16 @@ import type {
 export function isDemoMode(hostname?: string | null) {
   if (process.env.NEXT_PUBLIC_DEMO_MODE === "true") return true;
   if (process.env.NODE_ENV === "development") return true;
-  if (hostname === "localhost" || hostname === "127.0.0.1") return true;
+  const host = (hostname || "").toLowerCase();
+  if (
+    host === "localhost" ||
+    host === "127.0.0.1" ||
+    host === "::1" ||
+    host === "[::1]" ||
+    host.endsWith(".local")
+  ) {
+    return true;
+  }
   return false;
 }
 
