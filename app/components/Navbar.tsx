@@ -147,11 +147,19 @@ export function Navbar() {
             </summary>
             <div
               role="menu"
-              className="absolute right-0 top-12 z-[200] w-48 overflow-hidden rounded-2xl border-2 border-duo-border bg-duo-card shadow-xl"
+              className="absolute right-0 top-12 z-[200] w-52 overflow-hidden rounded-2xl border-2 border-duo-border bg-duo-card shadow-xl"
             >
               <p className="border-b border-duo-border px-4 py-3 text-sm font-extrabold text-duo-muted">
                 {profile.username || "Öğrenci"}
               </p>
+              <Link
+                href="/words/add"
+                role="menuitem"
+                className="block border-b border-duo-border px-4 py-3 text-sm font-extrabold text-[#1cb0f6] hover:bg-white/5"
+                onClick={() => detailsRef.current?.removeAttribute("open")}
+              >
+                Kelime ekle
+              </Link>
               <button
                 type="button"
                 role="menuitem"
