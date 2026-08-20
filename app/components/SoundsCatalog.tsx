@@ -53,7 +53,7 @@ export function SoundsCatalog() {
   }
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-6 pb-16">
+    <main className="mx-auto max-w-3xl px-4 py-6 pb-28 lg:pb-16">
       <section className="rounded-3xl border-2 border-duo-border bg-duo-card p-6 text-center sm:p-8">
         <h1 className="text-2xl font-black text-white sm:text-3xl">İngilizce sesleri öğrenelim!</h1>
         <p className="mt-2 font-bold text-duo-muted">

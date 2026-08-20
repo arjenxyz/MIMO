@@ -5,7 +5,6 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { xpInCurrentLevel } from "@/lib/srs";
 import type { Profile } from "@/types";
 
 const HIDDEN_PATHS = ["/login", "/register", "/onboarding", "/auth", "/sounds/practice"];
@@ -15,6 +14,7 @@ export function Navbar() {
   const router = useRouter();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [ready, setReady] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const loadProfile = useCallback(async () => {
     try {
@@ -43,6 +43,10 @@ export function Navbar() {
     return () => window.removeEventListener("profile-updated", onUpdate);
   }, [loadProfile, pathname]);
 
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [pathname]);
+
   if (HIDDEN_PATHS.some((path) => pathname.startsWith(path))) {
     return null;
   }
@@ -58,64 +62,86 @@ export function Navbar() {
     router.refresh();
   }
 
-  const xpNow = xpInCurrentLevel(profile.xp);
-
   return (
-    <header className="sticky top-0 z-40 border-b-2 border-duo-border bg-duo-bg/95 backdrop-blur">
-      <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-4 py-3">
-        <Link href="/" className="flex items-center gap-2 font-black tracking-tight">
-          <Image
-            src="/mimo-avatar.png"
-            alt="Mimo"
-            width={36}
-            height={36}
-            className="h-9 w-9 rounded-full object-cover ring-2 ring-duo-orange/40"
-          />
-          <span className="text-xl">MIMO</span>
+    <header className="sticky top-0 z-40 border-b-2 border-duo-border/80 bg-[#0f1a1e]/92 backdrop-blur-md">
+      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-3 px-4">
+        <Link
+          href="/"
+          className="flex items-center gap-2.5 rounded-xl px-1 py-1 transition hover:bg-white/5"
+        >
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#fd860a] text-sm font-black text-white shadow-[0_3px_0_#d66f08]">
+            EN
+          </span>
+          <span className="hidden text-lg font-black tracking-tight sm:inline">MIMO</span>
         </Link>
 
-        <div className="flex flex-wrap items-center gap-2 text-sm font-extrabold">
-          <span className="rounded-xl bg-duo-surface px-3 py-1.5 text-duo-purple">Lv {profile.level}</span>
-          <span className="rounded-xl bg-duo-surface px-3 py-1.5 text-duo-gold">
-            {profile.xp} XP · {xpNow}/100
-          </span>
-          <span className="rounded-xl bg-duo-surface px-3 py-1.5 text-duo-orange">
-            🔥 {profile.daily_streak}
-          </span>
-        </div>
+        <div className="flex items-center gap-1 sm:gap-2">
+          <div
+            className="flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 font-black text-[#ff9600]"
+            title="Günlük seri"
+          >
+            <span className="text-lg" aria-hidden>
+              🔥
+            </span>
+            <span className="text-sm tabular-nums">{profile.daily_streak}</span>
+          </div>
+          <div
+            className="flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 font-black text-[#ffc800]"
+            title="Toplam XP"
+          >
+            <span className="text-lg" aria-hidden>
+              ⚡
+            </span>
+            <span className="text-sm tabular-nums">{profile.xp}</span>
+          </div>
+          <div
+            className="flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 font-black text-[#ce82ff]"
+            title="Seviye"
+          >
+            <span className="text-sm">Lv</span>
+            <span className="text-sm tabular-nums">{profile.level}</span>
+          </div>
 
-        <nav className="flex flex-wrap items-center gap-2">
-          <Link
-            href="/quiz"
-            className="rounded-xl bg-duo-blue px-3 py-2 text-sm font-extrabold shadow-duo-blue active:translate-y-1 active:shadow-none"
-          >
-            Quiz
-          </Link>
-          <Link
-            href="/quiz/grammar"
-            className="rounded-xl bg-duo-purple px-3 py-2 text-sm font-extrabold text-[#3b0764] shadow-duo-purple active:translate-y-1 active:shadow-none"
-          >
-            Gramer
-          </Link>
-          <Link
-            href="/sounds"
-            className="rounded-xl bg-[#1cb0f6] px-3 py-2 text-sm font-extrabold text-white shadow-[0_3px_0_#1899d6] active:translate-y-1 active:shadow-none"
-          >
-            Sesler
-          </Link>
-          <Link
-            href="/reading"
-            className="rounded-xl bg-duo-orange px-3 py-2 text-sm font-extrabold shadow-duo-orange active:translate-y-1 active:shadow-none"
-          >
-            Okuma
-          </Link>
-          <button
-            onClick={signOut}
-            className="rounded-xl border-2 border-duo-border px-3 py-2 text-sm font-extrabold text-duo-muted"
-          >
-            Çıkış Yap
-          </button>
-        </nav>
+          <div className="relative ml-1">
+            <button
+              type="button"
+              aria-label="Profil menüsü"
+              aria-expanded={menuOpen}
+              onClick={() => setMenuOpen((o) => !o)}
+              className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full ring-2 ring-[#fd860a]/50 transition hover:ring-[#fd860a]"
+            >
+              <Image
+                src="/mimo-avatar.png"
+                alt=""
+                width={40}
+                height={40}
+                className="h-full w-full object-cover"
+              />
+            </button>
+            {menuOpen && (
+              <>
+                <button
+                  type="button"
+                  aria-label="Menüyü kapat"
+                  className="fixed inset-0 z-40 cursor-default"
+                  onClick={() => setMenuOpen(false)}
+                />
+                <div className="absolute right-0 top-12 z-50 w-48 overflow-hidden rounded-2xl border-2 border-duo-border bg-duo-card shadow-xl">
+                  <p className="border-b border-duo-border px-4 py-3 text-sm font-extrabold text-duo-muted">
+                    {profile.username || "Öğrenci"}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={signOut}
+                    className="w-full px-4 py-3 text-left text-sm font-extrabold text-[#ff4b4b] hover:bg-white/5"
+                  >
+                    Çıkış yap
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
       </div>
     </header>
   );

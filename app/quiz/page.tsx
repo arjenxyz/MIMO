@@ -154,7 +154,7 @@ export default function WordQuizPage() {
   }
 
   return (
-    <main className="mx-auto min-h-screen max-w-xl px-4 py-6">
+    <main className="mx-auto min-h-screen max-w-xl px-4 py-6 pb-28 lg:pb-6">
       <p className="mb-4 text-center text-sm font-extrabold text-duo-muted">{progressLabel}</p>
       <section className="rounded-3xl border-2 border-duo-border bg-duo-card p-6">
         <div className="mb-6 flex justify-center gap-3">

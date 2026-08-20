@@ -1,0 +1,15 @@
+---
+description: Auto commit and push to main after every meaningful change
+alwaysApply: true
+---
+
+# Auto commit + push to main
+
+After completing any meaningful code change in this repo:
+
+1. Commit on `main` (do not create `cursor/` feature branches unless the user explicitly asks).
+2. Use a concise commit message focused on why.
+3. Immediately `git push origin main`.
+4. Do not ask for confirmation for routine commits/pushes — the user requested this habit.
+5. Never commit secrets (`.env`, credentials). Never force-push.
+6. Skip empty commits if there is nothing to stage.

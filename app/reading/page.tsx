@@ -24,7 +24,7 @@ export default async function ReadingPage() {
   const done = new Set((completed ?? []).map((row) => row.story_id));
 
   return (
-    <main className="mx-auto min-h-screen max-w-5xl px-4 py-6">
+    <main className="mx-auto min-h-screen max-w-5xl px-4 py-6 pb-28 lg:pb-6">
       <h1 className="text-3xl font-black">Okuma</h1>
       <p className="mt-1 font-bold text-duo-muted">
         Level {profile.level} için hikayeler · her hikaye +20 XP

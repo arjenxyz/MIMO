@@ -99,7 +99,7 @@ export default function StoryDetailPage() {
   const expected = [story.answer1, story.answer2, story.answer3];
 
   return (
-    <main className="mx-auto min-h-screen max-w-3xl px-4 py-6">
+    <main className="mx-auto min-h-screen max-w-3xl px-4 py-6 pb-28 lg:pb-6">
       <p className="text-sm font-black uppercase text-duo-orange">Level {story.level}</p>
       <h1 className="mt-1 text-3xl font-black">{story.title}</h1>
       <article className="mt-5 whitespace-pre-wrap rounded-3xl border-2 border-duo-border bg-duo-card p-6 text-lg leading-8 font-semibold">

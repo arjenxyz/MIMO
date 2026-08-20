@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Nunito } from "next/font/google";
 import "./globals.css";
+import { BottomNav } from "@/app/components/BottomNav";
 import { Navbar } from "@/app/components/Navbar";
 
 const nunito = Nunito({
@@ -40,7 +41,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#fd860a",
+  themeColor: "#0f1a1e",
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
@@ -56,6 +57,7 @@ export default function RootLayout({
       <body className={`${nunito.variable} ${nunito.className} bg-duo-bg text-white antialiased`}>
         <Navbar />
         {children}
+        <BottomNav />
       </body>
     </html>
   );
