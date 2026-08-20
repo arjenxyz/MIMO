@@ -11,12 +11,6 @@ const ITEMS = [
     icon: "📘",
     match: (p: string) => p.startsWith("/quiz") && !p.includes("grammar"),
   },
-  {
-    href: "/quiz/grammar",
-    label: "Gramer",
-    icon: "🧩",
-    match: (p: string) => p.startsWith("/quiz/grammar"),
-  },
   { href: "/sounds", label: "Sesler", icon: "🎧", match: (p: string) => p.startsWith("/sounds") },
   { href: "/reading", label: "Okuma", icon: "📖", match: (p: string) => p.startsWith("/reading") },
 ];
