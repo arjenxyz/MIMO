@@ -232,7 +232,7 @@ export default function PhotoPracticePage() {
                   value={answer}
                   onChange={(e) => setAnswer(e.target.value)}
                   disabled={phase !== "running"}
-                  rows={12}
+                  rows={8}
                   placeholder="Describe the photo in English…"
                   className="mt-1 w-full resize-none rounded-2xl border-2 border-duo-border bg-[#0f1a1e] px-4 py-3 text-sm font-bold leading-relaxed text-white outline-none placeholder:text-duo-muted focus:border-[#1cb0f6] disabled:opacity-70"
                 />
