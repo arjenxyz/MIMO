@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { AddWordForm } from "@/app/components/AddWordForm";
 import { LearningPath, type PathNode } from "@/app/components/LearningPath";
 import { LoadWordsButton } from "@/app/components/LoadWordsButton";
+import { StreakWidget } from "@/app/components/StreakWidget";
 import { DEMO_DUE, DEMO_PROFILE, isDemoMode } from "@/lib/demo";
 import {
   getDueGrammar,
@@ -154,44 +155,13 @@ export default async function DashboardPage() {
         />
 
         <aside className="space-y-5 lg:sticky lg:top-20">
-          <section className="overflow-hidden rounded-[1.75rem] border-2 border-[#ff9600]/35 bg-gradient-to-br from-[#ff9600]/15 via-duo-card to-duo-card p-5">
-            <p className="text-xs font-black uppercase tracking-[0.16em] text-[#ff9600]">
-              Günlük seri
-            </p>
-            <div className="mt-3 flex items-center gap-4">
-              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-[#ff9600]/20 text-3xl shadow-inner">
-                🔥
-              </div>
-              <div className="min-w-0">
-                <p className="text-3xl font-black tabular-nums text-white">
-                  {profile.daily_streak}
-                  <span className="ml-1 text-base font-extrabold text-duo-muted">gün</span>
-                </p>
-                <p className="mt-0.5 text-sm font-bold text-duo-muted">
-                  {profile.daily_streak > 0
-                    ? "Serin devam ediyor — bugün de bir pratik yap."
-                    : "Bugün ilk adımı at, seriyi başlat."}
-                </p>
-              </div>
-            </div>
-            <Link
-              href={primaryHref}
-              className="mt-5 flex w-full items-center justify-center rounded-2xl bg-[#ff9600] px-4 py-3 text-sm font-black uppercase tracking-wide text-[#2a1600] shadow-[0_4px_0_#e08600] transition active:translate-y-1 active:shadow-none"
-            >
-              {primaryLabel}
-            </Link>
-          </section>
+          <StreakWidget
+            dailyStreak={profile.daily_streak}
+            primaryHref={primaryHref}
+            primaryLabel={primaryLabel}
+          />
 
-          {showAddWord ? (
-            <AddWordForm />
-          ) : (
-            <section className="rounded-[1.75rem] border-2 border-dashed border-duo-border bg-duo-card/60 p-5">
-              <h2 className="text-base font-black text-white">Kendi kelimeni ekle</h2>
-              <p className="mt-1 text-sm font-semibold text-duo-muted">
-                Demo’da kapalı. Canlıda otomatik anlam + ses ile eklenir.
-              </p>
-            </section>
-          )}
+          {showAddWord && <AddWordForm />}
 
           <section className="grid grid-cols-2 gap-3">
             <Link

@@ -56,20 +56,6 @@ body {
   animation: mimo-bounce 2.4s ease-in-out infinite;
 }
 
-@keyframes path-pulse {
-  0%,
-  100% {
-    box-shadow: 0 0 0 0 rgba(88, 204, 2, 0.35);
-  }
-  50% {
-    box-shadow: 0 0 0 10px rgba(88, 204, 2, 0);
-  }
-}
-
-.path-pulse {
-  animation: path-pulse 2.2s ease-out infinite;
-}
-
 .duo-btn {
   @apply w-full rounded-2xl py-4 text-base font-extrabold uppercase tracking-wide transition-all;
 }

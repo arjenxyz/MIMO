@@ -32,5 +32,20 @@ export default function manifest(): MetadataRoute.Manifest {
         purpose: "maskable",
       },
     ],
+    shortcuts: [
+      {
+        name: "Günlük seri",
+        short_name: "Seri",
+        description: "Günlük seri widget önizlemesi",
+        url: "/widget",
+        icons: [
+          {
+            src: "/icons/icon-192.png",
+            sizes: "192x192",
+            type: "image/png",
+          },
+        ],
+      },
+    ],
   };
 }

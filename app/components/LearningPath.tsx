@@ -111,20 +111,6 @@ export function LearningPath({
 
             return (
               <li key={node.id} className={`relative flex w-[78%] flex-col items-center ${offset}`}>
-                {isActive && (
-                  <div className="path-pulse mb-3 w-full rounded-2xl border-2 border-[#58cc02]/40 bg-[#58cc02]/10 px-4 py-3 text-center">
-                    <p className="text-[11px] font-black uppercase tracking-widest text-[#58cc02]">
-                      Şimdi sıra burada
-                    </p>
-                    <Link
-                      href={node.href}
-                      className={`mt-2 inline-flex w-full items-center justify-center rounded-xl px-4 py-3 text-sm font-black uppercase tracking-wide text-white transition active:translate-y-1 active:shadow-none ${tone.cta}`}
-                    >
-                      Başlat
-                    </Link>
-                  </div>
-                )}
-
                 <Link
                   href={node.href}
                   className={`group relative flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-full border-[5px] border-[#0f1a1e] ${tone.fill} ${tone.shadow} transition hover:-translate-y-0.5 ${
@@ -138,7 +124,6 @@ export function LearningPath({
 
                 <div className="mt-3 text-center">
                   <p className="text-base font-black text-white">{node.title}</p>
-                  <p className="mt-0.5 text-xs font-bold text-duo-muted">{node.subtitle}</p>
                   {node.badge && (
                     <span
                       className={`mt-2 inline-flex rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wide ${tone.soft}`}
