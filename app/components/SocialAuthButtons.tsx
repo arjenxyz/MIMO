@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { createClient } from "@/lib/supabase/client";
 
 type Provider = "google" | "discord" | "spotify" | "github";
 
@@ -88,7 +87,6 @@ function AppleIcon() {
 
 export function SocialAuthButtons() {
   const [loading, setLoading] = useState<Provider | null>(null);
-  const [error, setError] = useState("");
   const [moreOpen, setMoreOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -111,25 +109,9 @@ export function SocialAuthButtons() {
   }, [moreOpen]);
 
   async function signIn(provider: Provider) {
-    setError("");
     setLoading(provider);
-    try {
-      const supabase = createClient();
-      const origin = window.location.origin;
-      const { error: oauthError } = await supabase.auth.signInWithOAuth({
-        provider,
-        options: {
-          redirectTo: `${origin}/auth/callback`,
-        },
-      });
-      if (oauthError) {
-        setError(oauthError.message);
-        setLoading(null);
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Giriş başlatılamadı.");
-      setLoading(null);
-    }
+    setMoreOpen(false);
+    window.location.assign(`/auth/pending?provider=${provider}`);
   }
 
   const primaryButtons = (
@@ -265,8 +247,6 @@ export function SocialAuthButtons() {
           </span>
           <span>Diğer seçenekler</span>
         </button>
-
-        {error && <p className="pt-1 text-center text-sm font-bold text-red-500">{error}</p>}
       </div>
 
       {modal}

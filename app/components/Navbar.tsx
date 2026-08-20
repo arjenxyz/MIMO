@@ -8,7 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 import { xpInCurrentLevel } from "@/lib/srs";
 import type { Profile } from "@/types";
 
-const HIDDEN_PATHS = ["/login", "/register", "/onboarding"];
+const HIDDEN_PATHS = ["/login", "/register", "/onboarding", "/auth"];
 
 export function Navbar() {
   const pathname = usePathname();

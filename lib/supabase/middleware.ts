@@ -49,5 +49,12 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
+  // Logged-in users who land on waiting page can continue to dashboard
+  if (user && pathname === "/auth/pending") {
+    const redirectUrl = request.nextUrl.clone();
+    redirectUrl.pathname = "/";
+    return NextResponse.redirect(redirectUrl);
+  }
+
   return supabaseResponse;
 }
