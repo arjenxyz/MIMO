@@ -3,8 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useCallback, useEffect, useId, useRef, useState } from "react";
-import { createPortal } from "react-dom";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { DEMO_PROFILE, isDemoMode } from "@/lib/demo";
 import { createClient } from "@/lib/supabase/client";
 import type { Profile } from "@/types";
@@ -21,17 +20,12 @@ function detectDemo() {
 export function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
-  const menuId = useId();
-  const buttonRef = useRef<HTMLButtonElement>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
+  const detailsRef = useRef<HTMLDetailsElement>(null);
   const [demo, setDemo] = useState(detectDemo);
   const [profile, setProfile] = useState<Profile | null>(() =>
     detectDemo() ? DEMO_PROFILE : null
   );
   const [ready, setReady] = useState(() => detectDemo());
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [menuPos, setMenuPos] = useState({ top: 0, right: 0 });
-  const [mounted, setMounted] = useState(false);
 
   const loadProfile = useCallback(async () => {
     const localDemo = detectDemo();
@@ -63,10 +57,6 @@ export function Navbar() {
   }, []);
 
   useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
     loadProfile();
     const onUpdate = () => loadProfile();
     window.addEventListener("profile-updated", onUpdate);
@@ -74,50 +64,20 @@ export function Navbar() {
   }, [loadProfile, pathname]);
 
   useEffect(() => {
-    setMenuOpen(false);
+    detailsRef.current?.removeAttribute("open");
   }, [pathname]);
 
   useEffect(() => {
-    if (!menuOpen) return;
-
-    function place() {
-      const rect = buttonRef.current?.getBoundingClientRect();
-      if (!rect) return;
-      setMenuPos({
-        top: rect.bottom + 8,
-        right: Math.max(8, window.innerWidth - rect.right),
-      });
-    }
-
-    place();
-    window.addEventListener("resize", place);
-    window.addEventListener("scroll", place, true);
-
     function onPointerDown(event: PointerEvent) {
-      const target = event.target as Node;
-      if (buttonRef.current?.contains(target)) return;
-      if (menuRef.current?.contains(target)) return;
-      setMenuOpen(false);
+      const root = detailsRef.current;
+      if (!root?.open) return;
+      if (root.contains(event.target as Node)) return;
+      root.removeAttribute("open");
     }
 
-    function onKey(event: KeyboardEvent) {
-      if (event.key === "Escape") setMenuOpen(false);
-    }
-
-    // Defer so the opening click does not immediately close the menu.
-    const timer = window.setTimeout(() => {
-      document.addEventListener("pointerdown", onPointerDown);
-    }, 0);
-    document.addEventListener("keydown", onKey);
-
-    return () => {
-      window.clearTimeout(timer);
-      window.removeEventListener("resize", place);
-      window.removeEventListener("scroll", place, true);
-      document.removeEventListener("pointerdown", onPointerDown);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [menuOpen]);
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => document.removeEventListener("pointerdown", onPointerDown);
+  }, []);
 
   if (HIDDEN_PATHS.some((path) => pathname.startsWith(path))) {
     return null;
@@ -128,7 +88,7 @@ export function Navbar() {
   }
 
   async function signOut() {
-    setMenuOpen(false);
+    detailsRef.current?.removeAttribute("open");
     if (demo) {
       router.push("/login");
       return;
@@ -172,49 +132,36 @@ export function Navbar() {
             <span className="text-sm tabular-nums">{profile.daily_streak}</span>
           </div>
 
-          <button
-            ref={buttonRef}
-            type="button"
-            aria-label="Profil menüsü"
-            aria-expanded={menuOpen}
-            aria-haspopup="menu"
-            aria-controls={menuId}
-            onClick={() => setMenuOpen((open) => !open)}
-            className="relative z-[70] flex h-10 w-10 items-center justify-center overflow-hidden rounded-full ring-2 ring-[#fd860a]/50 transition hover:ring-[#fd860a]"
-          >
-            <Image
-              src="/mimo-avatar.png"
-              alt="Profil"
-              width={40}
-              height={40}
-              className="pointer-events-none h-full w-full object-cover"
-            />
-          </button>
-
-          {mounted &&
-            menuOpen &&
-            createPortal(
-              <div
-                ref={menuRef}
-                id={menuId}
-                role="menu"
-                style={{ top: menuPos.top, right: menuPos.right }}
-                className="fixed z-[200] w-48 overflow-hidden rounded-2xl border-2 border-duo-border bg-duo-card shadow-xl"
+          <details ref={detailsRef} className="relative">
+            <summary
+              aria-label="Profil menüsü"
+              className="flex h-10 w-10 cursor-pointer list-none items-center justify-center overflow-hidden rounded-full ring-2 ring-[#fd860a]/50 transition hover:ring-[#fd860a] [&::-webkit-details-marker]:hidden"
+            >
+              <Image
+                src="/mimo-avatar.png"
+                alt=""
+                width={40}
+                height={40}
+                className="pointer-events-none h-full w-full object-cover"
+              />
+            </summary>
+            <div
+              role="menu"
+              className="absolute right-0 top-12 z-[200] w-48 overflow-hidden rounded-2xl border-2 border-duo-border bg-duo-card shadow-xl"
+            >
+              <p className="border-b border-duo-border px-4 py-3 text-sm font-extrabold text-duo-muted">
+                {profile.username || "Öğrenci"}
+              </p>
+              <button
+                type="button"
+                role="menuitem"
+                onClick={signOut}
+                className="w-full px-4 py-3 text-left text-sm font-extrabold text-[#ff4b4b] hover:bg-white/5"
               >
-                <p className="border-b border-duo-border px-4 py-3 text-sm font-extrabold text-duo-muted">
-                  {profile.username || "Öğrenci"}
-                </p>
-                <button
-                  type="button"
-                  role="menuitem"
-                  onClick={signOut}
-                  className="w-full px-4 py-3 text-left text-sm font-extrabold text-[#ff4b4b] hover:bg-white/5"
-                >
-                  {demo ? "Giriş ekranı" : "Çıkış yap"}
-                </button>
-              </div>,
-              document.body
-            )}
+                {demo ? "Giriş ekranı" : "Çıkış yap"}
+              </button>
+            </div>
+          </details>
         </div>
       </div>
     </header>
