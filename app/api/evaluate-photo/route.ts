@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-3.6-flash" });
 
     const prompt = `You are an expert Duolingo English Test evaluator. Evaluate the following student's response to a "Describe the photo" task.
 Mode: ${mode}
