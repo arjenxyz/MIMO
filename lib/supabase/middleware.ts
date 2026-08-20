@@ -35,7 +35,8 @@ export async function updateSession(request: NextRequest) {
     pathname.startsWith("/login") ||
     pathname.startsWith("/register") ||
     pathname.startsWith("/onboarding") ||
-    pathname.startsWith("/auth");
+    pathname.startsWith("/auth") ||
+    pathname.startsWith("/api/report-error");
 
   if (!user && !isPublic) {
     const redirectUrl = request.nextUrl.clone();

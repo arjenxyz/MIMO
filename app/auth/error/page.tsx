@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { AuthShell } from "@/app/components/AuthShell";
+import { reportClientError } from "@/lib/report-client-error";
 
 function friendlyMessage(raw: string) {
   const lower = raw.toLowerCase();
@@ -19,13 +20,31 @@ function friendlyMessage(raw: string) {
 function ErrorContent() {
   const searchParams = useSearchParams();
   const [message, setMessage] = useState("Giriş tamamlanamadı. Lütfen tekrar dene.");
+  const [rawMessage, setRawMessage] = useState("");
 
   useEffect(() => {
     const fromQuery = searchParams.get("message") || searchParams.get("error_description");
     const hash = typeof window !== "undefined" ? window.location.hash.replace(/^#/, "") : "";
     const hashParams = new URLSearchParams(hash);
     const fromHash = hashParams.get("error_description") || hashParams.get("error");
-    setMessage(friendlyMessage(fromQuery || fromHash || ""));
+    const raw = fromQuery || fromHash || "";
+    setRawMessage(raw);
+    setMessage(friendlyMessage(raw));
+
+    if (raw) {
+      reportClientError({
+        title: "Giriş hatası",
+        message: raw,
+        path: "/auth/error",
+        source: "auth/error",
+        extra: {
+          error: searchParams.get("error") || hashParams.get("error") || undefined,
+          error_code:
+            searchParams.get("error_code") || hashParams.get("error_code") || undefined,
+          href: typeof window !== "undefined" ? window.location.href.slice(0, 500) : undefined,
+        },
+      });
+    }
   }, [searchParams]);
 
   return (
@@ -47,6 +66,9 @@ function ErrorContent() {
             </code>
           </li>
         </ul>
+        {rawMessage && (
+          <p className="mt-3 break-all text-[11px] text-[#9ca3af]">Ham hata: {rawMessage}</p>
+        )}
       </div>
       <div className="mt-8 flex flex-col gap-3">
         <Link

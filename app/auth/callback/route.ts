@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { sendDiscordAlert } from "@/lib/discord";
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
@@ -9,8 +10,20 @@ export async function GET(request: NextRequest) {
   const next = searchParams.get("next") ?? "/auth/success";
 
   if (oauthError) {
-    const message = encodeURIComponent(errorDescription || oauthError);
-    return NextResponse.redirect(`${origin}/auth/error?message=${message}`);
+    const message = errorDescription || oauthError;
+    await sendDiscordAlert({
+      title: "OAuth callback hatası",
+      message,
+      path: "/auth/callback",
+      source: "auth/callback",
+      extra: {
+        error: oauthError,
+        error_code: searchParams.get("error_code") || undefined,
+      },
+    });
+    return NextResponse.redirect(
+      `${origin}/auth/error?message=${encodeURIComponent(message)}`
+    );
   }
 
   if (code) {
@@ -18,8 +31,15 @@ export async function GET(request: NextRequest) {
     const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
     if (!url || !key) {
+      const message = "Supabase ortam değişkenleri eksik.";
+      await sendDiscordAlert({
+        title: "Auth env eksik",
+        message,
+        path: "/auth/callback",
+        source: "auth/callback",
+      });
       return NextResponse.redirect(
-        `${origin}/auth/error?message=${encodeURIComponent("Supabase ortam değişkenleri eksik.")}`
+        `${origin}/auth/error?message=${encodeURIComponent(message)}`
       );
     }
 
@@ -48,13 +68,28 @@ export async function GET(request: NextRequest) {
       return redirectResponse;
     }
 
+    await sendDiscordAlert({
+      title: "Session exchange hatası",
+      message: error.message,
+      path: "/auth/callback",
+      source: "auth/callback",
+    });
+
     return NextResponse.redirect(
       `${origin}/auth/error?message=${encodeURIComponent(error.message)}`
     );
   }
 
+  const message = "Giriş kodu alınamadı. Tekrar dene.";
+  await sendDiscordAlert({
+    title: "Auth code yok",
+    message,
+    path: "/auth/callback",
+    source: "auth/callback",
+  });
+
   return NextResponse.redirect(
-    `${origin}/auth/error?message=${encodeURIComponent("Giriş kodu alınamadı. Tekrar dene.")}`
+    `${origin}/auth/error?message=${encodeURIComponent(message)}`
   );
 }
 

@@ -12,14 +12,15 @@ cd MIMO
 npm install
 ```
 
-`.env.local` dosyasını oluştur ve Supabase değerlerini doldur:
+`.env.local` dosyasını oluştur:
 
 ```
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
+DISCORD_WEBHOOK_URL=
 ```
 
-Değerleri Supabase Dashboard > Project Settings > API içinden alırsın.
+`DISCORD_WEBHOOK_URL` opsiyonel; giriş/sayfa hatalarını Discord’a bildirir. Vercel’e de aynı env’yi ekle.
 
 ## 2) Veritabanı + OAuth
 
