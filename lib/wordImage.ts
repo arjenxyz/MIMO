@@ -264,11 +264,6 @@ async function searchWikidataCandidates(
   return candidates.map((c) => ({ url: commonsFileUrl(c.file), score: c.score }));
 }
 
-async function searchWikidataImage(query: string): Promise<string | null> {
-  const list = await searchWikidataCandidates(query);
-  return list[0]?.url ?? null;
-}
-
 async function searchWikipediaSummary(query: string): Promise<string | null> {
   const title = query
     .split(" ")
@@ -336,11 +331,6 @@ type OpenverseResult = {
   height?: number | null;
   tags?: Array<{ name?: string }>;
 };
-
-async function searchOpenverseClear(query: string): Promise<string | null> {
-  const list = await searchOpenverseCandidates(query);
-  return list[0]?.url ?? null;
-}
 
 async function searchOpenverseCandidates(
   query: string
