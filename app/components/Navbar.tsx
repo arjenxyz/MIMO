@@ -159,11 +159,16 @@ export function Navbar() {
     return () => document.removeEventListener("pointerdown", onPointerDown);
   }, []);
 
-  // Pathname henüz yokken koyu navbar göstermeyelim — login/auth flash bozuluyor.
-  if (!pathname || HIDDEN_PATHS.some((path) => pathname.startsWith(path))) {
+  // Auth / DET: asla koyu navbar gösterme.
+  // Pathname henüz gelmeden de gizle — login üstünde siyah şerit flash'ını önler.
+  const path =
+    pathname || (typeof window !== "undefined" ? window.location.pathname : "");
+  const hideChrome = !path || HIDDEN_PATHS.some((prefix) => path.startsWith(prefix));
+  if (hideChrome) {
     return null;
   }
 
+  // Sadece uygulama sayfalarında yükleme iskeleti (login'de değil)
   if (!ready || !profile) {
     return (
       <>

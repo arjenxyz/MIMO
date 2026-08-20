@@ -4,8 +4,27 @@ const withPWA = withPWAInit({
   dest: "public",
   disable: process.env.NODE_ENV === "development",
   register: true,
-  fallbacks: {
-    document: "/login",
+  // App Router + auth redirects: NEVER use document fallback (serves wrong HTML for /login).
+  cacheStartUrl: false,
+  dynamicStartUrl: true,
+  workboxOptions: {
+    cleanupOutdatedCaches: true,
+    skipWaiting: true,
+    clientsClaim: true,
+    // Auth HTML must always hit the network — cached redirects poison /login with "/".
+    runtimeCaching: [
+      {
+        urlPattern: ({ url: { pathname } }) =>
+          pathname === "/login" ||
+          pathname.startsWith("/login/") ||
+          pathname.startsWith("/register") ||
+          pathname.startsWith("/auth") ||
+          pathname.startsWith("/onboarding"),
+        handler: "NetworkOnly",
+        method: "GET",
+      },
+    ],
+    extendDefaultRuntimeCaching: true,
   },
 });
 

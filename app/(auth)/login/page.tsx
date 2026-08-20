@@ -1,7 +1,10 @@
 "use client";
 
 import Image from "next/image";
+import { useEffect, useState } from "react";
 import { SocialAuthButtons } from "@/app/components/SocialAuthButtons";
+import { createClient } from "@/lib/supabase/client";
+import { isDemoMode } from "@/lib/demo";
 
 function Decor() {
   return (
@@ -16,7 +19,6 @@ function Decor() {
       <div className="pointer-events-none absolute right-16 top-40 text-xl text-[#c4b5fd] lg:right-20 lg:top-24 lg:text-3xl">
         ✦
       </div>
-      {/* Paw stays in empty corners only — never over text */}
       <div className="pointer-events-none absolute bottom-10 left-6 text-3xl text-[#fbbf24]/70 lg:bottom-10 lg:left-8 lg:text-5xl">
         🐾
       </div>
@@ -28,12 +30,53 @@ function Decor() {
 }
 
 export default function LoginPage() {
+  const [checking, setChecking] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function gate() {
+      // Demo / local: stay on login UI for design work.
+      if (isDemoMode(window.location.hostname)) {
+        if (!cancelled) setChecking(false);
+        return;
+      }
+
+      try {
+        const supabase = createClient();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (user) {
+          // Hard navigation so URL cannot stay stuck on /login with home HTML (SW bug).
+          window.location.replace("/");
+          return;
+        }
+      } catch {
+        // show login
+      }
+      if (!cancelled) setChecking(false);
+    }
+
+    void gate();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (checking) {
+    return (
+      <main className="flex min-h-[100dvh] items-center justify-center bg-[#fff8f1] font-extrabold text-[#6b7280]">
+        Yükleniyor…
+      </main>
+    );
+  }
+
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#fff8f1]">
+    <main className="relative min-h-[100dvh] overflow-hidden bg-[#fff8f1]">
       <Decor />
 
-      {/* Mobile: centered card */}
-      <div className="relative z-10 flex min-h-screen items-center justify-center px-4 py-10 lg:hidden">
+      <div className="relative z-10 flex min-h-[100dvh] items-center justify-center px-4 py-10 lg:hidden">
         <section className="w-full max-w-md rounded-[2rem] bg-white/80 px-6 py-10 text-center shadow-xl backdrop-blur-sm">
           <Image
             src="/mimo-avatar.png"
@@ -51,8 +94,7 @@ export default function LoginPage() {
         </section>
       </div>
 
-      {/* Desktop: split panel */}
-      <div className="relative z-10 mx-auto hidden min-h-screen max-w-6xl items-center gap-10 px-10 py-12 lg:grid lg:grid-cols-2 xl:gap-16">
+      <div className="relative z-10 mx-auto hidden min-h-[100dvh] max-w-6xl items-center gap-10 px-10 py-12 lg:grid lg:grid-cols-2 xl:gap-16">
         <section className="relative z-10 flex flex-col items-start justify-center">
           <div className="relative overflow-hidden rounded-[2.5rem] bg-[#fd860a] p-2 shadow-xl">
             <Image

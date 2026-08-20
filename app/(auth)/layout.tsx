@@ -1,9 +1,22 @@
+import type { Viewport } from "next";
+import { ClearAuthPageCache } from "@/app/components/ClearAuthPageCache";
+import { LightAuthChrome } from "@/app/components/LightAuthChrome";
+
+export const viewport: Viewport = {
+  themeColor: "#fff8f1",
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+};
+
 /**
- * Auth screens use a light canvas. Root layout is dark (app chrome),
- * so this wrapper fully covers body background/text inheritance.
+ * Auth screens use a light canvas. Root layout is dark (app chrome).
  */
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-[#fff8f1] text-[#1f2937] antialiased">{children}</div>
+    <LightAuthChrome>
+      <ClearAuthPageCache />
+      {children}
+    </LightAuthChrome>
   );
 }
