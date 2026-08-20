@@ -15,6 +15,7 @@ import {
 import { DEMO_DUE_WORDS, isDemoMode } from "@/lib/demo";
 import { answersMatch, calculateXP } from "@/lib/srs";
 import { playWordAudio, speak } from "@/lib/speak";
+import { getWordImageUrl } from "@/lib/wordImage";
 import { createClient } from "@/lib/supabase/client";
 import type { DueWordItem, Quality } from "@/types";
 
