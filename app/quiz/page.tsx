@@ -13,7 +13,7 @@ import {
   updateWordProgress,
 } from "@/lib/db";
 import { answersMatch, calculateXP } from "@/lib/srs";
-import { speak } from "@/lib/speak";
+import { playWordAudio, speak } from "@/lib/speak";
 import { createClient } from "@/lib/supabase/client";
 import type { DueWordItem, Quality } from "@/types";
 
@@ -68,7 +68,7 @@ export default function WordQuizPage() {
   function listen() {
     if (!word) return;
     setRevealed(true);
-    speak(word.english);
+    playWordAudio(word.english, word.audio_url);
   }
 
   function listenExample() {

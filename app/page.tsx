@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { AddWordForm } from "@/app/components/AddWordForm";
 import { DailyQuests } from "@/app/components/DailyQuests";
 import { LearningPath, type PathNode } from "@/app/components/LearningPath";
 import { LoadWordsButton } from "@/app/components/LoadWordsButton";
@@ -192,6 +193,8 @@ export default async function DashboardPage() {
           </section>
 
           <DailyQuests quests={questsView} bonusJustClaimed={Boolean(bonus?.claimed)} />
+
+          <AddWordForm />
 
           <section className="grid grid-cols-2 gap-3">
             <Link

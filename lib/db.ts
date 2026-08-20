@@ -10,6 +10,7 @@ import type {
   SoundSessionQuestion,
   SoundWithProgress,
   Story,
+  Word,
 } from "@/types";
 import { calculateSM2, calculateXP, checkLevelUp } from "@/lib/srs";
 
@@ -159,6 +160,89 @@ export async function assignNewWords(
   );
 
   if (insertError) throw insertError;
+}
+
+export async function addWordToUserList(
+  supabase: SupabaseClient,
+  userId: string,
+  input: {
+    english: string;
+    turkish: string;
+    example_sentence?: string | null;
+    phonetic?: string | null;
+    audio_url?: string | null;
+    difficulty?: number;
+  }
+): Promise<{ word: Word; alreadyHad: boolean }> {
+  const english = input.english.trim().toLowerCase();
+
+  const { data: existingWord, error: findError } = await supabase
+    .from("words")
+    .select("*")
+    .eq("english", english)
+    .maybeSingle();
+
+  if (findError) throw findError;
+
+  let word = existingWord as Word | null;
+
+  if (!word) {
+    const { data: created, error: createError } = await supabase
+      .from("words")
+      .insert({
+        english,
+        turkish: input.turkish.trim(),
+        example_sentence: input.example_sentence ?? null,
+        phonetic: input.phonetic ?? null,
+        audio_url: input.audio_url ?? null,
+        difficulty: input.difficulty ?? 1,
+      })
+      .select("*")
+      .single();
+    if (createError) throw createError;
+    word = created as Word;
+  } else {
+    const patch: Record<string, string | null> = {};
+    if (!word.turkish && input.turkish) patch.turkish = input.turkish.trim();
+    if (!word.example_sentence && input.example_sentence) {
+      patch.example_sentence = input.example_sentence;
+    }
+    if (!word.phonetic && input.phonetic) patch.phonetic = input.phonetic;
+    if (!word.audio_url && input.audio_url) patch.audio_url = input.audio_url;
+    if (Object.keys(patch).length > 0) {
+      const { data: updated, error: updateError } = await supabase
+        .from("words")
+        .update(patch)
+        .eq("id", word.id)
+        .select("*")
+        .single();
+      if (updateError) throw updateError;
+      word = updated as Word;
+    }
+  }
+
+  const { data: link, error: linkError } = await supabase
+    .from("user_words")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("word_id", word.id)
+    .maybeSingle();
+
+  if (linkError) throw linkError;
+
+  if (link) {
+    return { word, alreadyHad: true };
+  }
+
+  const { error: insertError } = await supabase.from("user_words").insert({
+    user_id: userId,
+    word_id: word.id,
+    next_review: todayISO(),
+    last_answered: todayISO(),
+  });
+
+  if (insertError) throw insertError;
+  return { word, alreadyHad: false };
 }
 
 export async function assignNewGrammar(

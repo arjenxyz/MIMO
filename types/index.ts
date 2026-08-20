@@ -15,6 +15,8 @@ export interface Word {
   turkish: string;
   example_sentence: string | null;
   difficulty: number;
+  phonetic?: string | null;
+  audio_url?: string | null;
 }
 
 export interface UserWord {

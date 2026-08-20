@@ -1,0 +1,156 @@
+"use client";
+
+import { FormEvent, useState } from "react";
+import { useRouter } from "next/navigation";
+import { playWordAudio } from "@/lib/speak";
+import type { WordLookupResult } from "@/lib/wordLookup";
+
+export function AddWordForm() {
+  const router = useRouter();
+  const [query, setQuery] = useState("");
+  const [lookup, setLookup] = useState<WordLookupResult | null>(null);
+  const [turkish, setTurkish] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+
+  async function onLookup(event: FormEvent) {
+    event.preventDefault();
+    setError("");
+    setSuccess("");
+    setLookup(null);
+    setLoading(true);
+    try {
+      const res = await fetch("/api/words", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "lookup", english: query }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Bulunamadı");
+      setLookup(data.lookup);
+      setTurkish(data.lookup.turkish);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Bulunamadı");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function onSave() {
+    if (!lookup) return;
+    setSaving(true);
+    setError("");
+    setSuccess("");
+    try {
+      const res = await fetch("/api/words", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "save",
+          english: lookup.english,
+          turkish,
+          example_sentence: lookup.example_sentence,
+          phonetic: lookup.phonetic,
+          audio_url: lookup.audio_url,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Kaydedilemedi");
+      setSuccess(
+        data.alreadyHad
+          ? `"${lookup.english}" zaten listende.`
+          : `"${lookup.english}" listene eklendi.`
+      );
+      setQuery("");
+      setLookup(null);
+      setTurkish("");
+      router.refresh();
+      window.dispatchEvent(new Event("profile-updated"));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Kaydedilemedi");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <section className="rounded-[1.75rem] border-2 border-[#1cb0f6]/35 bg-gradient-to-br from-[#1cb0f6]/10 to-transparent p-5">
+      <h2 className="text-base font-black text-white">Kendi kelimeni ekle</h2>
+      <p className="mt-1 text-xs font-bold text-duo-muted">
+        İngilizce yaz → anlam ve ses ücretsiz otomatik gelir.
+      </p>
+
+      <form onSubmit={onLookup} className="mt-4 flex gap-2">
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="örn. serendipity"
+          className="min-w-0 flex-1 rounded-2xl border-2 border-duo-border bg-[#0f1a1e] px-4 py-3 text-sm font-bold text-white outline-none placeholder:text-duo-muted focus:border-[#1cb0f6]"
+        />
+        <button
+          type="submit"
+          disabled={loading || !query.trim()}
+          className="shrink-0 rounded-2xl bg-[#1cb0f6] px-4 py-3 text-sm font-black text-white shadow-[0_3px_0_#1899d6] disabled:opacity-50"
+        >
+          {loading ? "..." : "Ara"}
+        </button>
+      </form>
+
+      {error && (
+        <p className="mt-3 text-sm font-bold text-[#ff4b4b]">{error}</p>
+      )}
+      {success && (
+        <p className="mt-3 text-sm font-bold text-[#58cc02]">{success}</p>
+      )}
+
+      {lookup && (
+        <div className="mt-4 space-y-3 rounded-2xl border-2 border-duo-border bg-[#0f1a1e]/80 p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-xl font-black text-white">{lookup.english}</p>
+              {lookup.phonetic && (
+                <p className="text-xs font-bold text-duo-muted">{lookup.phonetic}</p>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => playWordAudio(lookup.english, lookup.audio_url)}
+              className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#58cc02] text-lg shadow-[0_3px_0_#46a302]"
+              aria-label="Sesini dinle"
+            >
+              🔊
+            </button>
+          </div>
+
+          <label className="block">
+            <span className="text-[10px] font-black uppercase tracking-wide text-duo-muted">
+              Türkçe anlam (düzenleyebilirsin)
+            </span>
+            <input
+              value={turkish}
+              onChange={(e) => setTurkish(e.target.value)}
+              className="mt-1 w-full rounded-xl border-2 border-duo-border bg-duo-card px-3 py-2 text-sm font-bold text-white outline-none focus:border-[#fd860a]"
+            />
+          </label>
+
+          {lookup.example_sentence && (
+            <p className="text-sm font-semibold italic text-duo-muted">
+              “{lookup.example_sentence}”
+            </p>
+          )}
+
+          <button
+            type="button"
+            disabled={saving || !turkish.trim()}
+            onClick={onSave}
+            className="w-full rounded-2xl bg-[#58cc02] py-3 text-sm font-black uppercase tracking-wide text-[#14260a] shadow-[0_3px_0_#46a302] disabled:opacity-50"
+          >
+            {saving ? "Kaydediliyor..." : "Listeme ekle"}
+          </button>
+        </div>
+      )}
+    </section>
+  );
+}

@@ -23,7 +23,9 @@ create table if not exists public.words (
   english text not null unique,
   turkish text not null,
   example_sentence text,
-  difficulty integer not null default 1 check (difficulty between 1 and 5)
+  difficulty integer not null default 1 check (difficulty between 1 and 5),
+  phonetic text,
+  audio_url text
 );
 
 create table if not exists public.user_words (
@@ -168,6 +170,19 @@ drop policy if exists "Words are publicly readable" on public.words;
 create policy "Words are publicly readable"
   on public.words for select
   using (true);
+
+drop policy if exists "Authenticated users can insert words" on public.words;
+create policy "Authenticated users can insert words"
+  on public.words for insert
+  to authenticated
+  with check (true);
+
+drop policy if exists "Authenticated users can update words" on public.words;
+create policy "Authenticated users can update words"
+  on public.words for update
+  to authenticated
+  using (true)
+  with check (true);
 
 drop policy if exists "Grammar is publicly readable" on public.grammar_rules;
 create policy "Grammar is publicly readable"
