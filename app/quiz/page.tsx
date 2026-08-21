@@ -270,8 +270,8 @@ export default function WordQuizPage() {
 
   if (finished) {
     return (
-      <PracticeExamMain>
-        <div className="mx-auto max-w-xl px-4 py-8">
+      <PracticeExamMain className="flex min-h-[100dvh] items-center justify-center">
+        <div className="mx-auto w-full max-w-xl px-4 py-8">
           <PracticeExamCard className="text-center">
             <PracticeExamEyebrow>Word Quiz</PracticeExamEyebrow>
             <h1 className="mt-3 text-2xl font-black">Well done!</h1>
@@ -289,8 +289,8 @@ export default function WordQuizPage() {
 
   if (!word) {
     return (
-      <PracticeExamMain>
-        <div className="mx-auto max-w-xl px-4 py-8">
+      <PracticeExamMain className="flex min-h-[100dvh] items-center justify-center">
+        <div className="mx-auto w-full max-w-xl px-4 py-8">
           <PracticeExamCard className="text-center">
             <h1 className="text-2xl font-black">Şu an eklenecek kelime kalmadı.</h1>
             <div className="mt-6">
