@@ -86,12 +86,15 @@ export function PracticeExamStickyBar({
   exitLabel = "Çık",
   onExitClick,
   maxWidthClass = "max-w-lg",
+  below,
 }: {
   left?: ReactNode;
   exitHref?: string;
   exitLabel?: string;
   onExitClick?: () => void;
   maxWidthClass?: string;
+  /** Extra content pinned under the timer row (e.g. photo strip while typing). */
+  below?: ReactNode;
 }) {
   const barRef = useRef<HTMLElement | null>(null);
 
@@ -105,7 +108,6 @@ export function PracticeExamStickyBar({
         el.style.transform = "";
         return;
       }
-      // Keep the bar glued to the visible top when the keyboard resizes the viewport.
       el.style.transform = `translateY(${Math.max(0, vv.offsetTop)}px)`;
     };
 
@@ -131,17 +133,27 @@ export function PracticeExamStickyBar({
         <div className="min-w-0">{left}</div>
         <PracticeExamExitLink href={exitHref} label={exitLabel} onClick={onExitClick} />
       </div>
+      {below}
     </header>
   );
 }
 
 /** Spacer matching PracticeExamStickyBar height so content is not hidden underneath. */
-export function PracticeExamStickySpacer({ className = "" }: { className?: string }) {
+export function PracticeExamStickySpacer({
+  className = "",
+  extraPx = 0,
+}: {
+  className?: string;
+  /** Extra pinned content height under the bar (e.g. photo strip). */
+  extraPx?: number;
+}) {
   return (
     <div
       aria-hidden
       className={`shrink-0 ${className}`.trim()}
-      style={{ height: "calc(3.75rem + env(safe-area-inset-top, 0px))" }}
+      style={{
+        height: `calc(3.75rem + env(safe-area-inset-top, 0px) + ${Math.max(0, extraPx)}px)`,
+      }}
     />
   );
 }

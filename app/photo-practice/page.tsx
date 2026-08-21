@@ -9,6 +9,8 @@ import {
   PracticeExamGhostLink,
   PracticeExamMain,
   PracticeExamPrimaryButton,
+  PracticeExamStickyBar,
+  PracticeExamStickySpacer,
   PracticeExamTopBar,
 } from "@/app/components/PracticeExamChrome";
 import { formatTimer } from "@/lib/detCloze";
@@ -19,6 +21,8 @@ type Phase = "ready" | "running" | "evaluating" | "done";
 
 const WRITE_SECONDS = 60;
 const MAX_SKIPS = 3;
+/** Compact photo strip height while typing (keeps picture visible above keyboard). */
+const WRITE_PHOTO_PX = 132;
 
 const CEFR_COLOR: Record<string, string> = {
   A1: "bg-[#ffe8e8] text-[#b91c1c] border-[#fecaca]",
@@ -35,6 +39,20 @@ function isB2OrAbove(level: string) {
 
 function wordCount(text: string) {
   return text.trim().split(/\s+/).filter(Boolean).length;
+}
+
+function emptyTimeoutEvaluation(): PhotoEvaluation {
+  return {
+    cefr_level: "A1",
+    score: 0,
+    vocabulary_score: 0,
+    coherence_score: 0,
+    feedback: "Süre doldu ve yeterli bir cevap yazılmadı. Bir sonraki turda fotoğrafa bakarak birkaç cümle yazmayı dene.",
+    grammar_errors: [],
+    suggestions: ["Describe what you see in 2–3 short sentences.", "Mention people, place, and action."],
+    improved_version:
+      "I can see a scene in the photo. There are buildings and light in the background. It looks calm and interesting.",
+  };
 }
 
 export default function PhotoPracticePage() {
@@ -69,19 +87,35 @@ export default function PhotoPracticePage() {
   }, [cooldownSec]);
 
   const runEvaluation = useCallback(
-    async (text: string) => {
+    async (text: string, opts?: { force?: boolean }) => {
+      const force = Boolean(opts?.force);
       if (evaluatingRef.current || sessionEvalStartedRef.current) return;
-      if (text.trim().length < 20) {
+
+      const trimmed = text.trim();
+      if (!force && trimmed.length < 20) {
         setError("Değerlendirme için biraz daha uzun yaz (en az birkaç cümle).");
         return;
       }
 
-      const sinceLast = Date.now() - lastEvalAtRef.current;
-      if (lastEvalAtRef.current && sinceLast < 20_000) {
-        const wait = Math.ceil((20_000 - sinceLast) / 1000);
-        setCooldownSec(wait);
-        setError(`Token koruması: ${wait} sn sonra yeni değerlendirme yapabilirsin.`);
+      // Timed-out empty / tiny answers: skip API, show timeout result immediately.
+      if (force && trimmed.length < 8) {
+        sessionEvalStartedRef.current = true;
+        setPhase("evaluating");
+        setError("");
+        setEvaluation(emptyTimeoutEvaluation());
+        playFeedback(false);
+        setPhase("done");
         return;
+      }
+
+      if (!force) {
+        const sinceLast = Date.now() - lastEvalAtRef.current;
+        if (lastEvalAtRef.current && sinceLast < 20_000) {
+          const wait = Math.ceil((20_000 - sinceLast) / 1000);
+          setCooldownSec(wait);
+          setError(`Token koruması: ${wait} sn sonra yeni değerlendirme yapabilirsin.`);
+          return;
+        }
       }
 
       sessionEvalStartedRef.current = true;
@@ -93,23 +127,33 @@ export default function PhotoPracticePage() {
       setEvaluation(null);
 
       const imageForAi = lockedImageRef.current || imageUrl;
+      const payloadText =
+        trimmed.length > 0
+          ? trimmed
+          : "The student wrote almost nothing before the timer ended.";
 
       try {
         const res = await fetch("/api/evaluate-photo", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ answer: text, mode: "write", imageUrl: imageForAi }),
+          body: JSON.stringify({ answer: payloadText, mode: "write", imageUrl: imageForAi }),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Değerlendirme başarısız");
-        const evaluation = data.evaluation as PhotoEvaluation;
-        setEvaluation(evaluation);
-        playFeedback(isB2OrAbove(evaluation.cefr_level));
+        const next = data.evaluation as PhotoEvaluation;
+        setEvaluation(next);
+        playFeedback(isB2OrAbove(next.cefr_level));
         setPhase("done");
       } catch (e) {
         sessionEvalStartedRef.current = false;
         setError(e instanceof Error ? e.message : "Değerlendirme başarısız");
-        setPhase("running");
+        // On forced timeout, still leave writing mode so the student isn't stuck at 00:00.
+        if (force) {
+          setEvaluation(emptyTimeoutEvaluation());
+          setPhase("done");
+        } else {
+          setPhase("running");
+        }
       } finally {
         evaluatingRef.current = false;
       }
@@ -120,7 +164,7 @@ export default function PhotoPracticePage() {
   useEffect(() => {
     if (phase !== "running") return;
     if (secondsLeft <= 0) {
-      void runEvaluation(answerRef.current);
+      void runEvaluation(answerRef.current, { force: true });
       return;
     }
     const t = window.setTimeout(() => setSecondsLeft((s) => s - 1), 1000);
@@ -165,26 +209,111 @@ export default function PhotoPracticePage() {
     evaluatingRef.current = false;
   }
 
-  const showTimer = phase === "running" || phase === "evaluating";
+  function onImageReady(img: HTMLImageElement) {
+    const stable = stabilizePicsumUrl(img.currentSrc || img.src, 900, 600);
+    lockedImageRef.current = stable;
+    if (stable !== imageUrl) setImageUrl(stable);
+  }
+
+  const writing = phase === "running" || phase === "evaluating";
+
+  if (writing) {
+    return (
+      <PracticeExamMain>
+        <PracticeExamStickyBar
+          maxWidthClass="max-w-3xl"
+          left={
+            <p
+              className={`text-2xl font-black tabular-nums tracking-tight ${
+                secondsLeft <= 10 ? "text-[#ff4b4b]" : "text-mimo-title"
+              }`}
+            >
+              {formatTimer(secondsLeft)}
+            </p>
+          }
+          below={
+            <div className="border-t border-mimo-border/50 bg-mimo-bg">
+              <div
+                className="relative mx-auto w-full max-w-3xl overflow-hidden bg-[#e2e8f0]"
+                style={{ height: WRITE_PHOTO_PX }}
+              >
+                {imageUrl ? (
+                  <Image
+                    src={imageUrl}
+                    alt="Practice photo"
+                    fill
+                    unoptimized
+                    sizes="(max-width: 768px) 100vw, 768px"
+                    className="object-cover"
+                    priority
+                    onLoadingComplete={onImageReady}
+                  />
+                ) : null}
+              </div>
+            </div>
+          }
+        />
+        <PracticeExamStickySpacer extraPx={WRITE_PHOTO_PX} />
+
+        <div className="mx-auto max-w-3xl px-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+          <div className="rounded-2xl border border-mimo-border bg-mimo-card px-4 py-4 shadow-sm sm:px-6">
+            <label className="block text-left">
+              <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-mimo-muted">
+                Cevabın · {wordCount(answer)} kelime
+              </span>
+              <textarea
+                value={answer}
+                onChange={(e) => setAnswer(e.target.value)}
+                disabled={phase !== "running"}
+                rows={5}
+                enterKeyHint="done"
+                placeholder="Describe the photo in English…"
+                className="mt-2 max-h-[28vh] min-h-[7.5rem] w-full resize-y rounded-xl border border-mimo-soft bg-mimo-surface px-4 py-3 text-sm font-semibold leading-relaxed text-mimo-fg outline-none placeholder:text-mimo-muted focus:border-[#1cb0f6] disabled:opacity-70"
+              />
+            </label>
+
+            {error && phase === "running" && (
+              <p className="mt-3 text-center text-sm font-bold text-[#b45309]">{error}</p>
+            )}
+
+            {phase === "running" && (
+              <div className="mt-4 flex flex-col items-center gap-2 sm:flex-row sm:justify-center">
+                <PracticeExamPrimaryButton
+                  onClick={() => void runEvaluation(answer)}
+                  disabled={answer.trim().length < 20 || sessionEvalStartedRef.current}
+                  variant="green"
+                  className="w-full sm:w-auto"
+                >
+                  Bitir ve Değerlendir
+                </PracticeExamPrimaryButton>
+                <button
+                  type="button"
+                  onClick={resetWithNewImage}
+                  disabled={skipsLeft <= 0}
+                  className="w-full rounded-2xl border border-mimo-soft px-6 py-3 text-sm font-bold text-mimo-muted disabled:opacity-50 sm:w-auto"
+                >
+                  {skipsLeft > 0 ? `Geç (${skipsLeft})` : "Geç hakkı bitti"}
+                </button>
+              </div>
+            )}
+
+            {phase === "evaluating" && (
+              <p className="mt-4 text-center text-sm font-bold text-mimo-muted">
+                Süre bitti — değerlendiriliyor…
+              </p>
+            )}
+          </div>
+        </div>
+      </PracticeExamMain>
+    );
+  }
 
   return (
     <PracticeExamMain>
       <div className="mx-auto max-w-3xl px-4 pb-10">
         <PracticeExamTopBar
           maxWidthClass="max-w-3xl"
-          left={
-            showTimer ? (
-              <p
-                className={`text-2xl font-black tabular-nums tracking-tight ${
-                  secondsLeft <= 10 ? "text-[#ff4b4b]" : "text-mimo-title"
-                }`}
-              >
-                {formatTimer(secondsLeft)}
-              </p>
-            ) : (
-              <PracticeExamEyebrow>Write About the Photo</PracticeExamEyebrow>
-            )
-          }
+          left={<PracticeExamEyebrow>Write About the Photo</PracticeExamEyebrow>}
         />
 
         <p className="mb-5 text-center text-base font-bold text-mimo-fg sm:text-lg">
@@ -202,11 +331,7 @@ export default function PhotoPracticePage() {
                 sizes="(max-width: 768px) 100vw, 768px"
                 className="object-cover"
                 priority
-                onLoadingComplete={(img) => {
-                  const stable = stabilizePicsumUrl(img.currentSrc || img.src, 900, 600);
-                  lockedImageRef.current = stable;
-                  if (stable !== imageUrl) setImageUrl(stable);
-                }}
+                onLoadingComplete={onImageReady}
               />
             ) : (
               <div className="flex h-full items-center justify-center text-sm font-bold text-mimo-muted">
@@ -223,7 +348,7 @@ export default function PhotoPracticePage() {
                     Fotoğrafı İngilizce anlat
                   </h1>
                   <p className="mt-2 text-sm font-semibold text-mimo-muted">
-                    60 saniye içinde gördüğünü yaz. Gemini seviyenizi değerlendirir.
+                    60 saniye içinde gördüğünü yaz. Süre bitince otomatik değerlendirilir.
                   </p>
                 </div>
                 <div className="flex flex-col items-center gap-2 sm:flex-row sm:justify-center">
@@ -244,55 +369,6 @@ export default function PhotoPracticePage() {
                     {skipsLeft > 0 ? `Geç (${skipsLeft})` : "Geç hakkı bitti"}
                   </button>
                 </div>
-              </div>
-            )}
-
-            {(phase === "running" || phase === "evaluating") && (
-              <div className="space-y-4">
-                <label className="block text-left">
-                  <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-mimo-muted">
-                    Cevabın · {wordCount(answer)} kelime
-                  </span>
-                  <textarea
-                    value={answer}
-                    onChange={(e) => setAnswer(e.target.value)}
-                    disabled={phase !== "running"}
-                    rows={8}
-                    placeholder="Describe the photo in English…"
-                    className="mt-2 w-full resize-none rounded-xl border border-mimo-soft bg-mimo-surface px-4 py-3 text-sm font-semibold leading-relaxed text-mimo-fg outline-none placeholder:text-mimo-muted focus:border-[#1cb0f6] disabled:opacity-70"
-                  />
-                </label>
-
-                {error && phase === "running" && (
-                  <p className="text-center text-sm font-bold text-[#b45309]">{error}</p>
-                )}
-
-                {phase === "running" && (
-                  <div className="flex flex-col items-center gap-2 sm:flex-row sm:justify-center">
-                    <PracticeExamPrimaryButton
-                      onClick={() => void runEvaluation(answer)}
-                      disabled={answer.trim().length < 20 || sessionEvalStartedRef.current}
-                      variant="green"
-                      className="w-full sm:w-auto"
-                    >
-                      Bitir ve Değerlendir
-                    </PracticeExamPrimaryButton>
-                    <button
-                      type="button"
-                      onClick={resetWithNewImage}
-                      disabled={skipsLeft <= 0}
-                      className="w-full rounded-2xl border border-mimo-soft px-6 py-3 text-sm font-bold text-mimo-muted disabled:opacity-50 sm:w-auto"
-                    >
-                      {skipsLeft > 0 ? `Geç (${skipsLeft})` : "Geç hakkı bitti"}
-                    </button>
-                  </div>
-                )}
-
-                {phase === "evaluating" && (
-                  <p className="text-center text-sm font-bold text-mimo-muted">
-                    Değerlendiriliyor…
-                  </p>
-                )}
               </div>
             )}
 
