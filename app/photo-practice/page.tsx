@@ -21,8 +21,8 @@ type Phase = "ready" | "running" | "evaluating" | "done";
 
 const WRITE_SECONDS = 60;
 const MAX_SKIPS = 3;
-/** Compact photo strip height while typing (keeps picture visible above keyboard). */
-const WRITE_PHOTO_PX = 132;
+/** Compact sticky photo while typing — padded card, not a full-bleed banner. */
+const WRITE_PHOTO_PX = 96;
 
 const CEFR_COLOR: Record<string, string> = {
   A1: "bg-[#ffe8e8] text-[#b91c1c] border-[#fecaca]",
@@ -41,20 +41,6 @@ function wordCount(text: string) {
   return text.trim().split(/\s+/).filter(Boolean).length;
 }
 
-function emptyTimeoutEvaluation(): PhotoEvaluation {
-  return {
-    cefr_level: "A1",
-    score: 0,
-    vocabulary_score: 0,
-    coherence_score: 0,
-    feedback: "Süre doldu ve yeterli bir cevap yazılmadı. Bir sonraki turda fotoğrafa bakarak birkaç cümle yazmayı dene.",
-    grammar_errors: [],
-    suggestions: ["Describe what you see in 2–3 short sentences.", "Mention people, place, and action."],
-    improved_version:
-      "I can see a scene in the photo. There are buildings and light in the background. It looks calm and interesting.",
-  };
-}
-
 export default function PhotoPracticePage() {
   const [phase, setPhase] = useState<Phase>("ready");
   const [imageUrl, setImageUrl] = useState("");
@@ -69,6 +55,7 @@ export default function PhotoPracticePage() {
   const lastEvalAtRef = useRef(0);
   const [cooldownSec, setCooldownSec] = useState(0);
   const [skipsLeft, setSkipsLeft] = useState(MAX_SKIPS);
+  const [emptyTimeout, setEmptyTimeout] = useState(false);
 
   useEffect(() => {
     answerRef.current = answer;
@@ -97,12 +84,12 @@ export default function PhotoPracticePage() {
         return;
       }
 
-      // Timed-out empty / tiny answers: skip API, show timeout result immediately.
+      // Timed-out empty / tiny answers: skip API, show timeout-only result.
       if (force && trimmed.length < 8) {
         sessionEvalStartedRef.current = true;
-        setPhase("evaluating");
+        setEmptyTimeout(true);
+        setEvaluation(null);
         setError("");
-        setEvaluation(emptyTimeoutEvaluation());
         playFeedback(false);
         setPhase("done");
         return;
@@ -149,7 +136,8 @@ export default function PhotoPracticePage() {
         setError(e instanceof Error ? e.message : "Değerlendirme başarısız");
         // On forced timeout, still leave writing mode so the student isn't stuck at 00:00.
         if (force) {
-          setEvaluation(emptyTimeoutEvaluation());
+          setEmptyTimeout(true);
+          setEvaluation(null);
           setPhase("done");
         } else {
           setPhase("running");
@@ -174,6 +162,7 @@ export default function PhotoPracticePage() {
   function startSession() {
     setError("");
     setEvaluation(null);
+    setEmptyTimeout(false);
     setAnswer("");
     setSecondsLeft(WRITE_SECONDS);
     sessionEvalStartedRef.current = false;
@@ -187,6 +176,7 @@ export default function PhotoPracticePage() {
     setPhase("ready");
     setAnswer("");
     setEvaluation(null);
+    setEmptyTimeout(false);
     setError("");
     setSecondsLeft(WRITE_SECONDS);
     setImageUrl(next);
@@ -201,6 +191,7 @@ export default function PhotoPracticePage() {
     setPhase("ready");
     setAnswer("");
     setEvaluation(null);
+    setEmptyTimeout(false);
     setError("");
     setSecondsLeft(WRITE_SECONDS);
     setImageUrl(next);
@@ -232,28 +223,33 @@ export default function PhotoPracticePage() {
             </p>
           }
           below={
-            <div className="border-t border-mimo-border/50 bg-mimo-bg">
-              <div
-                className="relative mx-auto w-full max-w-3xl overflow-hidden bg-[#e2e8f0]"
-                style={{ height: WRITE_PHOTO_PX }}
-              >
-                {imageUrl ? (
-                  <Image
-                    src={imageUrl}
-                    alt="Practice photo"
-                    fill
-                    unoptimized
-                    sizes="(max-width: 768px) 100vw, 768px"
-                    className="object-cover"
-                    priority
-                    onLoadingComplete={onImageReady}
-                  />
-                ) : null}
+            <div className="border-t border-mimo-border/40 bg-mimo-bg px-4 pb-2.5 pt-2">
+              <div className="mx-auto flex max-w-3xl items-center gap-3">
+                <div className="relative h-20 w-[7.5rem] shrink-0 overflow-hidden rounded-xl border border-mimo-border bg-[#e2e8f0] shadow-sm sm:h-24 sm:w-40">
+                  {imageUrl ? (
+                    <Image
+                      src={imageUrl}
+                      alt="Practice photo"
+                      fill
+                      unoptimized
+                      sizes="160px"
+                      className="object-cover"
+                      priority
+                      onLoadingComplete={onImageReady}
+                    />
+                  ) : null}
+                </div>
+                <p className="min-w-0 text-left text-xs font-bold leading-snug text-mimo-muted sm:text-sm">
+                  Fotoğrafa bakarak yaz.
+                  <span className="mt-0.5 block font-semibold text-mimo-fg/80">
+                    Klavye açıkken görsel burada kalır.
+                  </span>
+                </p>
               </div>
             </div>
           }
         />
-        <PracticeExamStickySpacer extraPx={WRITE_PHOTO_PX} />
+        <PracticeExamStickySpacer extraPx={WRITE_PHOTO_PX + 12} />
 
         <div className="mx-auto max-w-3xl px-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
           <div className="rounded-2xl border border-mimo-border bg-mimo-card px-4 py-4 shadow-sm sm:px-6">
@@ -372,7 +368,22 @@ export default function PhotoPracticePage() {
               </div>
             )}
 
-            {phase === "done" && evaluation && (
+            {phase === "done" && emptyTimeout && (
+              <div className="space-y-5 text-center">
+                <p className="text-sm font-semibold leading-relaxed text-mimo-muted">
+                  Süre doldu ve yeterli bir cevap yazılmadı. Bir sonraki turda fotoğrafa bakarak
+                  birkaç cümle yazmayı dene.
+                </p>
+                <div className="flex flex-col gap-2 pt-1">
+                  <PracticeExamPrimaryButton onClick={nextRoundWithNewImage} className="w-full">
+                    Yeni Görsel
+                  </PracticeExamPrimaryButton>
+                  <PracticeExamGhostLink href="/">Ana sayfa</PracticeExamGhostLink>
+                </div>
+              </div>
+            )}
+
+            {phase === "done" && evaluation && !emptyTimeout && (
               <div className="space-y-5 text-left">
                 <div className="flex flex-wrap items-center justify-center gap-3">
                   <span

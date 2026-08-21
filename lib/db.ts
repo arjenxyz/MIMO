@@ -527,3 +527,81 @@ export async function saveStoryResult(
 
   if (error) throw error;
 }
+export async function listGrammarTopics(supabase: SupabaseClient) {
+  const { data: topics, error } = await supabase
+    .from("grammar_topics")
+    .select("id, slug, title, summary, tip_tr, example, difficulty")
+    .order("difficulty", { ascending: true })
+    .order("id", { ascending: true });
+
+  if (error) throw error;
+  if (!topics?.length) return [];
+
+  const { data: counts, error: countError } = await supabase
+    .from("grammar_items")
+    .select("topic_id");
+
+  if (countError) throw countError;
+
+  const countMap = new Map<number, number>();
+  for (const row of counts ?? []) {
+    const id = row.topic_id as number;
+    countMap.set(id, (countMap.get(id) ?? 0) + 1);
+  }
+
+  return topics.map((t) => ({
+    id: t.id as number,
+    slug: t.slug as string,
+    title: t.title as string,
+    summary: t.summary as string,
+    tip_tr: (t.tip_tr as string | null) ?? null,
+    example: (t.example as string | null) ?? null,
+    difficulty: t.difficulty as number,
+    item_count: countMap.get(t.id as number) ?? 0,
+  }));
+}
+
+export async function getGrammarTopicBySlug(supabase: SupabaseClient, slug: string) {
+  const { data: topic, error } = await supabase
+    .from("grammar_topics")
+    .select("id, slug, title, summary, tip_tr, example, difficulty")
+    .eq("slug", slug)
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!topic) return null;
+
+  const { data: items, error: itemsError } = await supabase
+    .from("grammar_items")
+    .select(
+      "id, topic_id, question, correct_answer, explanation, example, difficulty, sort_order"
+    )
+    .eq("topic_id", topic.id)
+    .order("sort_order", { ascending: true })
+    .order("id", { ascending: true });
+
+  if (itemsError) throw itemsError;
+
+  const list = items ?? [];
+
+  return {
+    id: topic.id as number,
+    slug: topic.slug as string,
+    title: topic.title as string,
+    summary: topic.summary as string,
+    tip_tr: (topic.tip_tr as string | null) ?? null,
+    example: (topic.example as string | null) ?? null,
+    difficulty: topic.difficulty as number,
+    item_count: list.length,
+    items: list.map((item) => ({
+      id: item.id as number,
+      topic_id: item.topic_id as number,
+      question: item.question as string,
+      correct_answer: item.correct_answer as string,
+      explanation: (item.explanation as string | null) ?? null,
+      example: (item.example as string | null) ?? null,
+      difficulty: item.difficulty as number,
+      sort_order: item.sort_order as number,
+    })),
+  };
+}

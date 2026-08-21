@@ -44,7 +44,7 @@ export default async function WidgetPreviewPage() {
       primaryHref = "/quiz";
       primaryLabel = "Kelimeye başla";
     } else if (dueGrammar.length > 0) {
-      primaryHref = "/quiz/grammar";
+      primaryHref = "/grammar";
       primaryLabel = "Gramere başla";
     } else {
       primaryHref = "/det/read-complete";

@@ -48,7 +48,8 @@ export async function updateSession(request: NextRequest) {
     pathname.startsWith("/api/report-error") ||
     pathname.startsWith("/api/cron") ||
     pathname.startsWith("/api/status") ||
-    pathname === "/status";
+    pathname === "/status" ||
+    pathname.startsWith("/grammar");
 
   if (!user && !isPublic) {
     const redirectUrl = request.nextUrl.clone();

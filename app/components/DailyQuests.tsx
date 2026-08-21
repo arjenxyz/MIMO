@@ -14,8 +14,8 @@ const ITEMS = [
   },
   {
     key: "grammar" as const,
-    title: "3 gramer sorusu çöz",
-    href: "/quiz/grammar",
+    title: "1 gramer konusu çalış",
+    href: "/grammar",
     accent: "#ce82ff",
     icon: "🧩",
   },
