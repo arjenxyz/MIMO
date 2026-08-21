@@ -151,10 +151,10 @@ export function HomeChallengeInviteListener({ demo }: { demo: boolean }) {
           id="incoming-challenge-title"
           className="mt-1 text-xl font-black text-mimo-title"
         >
-          {fromName} seni meydan okuyor
+          {fromName} sana meydan okuyor
         </h2>
         <p className="mt-2 text-sm font-semibold text-mimo-muted">
-          {moduleLabel(invite.module)} · Aynı anda oynayın, yüksek skor kazanır.
+          {moduleLabel(invite.module)}. İkiniz aynı anda oynarsınız; yüksek skoru alan kazanır.
         </p>
 
         {error ? (

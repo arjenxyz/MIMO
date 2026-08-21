@@ -77,10 +77,10 @@ export function ChallengeInviteModal({ friend, onClose, demo = false }: Props) {
           Meydan okuma
         </p>
         <h2 id="challenge-invite-title" className="mt-1 text-lg font-black text-mimo-title">
-          {friend.username} ile 1v1
+          {friend.username}&apos;a meydan oku
         </h2>
         <p className="mt-1.5 text-sm font-semibold text-mimo-muted">
-          Bir oyun seç ve davet gönder. Kabul edince aynı anda oynarsınız.
+          Bir oyun seçip davet gönder. Kabul ederse ikiniz aynı anda oynarsınız.
         </p>
 
         <div className="mt-4 space-y-2">
