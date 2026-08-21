@@ -57,9 +57,9 @@ export default async function FriendsPage() {
           </Link>
         </div>
 
-        <section className="mt-5 rounded-3xl border border-mimo-border bg-mimo-card px-4 py-4 shadow-[0_8px_0_rgba(15,23,42,0.06)] dark:shadow-[0_8px_0_rgba(0,0,0,0.35)]">
+        <div className="mt-5">
           <FriendsPanel demo={demo} />
-        </section>
+        </div>
       </div>
     </main>
   );
