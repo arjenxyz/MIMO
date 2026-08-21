@@ -406,24 +406,46 @@ export function AddWordForm({ demo = false }: { demo?: boolean }) {
               )}
 
               {!alreadyOwned && (
-                <>
-                  <div className="overflow-hidden rounded-xl border border-mimo-soft bg-mimo-surface">
+                <div className="flex gap-2">
+                  <div className="min-w-0 flex-1 overflow-hidden rounded-xl border border-mimo-soft bg-mimo-surface">
                     <WordImage
                       english={lookup.english}
                       imageUrl={lookup.image_url}
                       className="h-36 w-full object-cover"
                     />
                   </div>
-
                   <button
                     type="button"
                     onClick={() => void swapImage()}
                     disabled={swapping}
-                    className="w-full rounded-xl border border-mimo-soft bg-mimo-surface px-4 py-2.5 text-sm font-bold text-[#0369a1] transition hover:border-[#1cb0f6] hover:bg-[#e8f6fe] disabled:opacity-50"
+                    className="flex w-[4.75rem] shrink-0 flex-col items-center justify-center gap-1.5 rounded-xl border border-mimo-soft bg-mimo-surface px-1.5 text-center text-[11px] font-extrabold leading-tight text-[#0369a1] transition hover:border-[#1cb0f6] hover:bg-[#e8f6fe] disabled:opacity-50"
+                    aria-label={swapping ? "Yeni görsel aranıyor" : "Görseli değiştir"}
                   >
-                    {swapping ? "Yeni görsel aranıyor…" : "Görseli değiştir"}
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      aria-hidden
+                      className={swapping ? "animate-spin" : undefined}
+                    >
+                      <path
+                        d="M21 12a9 9 0 1 1-2.6-6.3"
+                        stroke="currentColor"
+                        strokeWidth="2.2"
+                        strokeLinecap="round"
+                      />
+                      <path
+                        d="M21 4v5h-5"
+                        stroke="currentColor"
+                        strokeWidth="2.2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                    {swapping ? "Aranıyor…" : "Değiştir"}
                   </button>
-                </>
+                </div>
               )}
 
               {modalError && (
