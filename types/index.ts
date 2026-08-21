@@ -15,6 +15,11 @@ export interface Word {
   difficulty: number;
   phonetic?: string | null;
   audio_url?: string | null;
+  /** Shared with everyone when true; private to creator when false. */
+  is_global?: boolean | null;
+  created_by?: string | null;
+  uploader_username?: string | null;
+  uploader_avatar_url?: string | null;
 }
 
 export interface UserWord {

@@ -11,6 +11,7 @@ import {
   playCorrect,
   setFeedbackSoundMuted,
 } from "@/lib/feedbackSound";
+import { isShowGlobalWords, setShowGlobalWords } from "@/lib/showGlobalWords";
 import { createClient } from "@/lib/supabase/client";
 import type { Profile } from "@/types";
 
@@ -108,9 +109,11 @@ export function Navbar() {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [ready, setReady] = useState(() => detectDemo());
   const [sfxMuted, setSfxMuted] = useState(false);
+  const [showGlobalWords, setShowGlobalWordsState] = useState(true);
 
   useEffect(() => {
     setSfxMuted(isFeedbackSoundMuted());
+    setShowGlobalWordsState(isShowGlobalWords());
   }, []);
 
   const loadProfile = useCallback(async () => {
@@ -283,6 +286,21 @@ export function Navbar() {
                   <span>{sfxMuted ? "Ses efektleri kapalı" : "Ses efektleri açık"}</span>
                   <span className="text-base" aria-hidden>
                     {sfxMuted ? "🔇" : "🔊"}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => {
+                    const next = !showGlobalWords;
+                    setShowGlobalWords(next);
+                    setShowGlobalWordsState(next);
+                  }}
+                  className="flex w-full items-center justify-between border-b border-mimo-border px-4 py-3 text-left text-sm font-extrabold text-mimo-fg hover:bg-mimo-surface"
+                >
+                  <span>{showGlobalWords ? "Global kelimeler açık" : "Global kelimeler kapalı"}</span>
+                  <span className="text-base" aria-hidden>
+                    {showGlobalWords ? "🌐" : "🔒"}
                   </span>
                 </button>
                 <Link

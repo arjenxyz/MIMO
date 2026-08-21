@@ -213,9 +213,14 @@ export async function findExistingUserWord(
   if (poolError) throw poolError;
 
   if (poolHits && poolHits.length > 0) {
-    const best =
-      poolHits.find((w) => normalizeEnglishKey(w.english) === key) ?? poolHits[0];
-    return { word: best as Word, alreadyOwned: false };
+    const visible = (poolHits as Word[]).filter(
+      (w) => w.is_global !== false || !w.created_by || w.created_by === userId
+    );
+    if (visible.length > 0) {
+      const best =
+        visible.find((w) => normalizeEnglishKey(w.english) === key) ?? visible[0];
+      return { word: best, alreadyOwned: false };
+    }
   }
 
   // Broader scan for spaced / punctuated mismatches not covered by variants.
@@ -228,8 +233,10 @@ export async function findExistingUserWord(
   if (looseError) throw looseError;
 
   for (const hit of looseHits ?? []) {
+    const w = hit as Word;
+    if (w.is_global === false && w.created_by && w.created_by !== userId) continue;
     if (englishKeysMatch(hit.english, englishRaw)) {
-      return { word: hit as Word, alreadyOwned: false };
+      return { word: w, alreadyOwned: false };
     }
   }
 
@@ -246,12 +253,18 @@ export async function addWordToUserList(
     phonetic?: string | null;
     audio_url?: string | null;
     difficulty?: number;
+    /** true = community pool; false = only this user. Default true for back-compat. */
+    is_global?: boolean;
+    uploader_username?: string | null;
+    uploader_avatar_url?: string | null;
   }
 ): Promise<{ word: Word; alreadyHad: boolean }> {
   const english = normalizeEnglishKey(input.english);
   if (!english) {
     throw new Error("Geçerli bir İngilizce kelime gir.");
   }
+
+  const isGlobal = input.is_global !== false;
 
   const existing = await findExistingUserWord(supabase, userId, english);
   if (existing?.alreadyOwned) {
@@ -260,22 +273,49 @@ export async function addWordToUserList(
 
   let word = existing?.word ?? null;
 
+  // Don't attach someone else's private word to this user via pool match.
+  if (word && word.is_global === false && word.created_by && word.created_by !== userId) {
+    word = null;
+  }
+
   if (!word) {
-    const { data: created, error: createError } = await supabase
-      .from("words")
-      .insert({
-        english,
-        turkish: input.turkish.trim(),
-        example_sentence: input.example_sentence ?? null,
-        phonetic: input.phonetic ?? null,
-        audio_url: input.audio_url ?? null,
-        difficulty: input.difficulty ?? 1,
-      })
-      .select("*")
-      .single();
+    const baseRow = {
+      english,
+      turkish: input.turkish.trim(),
+      example_sentence: input.example_sentence ?? null,
+      phonetic: input.phonetic ?? null,
+      audio_url: input.audio_url ?? null,
+      difficulty: input.difficulty ?? 1,
+    };
+    const withVisibility = {
+      ...baseRow,
+      is_global: isGlobal,
+      created_by: userId,
+      uploader_username: isGlobal ? input.uploader_username ?? null : null,
+      uploader_avatar_url: isGlobal ? input.uploader_avatar_url ?? null : null,
+    };
+
+    let created: Word | null = null;
+    let createError: { code?: string; message?: string } | null = null;
+
+    {
+      const res = await supabase.from("words").insert(withVisibility).select("*").single();
+      if (res.error) {
+        // Columns may be missing before schema-words-visibility.sql is applied.
+        const msg = res.error.message || "";
+        if (/is_global|created_by|uploader_/i.test(msg) || res.error.code === "PGRST204") {
+          const fallback = await supabase.from("words").insert(baseRow).select("*").single();
+          if (fallback.error) createError = fallback.error;
+          else created = fallback.data as Word;
+        } else {
+          createError = res.error;
+        }
+      } else {
+        created = res.data as Word;
+      }
+    }
 
     if (createError) {
-      // Unique race: another insert won — reuse that row.
       if (createError.code === "23505") {
         const again = await findExistingUserWord(supabase, userId, english);
         if (again?.alreadyOwned) return { word: again.word, alreadyHad: true };
@@ -284,17 +324,23 @@ export async function addWordToUserList(
       } else {
         throw createError;
       }
-    } else {
-      word = created as Word;
+    } else if (created) {
+      word = created;
     }
   } else {
-    const patch: Record<string, string | null> = {};
+    const patch: Record<string, string | null | boolean> = {};
     if (!word.turkish && input.turkish) patch.turkish = input.turkish.trim();
     if (!word.example_sentence && input.example_sentence) {
       patch.example_sentence = input.example_sentence;
     }
     if (!word.phonetic && input.phonetic) patch.phonetic = input.phonetic;
     if (!word.audio_url && input.audio_url) patch.audio_url = input.audio_url;
+    // Promote to global if owner re-shares and columns exist.
+    if (isGlobal && word.created_by === userId && word.is_global === false) {
+      patch.is_global = true;
+      if (input.uploader_username) patch.uploader_username = input.uploader_username;
+      if (input.uploader_avatar_url) patch.uploader_avatar_url = input.uploader_avatar_url;
+    }
     if (Object.keys(patch).length > 0) {
       const { data: updated, error: updateError } = await supabase
         .from("words")
@@ -302,10 +348,16 @@ export async function addWordToUserList(
         .eq("id", word.id)
         .select("*")
         .single();
-      if (updateError) throw updateError;
-      word = updated as Word;
+      if (updateError) {
+        const msg = updateError.message || "";
+        if (!/is_global|uploader_/i.test(msg)) throw updateError;
+      } else {
+        word = updated as Word;
+      }
     }
   }
+
+  if (!word) throw new Error("Kelime kaydedilemedi.");
 
   const { data: link, error: linkError } = await supabase
     .from("user_words")
@@ -334,6 +386,39 @@ export async function addWordToUserList(
     throw insertError;
   }
   return { word, alreadyHad: false };
+}
+
+/** Community words not yet on the user's list (requires is_global column). */
+export async function getCommunityGlobalWords(
+  supabase: SupabaseClient,
+  userId: string,
+  limit = 40
+): Promise<Word[]> {
+  const { data: owned, error: ownedError } = await supabase
+    .from("user_words")
+    .select("word_id")
+    .eq("user_id", userId);
+
+  if (ownedError) throw ownedError;
+  const ownedIds = new Set((owned ?? []).map((r) => r.word_id));
+
+  const { data, error } = await supabase
+    .from("words")
+    .select("*")
+    .eq("is_global", true)
+    .not("created_by", "is", null)
+    .order("id", { ascending: false })
+    .limit(Math.max(limit * 2, 80));
+
+  if (error) {
+    // Schema not migrated yet — no community feed.
+    if (/is_global|created_by/i.test(error.message || "")) return [];
+    throw error;
+  }
+
+  return ((data ?? []) as Word[])
+    .filter((w) => !ownedIds.has(w.id) && w.created_by && w.created_by !== userId)
+    .slice(0, limit);
 }
 
 /** Remove a word from the user's practice list (does not delete the global pool row). */

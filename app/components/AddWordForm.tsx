@@ -91,6 +91,7 @@ export function AddWordForm({ demo = false }: { demo?: boolean }) {
   const [modalError, setModalError] = useState("");
   const [success, setSuccess] = useState("");
   const [alreadyOwned, setAlreadyOwned] = useState(false);
+  const [shareMode, setShareMode] = useState<"private" | "global">("private");
   const [imagePool, setImagePool] = useState<string[]>([]);
   const [imageIndex, setImageIndex] = useState(0);
   const [triedUrls, setTriedUrls] = useState<string[]>([]);
@@ -257,6 +258,7 @@ export function AddWordForm({ demo = false }: { demo?: boolean }) {
           phonetic: lookup.phonetic,
           audio_url: lookup.audio_url,
           difficulty: lookup.difficulty,
+          is_global: shareMode === "global",
         }),
       });
       const data = (await res.json()) as {
@@ -417,13 +419,57 @@ export function AddWordForm({ demo = false }: { demo?: boolean }) {
                     </p>
                   )}
 
+                  <fieldset className="space-y-2">
+                    <legend className="text-[10px] font-black uppercase tracking-wide text-mimo-muted">
+                      Kayıt türü
+                    </legend>
+                    <label className="flex cursor-pointer items-start gap-2.5 rounded-xl border border-mimo-border bg-mimo-surface px-3 py-2.5">
+                      <input
+                        type="radio"
+                        name="shareMode"
+                        checked={shareMode === "private"}
+                        onChange={() => setShareMode("private")}
+                        className="mt-1"
+                      />
+                      <span>
+                        <span className="block text-sm font-extrabold text-mimo-title">
+                          Yalnızca kendim için
+                        </span>
+                        <span className="mt-0.5 block text-xs font-semibold text-mimo-muted">
+                          Başka hesaplara yüklenmez; sadece senin listende kalır.
+                        </span>
+                      </span>
+                    </label>
+                    <label className="flex cursor-pointer items-start gap-2.5 rounded-xl border border-mimo-border bg-mimo-surface px-3 py-2.5">
+                      <input
+                        type="radio"
+                        name="shareMode"
+                        checked={shareMode === "global"}
+                        onChange={() => setShareMode("global")}
+                        className="mt-1"
+                      />
+                      <span>
+                        <span className="block text-sm font-extrabold text-mimo-title">
+                          Global kelime sistemine yükle
+                        </span>
+                        <span className="mt-0.5 block text-xs font-semibold text-mimo-muted">
+                          Topluluk havuzuna eklenir; isteyenler kendi listesine alabilir.
+                        </span>
+                      </span>
+                    </label>
+                  </fieldset>
+
                   <button
                     type="button"
                     disabled={saving || !turkish.trim()}
                     onClick={() => void onSave()}
                     className="w-full rounded-2xl bg-[#58cc02] py-3 text-sm font-black uppercase tracking-wide text-[#14260a] shadow-[0_3px_0_#46a302] disabled:opacity-50"
                   >
-                    {saving ? "Kaydediliyor..." : "Listeme ekle"}
+                    {saving
+                      ? "Kaydediliyor..."
+                      : shareMode === "global"
+                        ? "Globale kaydet"
+                        : "Listeme ekle"}
                   </button>
                 </>
               )}

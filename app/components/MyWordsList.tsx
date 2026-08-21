@@ -1,8 +1,9 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { playWordAudio } from "@/lib/speak";
+import { isShowGlobalWords } from "@/lib/showGlobalWords";
 import type { DueWordItem, Word } from "@/types";
 
 type EditDraft = {
@@ -11,21 +12,79 @@ type EditDraft = {
   phonetic: string;
 };
 
+function UploaderBadge({ word }: { word: Word }) {
+  if (!word.is_global || !word.created_by) return null;
+  const name = word.uploader_username?.trim() || "Bir kullanıcı";
+  const initial = name.charAt(0).toUpperCase();
+
+  return (
+    <div className="mt-1.5 flex items-center gap-1.5">
+      <span className="relative flex h-5 w-5 shrink-0 overflow-hidden rounded-full bg-[#fd860a] ring-1 ring-mimo-soft">
+        {word.uploader_avatar_url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={word.uploader_avatar_url}
+            alt=""
+            className="h-full w-full object-cover"
+            referrerPolicy="no-referrer"
+          />
+        ) : (
+          <span className="flex h-full w-full items-center justify-center text-[9px] font-black text-[#2a1600]">
+            {initial}
+          </span>
+        )}
+      </span>
+      <p className="truncate text-[11px] font-bold text-mimo-muted">
+        {name} tarafından sisteme yüklendi
+      </p>
+    </div>
+  );
+}
+
 export function MyWordsList({
   words,
   demo = false,
+  currentUserId = null,
 }: {
   words: DueWordItem[];
   demo?: boolean;
+  currentUserId?: string | null;
 }) {
   const router = useRouter();
   const [rows, setRows] = useState(words);
+  const [showGlobal, setShowGlobal] = useState(true);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [draft, setDraft] = useState<EditDraft>({ english: "", turkish: "", phonetic: "" });
   const [busyId, setBusyId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const items = useMemo(() => rows.filter((row) => row.words), [rows]);
+  useEffect(() => {
+    setRows(words);
+  }, [words]);
+
+  useEffect(() => {
+    const sync = () => setShowGlobal(isShowGlobalWords());
+    sync();
+    window.addEventListener("show-global-words-changed", sync);
+    window.addEventListener("storage", sync);
+    return () => {
+      window.removeEventListener("show-global-words-changed", sync);
+      window.removeEventListener("storage", sync);
+    };
+  }, []);
+
+  const items = useMemo(() => {
+    return rows.filter((row) => {
+      const word = row.words;
+      if (!word) return false;
+      const fromCommunity =
+        word.is_global === true &&
+        Boolean(word.created_by) &&
+        (!currentUserId || word.created_by !== currentUserId);
+      if (fromCommunity && !showGlobal) return false;
+      return true;
+    });
+  }, [rows, showGlobal, currentUserId]);
 
   function startEdit(row: DueWordItem) {
     const word = row.words!;
@@ -138,6 +197,12 @@ export function MyWordsList({
         </p>
       </div>
 
+      {!showGlobal && (
+        <p className="mt-2 text-xs font-semibold text-mimo-muted">
+          Global kelimeler gizli — profil menüsünden açabilirsin.
+        </p>
+      )}
+
       {error && (
         <p className="mt-3 rounded-xl bg-[#ffe8e8] px-3 py-2 text-sm font-bold text-[#b91c1c]">
           {error}
@@ -154,6 +219,7 @@ export function MyWordsList({
             const word = row.words!;
             const busy = busyId === row.id;
             const editing = editingId === row.id;
+            const isPrivate = word.is_global === false;
 
             return (
               <li key={row.id} className="py-3.5 first:pt-1 last:pb-0">
@@ -202,7 +268,14 @@ export function MyWordsList({
                 ) : (
                   <div className="flex items-center gap-2">
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-base font-black text-mimo-fg">{word.english}</p>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="truncate text-base font-black text-mimo-fg">{word.english}</p>
+                        {isPrivate && (
+                          <span className="rounded-md bg-mimo-surface px-1.5 py-0.5 text-[10px] font-black uppercase tracking-wide text-mimo-muted">
+                            Özel
+                          </span>
+                        )}
+                      </div>
                       <p className="mt-0.5 truncate text-sm font-semibold text-mimo-muted">
                         {word.turkish}
                       </p>
@@ -211,6 +284,7 @@ export function MyWordsList({
                           {word.phonetic}
                         </p>
                       )}
+                      <UploaderBadge word={word} />
                     </div>
                     <button
                       type="button"

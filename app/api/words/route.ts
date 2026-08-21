@@ -31,6 +31,7 @@ export async function POST(request: NextRequest) {
       audio_url?: string | null;
       difficulty?: number;
       userWordId?: number;
+      is_global?: boolean;
     };
 
     if (body.action === "lookup") {
@@ -90,6 +91,30 @@ export async function POST(request: NextRequest) {
           ? body.difficulty
           : undefined;
 
+      const isGlobal = body.is_global !== false;
+      const meta = user.user_metadata ?? {};
+      const identity = user.identities?.[0]?.identity_data ?? {};
+      const uploaderUsername =
+        (typeof meta.full_name === "string" && meta.full_name) ||
+        (typeof meta.name === "string" && meta.name) ||
+        (typeof meta.user_name === "string" && meta.user_name) ||
+        user.email?.split("@")[0] ||
+        "Kullanıcı";
+      const avatarCandidates = [
+        meta.avatar_url,
+        meta.picture,
+        meta.avatar,
+        identity.avatar_url,
+        identity.picture,
+      ];
+      let uploaderAvatar: string | null = null;
+      for (const value of avatarCandidates) {
+        if (typeof value === "string" && value.startsWith("http")) {
+          uploaderAvatar = value;
+          break;
+        }
+      }
+
       const saved = await addWordToUserList(supabase, user.id, {
         english: body.english,
         turkish: body.turkish,
@@ -97,6 +122,9 @@ export async function POST(request: NextRequest) {
         phonetic: body.phonetic ?? null,
         audio_url: body.audio_url ?? null,
         difficulty,
+        is_global: isGlobal,
+        uploader_username: uploaderUsername,
+        uploader_avatar_url: uploaderAvatar,
       });
 
       if (saved.alreadyHad) {

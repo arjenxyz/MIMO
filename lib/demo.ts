@@ -57,7 +57,8 @@ function demoWord(
   turkish: string,
   example_sentence: string,
   difficulty = 2,
-  phonetic: string | null = null
+  phonetic: string | null = null,
+  community?: { username: string; avatar?: string | null }
 ): DueWordItem {
   return {
     id,
@@ -78,6 +79,10 @@ function demoWord(
       difficulty,
       phonetic,
       audio_url: null,
+      is_global: community ? true : id % 7 === 0 ? false : true,
+      created_by: community ? "community-user" : id % 7 === 0 ? DEMO_PROFILE.id : null,
+      uploader_username: community?.username ?? null,
+      uploader_avatar_url: community?.avatar ?? null,
     },
   };
 }
@@ -85,8 +90,12 @@ function demoWord(
 /** Rich demo pool for quiz / match / spelling / listen-type previews. */
 export const DEMO_DUE_WORDS: DueWordItem[] = [
   demoWord(1, "friend", "arkadaş", "She is my best friend.", 1, "/frend/"),
-  demoWord(2, "water", "su", "Please drink more water.", 1, "/ˈwɔː.tər/"),
-  demoWord(3, "school", "okul", "The children walk to school.", 1, "/skuːl/"),
+  demoWord(2, "water", "su", "Please drink more water.", 1, "/ˈwɔː.tər/", {
+    username: "Ayşe",
+  }),
+  demoWord(3, "school", "okul", "The children walk to school.", 1, "/skuːl/", {
+    username: "Mert",
+  }),
   demoWord(4, "mother", "anne", "My mother is a teacher.", 1, "/ˈmʌð.ər/"),
   demoWord(5, "father", "baba", "His father works in a hospital.", 1, "/ˈfɑː.ðər/"),
   demoWord(6, "please", "lütfen", "Could you help me, please?", 1, "/pliːz/"),

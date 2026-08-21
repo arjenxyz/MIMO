@@ -8,7 +8,7 @@ import {
   PracticeExamTopBar,
 } from "@/app/components/PracticeExamChrome";
 import { getUserWords } from "@/lib/db";
-import { DEMO_DUE_WORDS, isDemoMode } from "@/lib/demo";
+import { DEMO_DUE_WORDS, DEMO_PROFILE, isDemoMode } from "@/lib/demo";
 import { createClient } from "@/lib/supabase/server";
 import type { DueWordItem } from "@/types";
 import { redirect } from "next/navigation";
@@ -21,6 +21,7 @@ export default async function AddWordPage() {
   const demo = isDemoMode(host);
 
   let words: DueWordItem[] = DEMO_DUE_WORDS;
+  let currentUserId: string | null = DEMO_PROFILE.id;
 
   if (!demo) {
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
@@ -31,6 +32,7 @@ export default async function AddWordPage() {
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) redirect("/login");
+    currentUserId = user.id;
     words = await getUserWords(supabase, user.id);
   }
 
@@ -51,7 +53,7 @@ export default async function AddWordPage() {
         </PracticeExamCard>
 
         <div className="mt-5">
-          <MyWordsList words={words} demo={demo} />
+          <MyWordsList words={words} demo={demo} currentUserId={currentUserId} />
         </div>
       </div>
     </PracticeExamMain>
