@@ -60,7 +60,7 @@ export function UploaderBadge({
         )}
       </span>
       <span className="truncate text-[11px] font-bold text-mimo-muted underline-offset-2 hover:underline">
-        {profile.name} tarafından sisteme yüklendi
+        {profile.name}
       </span>
     </button>
   );
