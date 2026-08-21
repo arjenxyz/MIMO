@@ -210,8 +210,8 @@ export function ListenTypeGame({ seedWords }: { seedWords: SeedWord[] }) {
         }
       />
       <PracticeExamStickySpacer />
-      <div className="mx-auto flex w-full max-w-lg flex-1 flex-col lg:max-w-5xl">
-        <div className="flex flex-1 flex-col items-center pt-2 lg:grid lg:grid-cols-[auto_minmax(0,1fr)] lg:items-center lg:gap-10 lg:pt-4">
+      <div className="mx-auto flex w-full max-w-lg flex-1 flex-col lg:max-w-2xl">
+        <div className="flex flex-1 flex-col items-center pt-2 lg:justify-center lg:pt-0">
           <div className="flex flex-col items-center">
             <p className="text-center text-xl font-black text-mimo-title sm:text-2xl lg:text-3xl">
               Duyduğunu yaz
@@ -220,7 +220,7 @@ export function ListenTypeGame({ seedWords }: { seedWords: SeedWord[] }) {
               type="button"
               onClick={onReplay}
               disabled={phase !== "answering" || playsLeft <= 0}
-              className="mt-8 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#1cb0f6] text-white shadow-[0_4px_0_#1899d6] transition enabled:active:translate-y-0.5 enabled:active:shadow-none disabled:opacity-40 lg:mt-6 lg:h-20 lg:w-20"
+              className="mt-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#1cb0f6] text-white shadow-[0_4px_0_#1899d6] transition enabled:active:translate-y-0.5 enabled:active:shadow-none disabled:opacity-40 lg:mt-5 lg:h-20 lg:w-20"
               aria-label="Sesi çal"
             >
               <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
@@ -240,19 +240,19 @@ export function ListenTypeGame({ seedWords }: { seedWords: SeedWord[] }) {
             </span>
           </div>
 
-          <div className="mt-8 w-full lg:mt-0">
+          <div className="mt-6 w-full lg:mt-8">
             {phase === "answering" ? (
               <textarea
                 value={answer}
                 onChange={(e) => setAnswer(e.target.value)}
                 placeholder="Yanıtın"
                 rows={4}
-                className="w-full resize-none rounded-xl border border-mimo-soft bg-mimo-surface px-4 py-3 text-base font-semibold text-mimo-fg outline-none placeholder:font-medium placeholder:text-mimo-muted focus:border-[#1cb0f6] lg:min-h-[10rem] lg:text-lg"
+                className="mx-auto w-full resize-none rounded-xl border border-mimo-soft bg-mimo-surface px-4 py-3 text-base font-semibold text-mimo-fg outline-none placeholder:font-medium placeholder:text-mimo-muted focus:border-[#1cb0f6] lg:min-h-[9rem] lg:text-lg"
                 autoFocus
               />
             ) : (
               <div
-                className={`w-full rounded-xl border px-4 py-4 text-left ${
+                className={`mx-auto w-full rounded-xl border px-4 py-4 text-left ${
                   lastCorrect
                     ? "border-[#86efac] bg-[#f0fdf4] dark:border-[#166534] dark:bg-[#052e16]"
                     : "border-[#fca5a5] bg-[#fef2f2] dark:border-[#991b1b] dark:bg-[#450a0a]"
