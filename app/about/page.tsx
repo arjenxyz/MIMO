@@ -36,9 +36,9 @@ export default function AboutMimoPage() {
         </div>
 
         <section className="mt-6 overflow-hidden rounded-[1.75rem] border border-mimo-border bg-mimo-card shadow-sm">
-          <div className="relative aspect-[9/16] max-h-[min(72dvh,560px)] w-full bg-[#0f172a] sm:aspect-video sm:max-h-none">
+          <div className="relative aspect-video w-full bg-[#0f172a]">
             <video
-              className="h-full w-full object-contain"
+              className="h-full w-full object-cover"
               controls
               playsInline
               preload="metadata"
