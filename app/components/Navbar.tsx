@@ -4,14 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useTheme } from "@/app/components/ThemeProvider";
 import { DEMO_PROFILE, isDemoMode } from "@/lib/demo";
-import {
-  isFeedbackSoundMuted,
-  playCorrect,
-  setFeedbackSoundMuted,
-} from "@/lib/feedbackSound";
-import { isShowGlobalWords, setShowGlobalWords } from "@/lib/showGlobalWords";
 import { createClient } from "@/lib/supabase/client";
 import type { Profile } from "@/types";
 
@@ -100,7 +93,6 @@ function UserAvatar({
 export function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { theme, toggleTheme } = useTheme();
   const detailsRef = useRef<HTMLDetailsElement>(null);
   const [demo, setDemo] = useState(detectDemo);
   const [profile, setProfile] = useState<Profile | null>(() =>
@@ -108,13 +100,6 @@ export function Navbar() {
   );
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [ready, setReady] = useState(() => detectDemo());
-  const [sfxMuted, setSfxMuted] = useState(false);
-  const [showGlobalWords, setShowGlobalWordsState] = useState(true);
-
-  useEffect(() => {
-    setSfxMuted(isFeedbackSoundMuted());
-    setShowGlobalWordsState(isShowGlobalWords());
-  }, []);
 
   const loadProfile = useCallback(async () => {
     const localDemo = detectDemo();
@@ -259,50 +244,14 @@ export function Navbar() {
                   </div>
                   <p className="truncate text-sm font-extrabold text-mimo-muted">{displayName}</p>
                 </div>
-                <button
-                  type="button"
+                <Link
+                  href="/settings"
                   role="menuitem"
-                  onClick={() => {
-                    toggleTheme();
-                  }}
-                  className="flex w-full items-center justify-between border-b border-mimo-border px-4 py-3 text-left text-sm font-extrabold text-mimo-fg hover:bg-mimo-surface"
+                  className="block border-b border-mimo-border px-4 py-3 text-sm font-extrabold text-mimo-fg hover:bg-mimo-surface"
+                  onClick={() => detailsRef.current?.removeAttribute("open")}
                 >
-                  <span>{theme === "dark" ? "Açık mod" : "Koyu mod"}</span>
-                  <span className="text-base" aria-hidden>
-                    {theme === "dark" ? "☀️" : "🌙"}
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  role="menuitem"
-                  onClick={() => {
-                    const next = !sfxMuted;
-                    setFeedbackSoundMuted(next);
-                    setSfxMuted(next);
-                    if (!next) playCorrect();
-                  }}
-                  className="flex w-full items-center justify-between border-b border-mimo-border px-4 py-3 text-left text-sm font-extrabold text-mimo-fg hover:bg-mimo-surface"
-                >
-                  <span>{sfxMuted ? "Ses efektleri kapalı" : "Ses efektleri açık"}</span>
-                  <span className="text-base" aria-hidden>
-                    {sfxMuted ? "🔇" : "🔊"}
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  role="menuitem"
-                  onClick={() => {
-                    const next = !showGlobalWords;
-                    setShowGlobalWords(next);
-                    setShowGlobalWordsState(next);
-                  }}
-                  className="flex w-full items-center justify-between border-b border-mimo-border px-4 py-3 text-left text-sm font-extrabold text-mimo-fg hover:bg-mimo-surface"
-                >
-                  <span>{showGlobalWords ? "Global kelimeler açık" : "Global kelimeler kapalı"}</span>
-                  <span className="text-base" aria-hidden>
-                    {showGlobalWords ? "🌐" : "🔒"}
-                  </span>
-                </button>
+                  Ayarlar
+                </Link>
                 <Link
                   href="/friends"
                   role="menuitem"
