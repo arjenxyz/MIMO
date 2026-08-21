@@ -266,8 +266,12 @@ export default function WordQuizPage() {
   }
 
   return (
-    <PracticeExamMain>
-      <div className="mx-auto max-w-3xl px-4 pb-10 pt-5">
+    <PracticeExamMain className="flex min-h-screen flex-col">
+      <div
+        className={`mx-auto w-full max-w-3xl flex-1 px-4 pt-5 ${
+          checked ? "pb-36" : "pb-10"
+        }`}
+      >
         <PracticeExamTopBar
           left={
             <p className="text-sm font-bold text-mimo-muted">
@@ -276,12 +280,12 @@ export default function WordQuizPage() {
           }
         />
 
-        <p className="mb-5 text-center text-base font-bold text-mimo-fg sm:text-lg">
+        <p className="mb-4 text-center text-base font-bold text-mimo-fg sm:text-lg">
           Choose the correct Turkish meaning.
         </p>
 
         <PracticeExamCard className="!px-0 !py-0 overflow-hidden sm:!px-0 sm:!py-0">
-          <div className="relative h-48 w-full bg-[#e2e8f0] sm:h-56">
+          <div className="relative h-36 w-full bg-[#e2e8f0] sm:h-44">
             <WordImage
               english={word.english}
               className="h-full w-full object-cover"
@@ -310,7 +314,7 @@ export default function WordQuizPage() {
             </button>
           </div>
 
-          <div className="px-5 py-6 sm:px-8 sm:py-8">
+          <div className="px-5 py-5 sm:px-8 sm:py-6">
             <h1 className="text-center text-3xl font-black tracking-tight text-mimo-title sm:text-4xl">
               {word.english}
             </h1>
@@ -318,7 +322,7 @@ export default function WordQuizPage() {
               <p className="mt-1 text-center text-sm font-bold text-mimo-muted">{word.phonetic}</p>
             )}
 
-            <div className="mt-6 grid gap-2.5">
+            <div className="mt-5 grid gap-2">
               {choices.map((option) => {
                 const isPick = selected === option;
                 const isRight = option.toLowerCase() === correctLabel.toLowerCase();
@@ -338,32 +342,13 @@ export default function WordQuizPage() {
                     type="button"
                     disabled={checked}
                     onClick={() => pick(option)}
-                    className={`rounded-xl border px-4 py-3.5 text-left text-base font-extrabold transition ${style}`}
+                    className={`rounded-xl border px-4 py-3 text-left text-base font-extrabold transition ${style}`}
                   >
                     {option}
                   </button>
                 );
               })}
             </div>
-
-            {checked && (
-              <div className="mt-6 flex flex-col items-center gap-3">
-                <p
-                  className={`text-center text-sm font-bold ${
-                    correct ? "text-[#15803d]" : "text-[#b91c1c]"
-                  }`}
-                >
-                  {correct ? "Harika! Doğru." : `Yanlış. Doğru cevap: ${correctLabel}`}
-                </p>
-                <PracticeExamPrimaryButton
-                  disabled={saving}
-                  onClick={() => void continueNext()}
-                  variant="green"
-                >
-                  {saving ? "..." : index + 1 >= items.length ? "Sonuçlar" : "Devam"}
-                </PracticeExamPrimaryButton>
-              </div>
-            )}
 
             {error && <p className="mt-4 text-center text-sm font-bold text-[#b91c1c]">{error}</p>}
           </div>
@@ -375,6 +360,28 @@ export default function WordQuizPage() {
           </Link>
         </p>
       </div>
+
+      {checked && (
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-mimo-soft bg-mimo-bg/95 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur-md">
+          <div className="mx-auto flex w-full max-w-3xl flex-col items-center gap-2">
+            <p
+              className={`text-center text-sm font-bold ${
+                correct ? "text-[#15803d]" : "text-[#b91c1c]"
+              }`}
+            >
+              {correct ? "Harika! Doğru." : `Yanlış. Doğru cevap: ${correctLabel}`}
+            </p>
+            <PracticeExamPrimaryButton
+              className="w-full max-w-sm"
+              disabled={saving}
+              onClick={() => void continueNext()}
+              variant="green"
+            >
+              {saving ? "..." : index + 1 >= items.length ? "Sonuçlar" : "Devam"}
+            </PracticeExamPrimaryButton>
+          </div>
+        </div>
+      )}
 
       {levelUp !== null && <LevelUpModal level={levelUp} onClose={() => setLevelUp(null)} />}
     </PracticeExamMain>

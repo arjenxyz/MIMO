@@ -96,6 +96,14 @@ export default async function DashboardPage() {
       state: "upcoming",
     },
     {
+      id: "listen-type",
+      title: "Listen & Type",
+      href: "/det/listen-type",
+      tone: "blue",
+      icon: "listen",
+      state: "upcoming",
+    },
+    {
       id: "photo",
       title: "Görsel Betimleme",
       href: "/photo-practice",

@@ -1,7 +1,14 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
-export type PathIconName = "books" | "sound" | "write" | "photo" | "match" | "verify";
+export type PathIconName =
+  | "books"
+  | "sound"
+  | "write"
+  | "photo"
+  | "match"
+  | "verify"
+  | "listen";
 
 export type PathNode = {
   id: string;
@@ -59,6 +66,7 @@ const OFFSETS = [
   "-translate-x-10 sm:-translate-x-12",
   "translate-x-12 sm:translate-x-14",
   "-translate-x-14 sm:-translate-x-16",
+  "translate-x-10 sm:translate-x-12",
 ];
 
 function PathIcon({ name }: { name: PathIconName }) {
@@ -114,6 +122,14 @@ function PathIcon({ name }: { name: PathIconName }) {
       <svg {...common}>
         <circle cx="12" cy="12" r="9" />
         <path d="M8 12.5 11 15.5 16 9" />
+      </svg>
+    ),
+    listen: (
+      <svg {...common}>
+        <path d="M12 3v10" />
+        <path d="M8.5 8.5a5 5 0 0 0 7 0" />
+        <rect x="9" y="13" width="6" height="4" rx="1" />
+        <path d="M12 17v2M9 21h6" />
       </svg>
     ),
   };
