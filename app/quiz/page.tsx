@@ -187,7 +187,7 @@ export default function WordQuizPage() {
     setSelected(null);
     setChecked(false);
     setCorrect(false);
-  }, [word?.id, items]);
+  }, [word, items]);
 
   useEffect(() => {
     if (!word || spokenForId.current === word.id) return;
@@ -196,7 +196,7 @@ export default function WordQuizPage() {
       playWordAudio(word.english, word.audio_url);
     }, 350);
     return () => window.clearTimeout(t);
-  }, [word?.id, word?.english, word?.audio_url]);
+  }, [word]);
 
   function listen() {
     if (!word) return;
