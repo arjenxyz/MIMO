@@ -172,14 +172,61 @@ export function FriendsPanel({ demo }: { demo: boolean }) {
     }
   }
 
-  const tabs: { id: Tab; label: string; badge?: number }[] = [
-    { id: "friends", label: "Arkadaşlar", badge: friends.length },
+  const tabs: {
+    id: Tab;
+    label: string;
+    badge?: number;
+    icon: ReactNode;
+  }[] = [
+    {
+      id: "friends",
+      label: "Arkadaşlar",
+      badge: friends.length,
+      icon: (
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden className="shrink-0">
+          <circle cx="9" cy="8" r="3.2" stroke="currentColor" strokeWidth="2.2" />
+          <circle cx="17" cy="9" r="2.6" stroke="currentColor" strokeWidth="2.2" />
+          <path
+            d="M3.5 18.5c.8-3.2 2.9-4.8 5.5-4.8s4.7 1.6 5.5 4.8"
+            stroke="currentColor"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+          />
+          <path
+            d="M14.2 14.2c1.5-.6 3.1-.4 4.3.5"
+            stroke="currentColor"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+          />
+        </svg>
+      ),
+    },
     {
       id: "requests",
       label: "İstekler",
       badge: incoming.length + outgoing.length,
+      icon: (
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden className="shrink-0">
+          <path
+            d="M4 7h12l4 5-4 5H4V7z"
+            stroke="currentColor"
+            strokeWidth="2.2"
+            strokeLinejoin="round"
+          />
+          <path d="M8 10v4M11 10v4" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+        </svg>
+      ),
     },
-    { id: "add", label: "Ekle" },
+    {
+      id: "add",
+      label: "Ekle",
+      icon: (
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden className="shrink-0">
+          <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2.2" />
+          <path d="M12 8v8M8 12h8" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+        </svg>
+      ),
+    },
   ];
 
   return (
@@ -196,15 +243,16 @@ export function FriendsPanel({ demo }: { demo: boolean }) {
             role="tab"
             aria-selected={tab === t.id}
             onClick={() => setTab(t.id)}
-            className={`rounded-lg px-2 py-2 text-center text-xs font-extrabold transition ${
+            className={`inline-flex items-center justify-center gap-1 rounded-lg px-1.5 py-2 text-center text-[11px] font-extrabold transition sm:text-xs ${
               tab === t.id
                 ? "bg-[#fff3e0] text-[#c2410c] shadow-sm ring-1 ring-[#fd860a]/40 dark:bg-[#3a2208] dark:text-[#fdba74]"
                 : "text-mimo-muted hover:text-mimo-fg"
             }`}
           >
-            {t.label}
+            {t.icon}
+            <span className="truncate">{t.label}</span>
             {typeof t.badge === "number" && t.badge > 0 ? (
-              <span className="ml-1 tabular-nums text-[#fd860a]">({t.badge})</span>
+              <span className="tabular-nums text-[#fd860a]">({t.badge})</span>
             ) : null}
           </button>
         ))}
