@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { DEMO_PROFILE, isDemoMode } from "@/lib/demo";
 import { createClient } from "@/lib/supabase/client";
 import type { Profile } from "@/types";
@@ -90,6 +91,115 @@ function UserAvatar({
   );
 }
 
+function AccountInfoModal({
+  profile,
+  displayName,
+  avatarUrl,
+  email,
+  demo,
+  onClose,
+}: {
+  profile: Profile;
+  displayName: string;
+  avatarUrl: string | null;
+  email: string | null;
+  demo: boolean;
+  onClose: () => void;
+}) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [onClose]);
+
+  if (!mounted) return null;
+
+  const rawUsername = profile.username?.trim() || "";
+  const username = rawUsername
+    ? rawUsername.startsWith("@")
+      ? rawUsername
+      : `@${rawUsername}`
+    : "—";
+  const age = typeof profile.age === "number" ? String(profile.age) : "—";
+  const lastActive = profile.last_active || "—";
+
+  const rows: { label: string; value: string }[] = [
+    { label: "Kullanıcı adı", value: username },
+    { label: "Yaş", value: age },
+    { label: "Günlük seri", value: `${profile.daily_streak} gün` },
+    { label: "Toplam ders", value: String(profile.total_lessons ?? 0) },
+    { label: "Son aktif", value: lastActive },
+  ];
+  if (email) rows.unshift({ label: "E-posta", value: email });
+  if (demo) rows.push({ label: "Mod", value: "Demo (örnek veri)" });
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[500] flex items-center justify-center bg-black/55 p-4 backdrop-blur-md"
+      role="presentation"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="account-info-title"
+        className="relative z-[501] w-full max-w-sm rounded-2xl border border-mimo-border bg-mimo-card p-6 text-center shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="mx-auto h-20 w-20 overflow-hidden rounded-full ring-4 ring-[#fff3e0] dark:ring-[#3a2208]">
+          <UserAvatar src={avatarUrl} name={displayName} size={80} />
+        </div>
+        <h3 id="account-info-title" className="mt-4 text-xl font-black text-mimo-title">
+          {displayName}
+        </h3>
+        <p className="mt-1 text-sm font-bold text-mimo-muted">Hesap bilgileri</p>
+
+        <dl className="mt-4 space-y-2 text-left">
+          {rows.map((row) => (
+            <div
+              key={row.label}
+              className="flex items-baseline justify-between gap-3 rounded-xl bg-mimo-surface px-3 py-2.5"
+            >
+              <dt className="shrink-0 text-xs font-bold text-mimo-muted">{row.label}</dt>
+              <dd className="truncate text-sm font-extrabold text-mimo-fg">{row.value}</dd>
+            </div>
+          ))}
+        </dl>
+
+        <div className="mt-5 space-y-2">
+          <Link
+            href="/settings"
+            onClick={onClose}
+            className="block w-full rounded-2xl bg-[#fd860a] py-3 text-sm font-black text-[#2a1600] shadow-[0_3px_0_#c2410c]"
+          >
+            Ayarlara git
+          </Link>
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-full rounded-2xl border border-mimo-border bg-mimo-surface py-3 text-sm font-extrabold text-mimo-fg"
+          >
+            Kapat
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
 export function Navbar() {
   const pathname = usePathname();
   const detailsRef = useRef<HTMLDetailsElement>(null);
@@ -98,6 +208,8 @@ export function Navbar() {
     detectDemo() ? DEMO_PROFILE : null
   );
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [email, setEmail] = useState<string | null>(null);
+  const [accountOpen, setAccountOpen] = useState(false);
   const [ready, setReady] = useState(() => detectDemo());
 
   const loadProfile = useCallback(async () => {
@@ -107,6 +219,7 @@ export function Navbar() {
     if (localDemo) {
       setProfile(DEMO_PROFILE);
       setAvatarUrl(null);
+      setEmail("demo@mimo.local");
       setReady(true);
       return;
     }
@@ -119,15 +232,18 @@ export function Navbar() {
       if (!user) {
         setProfile(null);
         setAvatarUrl(null);
+        setEmail(null);
         setReady(true);
         return;
       }
       setAvatarUrl(avatarFromUser(user));
+      setEmail(user.email ?? null);
       const { data } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();
       setProfile((data as Profile | null) ?? null);
     } catch {
       setProfile(null);
       setAvatarUrl(null);
+      setEmail(null);
     } finally {
       setReady(true);
     }
@@ -142,6 +258,7 @@ export function Navbar() {
 
   useEffect(() => {
     detailsRef.current?.removeAttribute("open");
+    setAccountOpen(false);
   }, [pathname]);
 
   useEffect(() => {
@@ -238,12 +355,23 @@ export function Navbar() {
                 role="menu"
                 className="absolute right-0 top-12 z-[200] w-56 overflow-hidden rounded-2xl border border-mimo-border bg-mimo-card shadow-lg"
               >
-                <div className="flex items-center gap-3 border-b border-mimo-border px-4 py-3">
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => {
+                    detailsRef.current?.removeAttribute("open");
+                    setAccountOpen(true);
+                  }}
+                  className="flex w-full items-center gap-3 border-b border-mimo-border px-4 py-3 text-left transition hover:bg-mimo-surface"
+                >
                   <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full ring-2 ring-mimo-soft">
                     <UserAvatar src={avatarUrl} name={displayName} size={36} />
                   </div>
-                  <p className="truncate text-sm font-extrabold text-mimo-muted">{displayName}</p>
-                </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-extrabold text-mimo-title">{displayName}</p>
+                    <p className="truncate text-[11px] font-bold text-mimo-muted">Hesabı görüntüle</p>
+                  </div>
+                </button>
                 <Link
                   href="/settings"
                   role="menuitem"
@@ -290,6 +418,17 @@ export function Navbar() {
         </div>
       </header>
       <div className="h-14 shrink-0" aria-hidden />
+
+      {accountOpen ? (
+        <AccountInfoModal
+          profile={profile}
+          displayName={displayName}
+          avatarUrl={avatarUrl}
+          email={email}
+          demo={demo}
+          onClose={() => setAccountOpen(false)}
+        />
+      ) : null}
     </>
   );
 }
