@@ -1,5 +1,5 @@
 -- MIMO profile setup fields for first-time registration
--- Run once in the Supabase SQL Editor.
+-- Safe to re-run in the Supabase SQL Editor.
 
 alter table public.profiles
   add column if not exists display_name text,
@@ -13,12 +13,28 @@ alter table public.profiles
   add constraint profiles_age_check
   check (age is null or (age >= 5 and age <= 120));
 
--- Existing accounts should not be forced through setup again.
+-- Only mark complete when name + username + age are all present.
 update public.profiles
 set profile_completed_at = coalesce(profile_completed_at, now())
-where profile_completed_at is null;
+where profile_completed_at is null
+  and display_name is not null
+  and length(trim(display_name)) >= 2
+  and username is not null
+  and length(trim(username)) >= 3
+  and age is not null;
 
--- New signups: leave profile incomplete (username may still be prefilled by trigger).
+-- Older bulk migrations may have set completed_at without real fields — reopen those.
+update public.profiles
+set profile_completed_at = null
+where (
+    display_name is null
+    or length(trim(display_name)) < 2
+    or username is null
+    or length(trim(username)) < 3
+    or age is null
+  );
+
+-- New signups: leave profile incomplete.
 create or replace function public.handle_new_user()
 returns trigger
 language plpgsql

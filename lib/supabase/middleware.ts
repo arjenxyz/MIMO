@@ -1,6 +1,8 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { isDemoMode } from "@/lib/demo";
+import { needsProfileSetup } from "@/lib/profileSetup";
+import type { Profile } from "@/types";
 
 export async function updateSession(request: NextRequest) {
   const host = request.nextUrl.hostname;
@@ -67,14 +69,19 @@ export async function updateSession(request: NextRequest) {
   if (user) {
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
-      .select("profile_completed_at")
+      .select("id, username, display_name, age, profile_completed_at")
       .eq("id", user.id)
       .maybeSingle();
 
-    const schemaReady = !profileError;
-    // Missing column / table = schema not applied yet; don't lock users out.
+    // Missing columns / schema not applied: never lock users out.
+    const schemaMissing =
+      Boolean(profileError) &&
+      /display_name|profile_completed_at|age|column|schema cache|does not exist/i.test(
+        profileError?.message ?? ""
+      );
+
     const incomplete =
-      schemaReady && (profile == null || profile.profile_completed_at == null);
+      !schemaMissing && needsProfileSetup((profile as Profile | null) ?? null);
 
     const setupExempt =
       pathname.startsWith("/setup") ||
@@ -88,7 +95,7 @@ export async function updateSession(request: NextRequest) {
       return NextResponse.redirect(redirectUrl);
     }
 
-    if (schemaReady && !incomplete && pathname.startsWith("/setup")) {
+    if (!schemaMissing && !incomplete && pathname.startsWith("/setup")) {
       const redirectUrl = request.nextUrl.clone();
       redirectUrl.pathname = "/";
       return NextResponse.redirect(redirectUrl, 303);

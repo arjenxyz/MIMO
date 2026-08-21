@@ -29,8 +29,22 @@ export function validateProfileSetupInput(input: {
   return { displayName, username, age };
 }
 
-export function isProfileComplete(profile: Profile | null | undefined) {
-  return Boolean(profile?.profile_completed_at);
+/** Field-based check — do not trust profile_completed_at alone (old migrations). */
+export function isProfileComplete(profile: Profile | null | undefined): boolean {
+  if (!profile) return false;
+  const name = profile.display_name?.trim() ?? "";
+  const username = profile.username?.trim() ?? "";
+  const age = profile.age;
+  if (name.length < 2) return false;
+  if (username.length < 3) return false;
+  if (typeof age !== "number" || !Number.isFinite(age) || age < 5 || age > 120) {
+    return false;
+  }
+  return true;
+}
+
+export function needsProfileSetup(profile: Profile | null | undefined): boolean {
+  return !isProfileComplete(profile);
 }
 
 export async function completeProfileSetup(
@@ -60,13 +74,16 @@ export async function completeProfileSetup(
     })
     .eq("id", userId)
     .select("*")
-    .single();
+    .maybeSingle();
 
   if (error) {
     if (/unique|duplicate/i.test(error.message)) {
       throw new Error("Bu kullanıcı adı alınmış.");
     }
     throw error;
+  }
+  if (!data) {
+    throw new Error("Profil bulunamadı. Yeniden giriş yapıp tekrar dene.");
   }
 
   return data as Profile;
