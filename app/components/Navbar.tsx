@@ -286,14 +286,6 @@ export function Navbar() {
                   </span>
                 </button>
                 <Link
-                  href="/grammar"
-                  role="menuitem"
-                  className="block border-b border-mimo-border px-4 py-3 text-sm font-extrabold text-[#7c3aed] hover:bg-mimo-surface dark:text-[#c4b5fd]"
-                  onClick={() => detailsRef.current?.removeAttribute("open")}
-                >
-                  Gramer konuları
-                </Link>
-                <Link
                   href="/words/add"
                   role="menuitem"
                   className="block border-b border-mimo-border px-4 py-3 text-sm font-extrabold text-[#0369a1] hover:bg-mimo-surface dark:text-[#38bdf8]"
