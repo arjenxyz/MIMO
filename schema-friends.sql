@@ -1,4 +1,4 @@
--- MIMO — Friends (request / accept / reject)
+-- MIMO friends: request / accept / reject
 -- Run once in the Supabase SQL Editor.
 
 -- Allow authenticated users to look up others by username (needed for add-friend search).
@@ -20,7 +20,7 @@ create table if not exists public.friendships (
   check (requester_id <> addressee_id)
 );
 
--- One relationship per unordered pair (blocks A→B and B→A duplicates).
+-- One relationship per unordered pair (blocks A->B and B->A duplicates).
 create unique index if not exists friendships_pair_unique
   on public.friendships (
     least(requester_id, addressee_id),
@@ -52,12 +52,12 @@ create policy "Addressee can respond to requests"
   using (auth.uid() = addressee_id)
   with check (auth.uid() = addressee_id);
 
+drop policy if exists "Requester can cancel pending" on public.friendships;
 drop policy if exists "Participants can manage friendship rows" on public.friendships;
 create policy "Participants can manage friendship rows"
   on public.friendships for delete
   to authenticated
   using (auth.uid() = requester_id or auth.uid() = addressee_id);
 
--- Optional: username search helper (case-insensitive)
 create index if not exists profiles_username_lower_idx
   on public.profiles (lower(username));
