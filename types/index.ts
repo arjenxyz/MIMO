@@ -79,7 +79,7 @@ export interface UserStory {
 }
 
 export type Quality = 0 | 1 | 2 | 3;
-export type ModuleType = "word" | "grammar" | "story" | "sound";
+export type ModuleType = "word" | "grammar" | "story";
 
 export interface SM2Result {
   easeFactor: number;
@@ -95,8 +95,6 @@ export interface DailyQuests {
   grammarTarget: number;
   storiesDone: number;
   storiesTarget: number;
-  soundsDone: number;
-  soundsTarget: number;
   allComplete: boolean;
   bonusClaimed: boolean;
 }
@@ -107,45 +105,6 @@ export interface DueWordItem extends UserWord {
 
 export interface DueGrammarItem extends UserGrammar {
   grammar_rules: Grammar;
-}
-
-export interface Sound {
-  id: number;
-  ipa: string;
-  example_word: string;
-  category: "vowel" | "consonant";
-  sort_order: number;
-}
-
-export interface SoundPair {
-  id: number;
-  sound_id: number;
-  word_a: string;
-  word_b: string;
-  correct: "a" | "b";
-}
-
-export interface UserSound {
-  id: number;
-  user_id: string;
-  sound_id: number;
-  mastery: number;
-  correct_count: number;
-  seen_count: number;
-  last_answered: string;
-}
-
-export interface SoundWithProgress extends Sound {
-  mastery: number;
-}
-
-export interface SoundSessionQuestion {
-  id: number;
-  soundId: number;
-  ipa: string;
-  playWord: string;
-  options: [string, string];
-  correct: string;
 }
 
 export interface DETQuestionType {

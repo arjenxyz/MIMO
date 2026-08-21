@@ -56,11 +56,11 @@ export default async function DashboardPage() {
   const hour = new Date().getHours();
   const greeting = greetingFor(hour, profile.username);
 
-  let primaryHref = "/sounds";
+  let primaryHref = "/det/read-complete";
   let primaryLabel = "Başlat";
-  let unitTitle = "Sesleri güçlendir";
-  let unitHint = "Kulağını İngilizce seslere alıştır, telaffuzunu netleştir.";
-  let activeId = "sounds";
+  let unitTitle = "Read & Complete";
+  let unitHint = "Boşlukları doldur, okuma hızını ve kelime bilgini güçlendir.";
+  let activeId = "det";
 
   if (dueWordCount > 0) {
     primaryHref = "/quiz";
@@ -78,14 +78,6 @@ export default async function DashboardPage() {
       tone: "blue",
       icon: "books",
       state: activeId === "words" ? "active" : dueWordCount === 0 ? "done" : "upcoming",
-    },
-    {
-      id: "sounds",
-      title: "Sesler",
-      href: "/sounds",
-      tone: "cyan",
-      icon: "sound",
-      state: activeId === "sounds" ? "active" : "upcoming",
     },
     {
       id: "det",

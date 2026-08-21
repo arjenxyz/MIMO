@@ -3,7 +3,6 @@ import type { ReactNode } from "react";
 
 export type PathIconName =
   | "books"
-  | "sound"
   | "write"
   | "photo"
   | "match"
@@ -89,13 +88,6 @@ function PathIcon({ name }: { name: PathIconName }) {
         <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
         <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
         <path d="M8 7h8M8 11h6" />
-      </svg>
-    ),
-    sound: (
-      <svg {...common}>
-        <path d="M11 5 6 9H2v6h4l5 4V5z" />
-        <path d="M15.5 8.5a5 5 0 0 1 0 7" />
-        <path d="M18.5 5.5a9 9 0 0 1 0 13" />
       </svg>
     ),
     write: (

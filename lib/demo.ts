@@ -4,7 +4,6 @@ import type {
   DueGrammarItem,
   DueWordItem,
   Profile,
-  SoundWithProgress,
   Story,
 } from "@/types";
 
@@ -41,8 +40,6 @@ export const DEMO_QUESTS: DailyQuests = {
   grammarTarget: 3,
   storiesDone: 0,
   storiesTarget: 1,
-  soundsDone: 0,
-  soundsTarget: 1,
   allComplete: false,
   bonusClaimed: false,
 };
@@ -193,15 +190,6 @@ export const DEMO_STORIES: Story[] = [
     answer3: "On the table",
     image_prompt: null,
   },
-];
-
-export const DEMO_SOUNDS: SoundWithProgress[] = [
-  { id: 1, ipa: "ɑ", example_word: "hot", category: "vowel", sort_order: 1, mastery: 40 },
-  { id: 2, ipa: "æ", example_word: "cat", category: "vowel", sort_order: 2, mastery: 20 },
-  { id: 3, ipa: "ɪ", example_word: "ship", category: "vowel", sort_order: 3, mastery: 10 },
-  { id: 4, ipa: "i", example_word: "sheep", category: "vowel", sort_order: 4, mastery: 0 },
-  { id: 5, ipa: "θ", example_word: "think", category: "consonant", sort_order: 5, mastery: 15 },
-  { id: 6, ipa: "ʃ", example_word: "shoe", category: "consonant", sort_order: 6, mastery: 5 },
 ];
 
 export const DEMO_DET_READ_COMPLETE: DETExercise[] = [

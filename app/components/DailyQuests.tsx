@@ -26,13 +26,6 @@ const ITEMS = [
     accent: "#ff9600",
     icon: "📖",
   },
-  {
-    key: "sounds" as const,
-    title: "1 ses oturumu yap",
-    href: "/sounds",
-    accent: "#00cd9c",
-    icon: "🎧",
-  },
 ];
 
 export function DailyQuests({
@@ -54,7 +47,6 @@ export function DailyQuests({
     words: { done: quests.wordsDone, target: quests.wordsTarget },
     grammar: { done: quests.grammarDone, target: quests.grammarTarget },
     stories: { done: quests.storiesDone, target: quests.storiesTarget },
-    sounds: { done: quests.soundsDone, target: quests.soundsTarget },
   };
 
   const completedCount = ITEMS.filter((item) => {

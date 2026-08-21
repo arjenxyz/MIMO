@@ -5,11 +5,10 @@ import { Mascot } from "@/app/components/Mascot";
 
 const TIPS = [
   "Her gün kısa pratik, uzun maratondan daha etkilidir.",
-  "Minimal çiftler (ship/sheep) kulağını keskinleştirir.",
-  "Sesleri dinlerken gözlerini kapatmayı dene.",
   "Yanlış cevap da öğrenmedir — tekrar et, kalıcı olur.",
   "MIMO’da düzenli seri, öğrenmeyi hızlandırır.",
-  "Telaffuz için yüksek sesle tekrar etmek işe yarar.",
+  "Kelimeleri yüksek sesle tekrar etmek işe yarar.",
+  "Kısa oturumlar, uzun hafıza demektir.",
 ];
 
 export function LoadingScreen({ tip }: { tip?: string }) {

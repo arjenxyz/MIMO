@@ -1,4 +1,4 @@
--- MIMO — Supabase schema, RLS policies, and seed data
+﻿-- MIMO â€” Supabase schema, RLS policies, and seed data
 -- Run this entire file in the Supabase SQL Editor.
 
 create extension if not exists "pgcrypto";
@@ -90,33 +90,6 @@ create table if not exists public.user_stories (
   completed_at date not null default current_date
 );
 
-create table if not exists public.sounds (
-  id bigserial primary key,
-  ipa text not null unique,
-  example_word text not null,
-  category text not null check (category in ('vowel', 'consonant')),
-  sort_order integer not null default 0
-);
-
-create table if not exists public.sound_pairs (
-  id bigserial primary key,
-  sound_id bigint not null references public.sounds (id) on delete cascade,
-  word_a text not null,
-  word_b text not null,
-  correct text not null check (correct in ('a', 'b'))
-);
-
-create table if not exists public.user_sounds (
-  id bigserial primary key,
-  user_id uuid not null references public.profiles (id) on delete cascade,
-  sound_id bigint not null references public.sounds (id) on delete cascade,
-  mastery integer not null default 0 check (mastery between 0 and 100),
-  correct_count integer not null default 0,
-  seen_count integer not null default 0,
-  last_answered date not null default current_date,
-  unique (user_id, sound_id)
-);
-
 -- ---------------------------------------------------------------------------
 -- New user trigger: create a profile row on signup
 -- ---------------------------------------------------------------------------
@@ -153,9 +126,6 @@ alter table public.grammar_rules enable row level security;
 alter table public.user_grammar enable row level security;
 alter table public.stories enable row level security;
 alter table public.user_stories enable row level security;
-alter table public.sounds enable row level security;
-alter table public.sound_pairs enable row level security;
-alter table public.user_sounds enable row level security;
 
 drop policy if exists "Users can view own profile" on public.profiles;
 create policy "Users can view own profile"
@@ -259,37 +229,6 @@ create policy "Users can delete own stories"
   on public.user_stories for delete
   using (auth.uid() = user_id);
 
-drop policy if exists "Sounds are publicly readable" on public.sounds;
-create policy "Sounds are publicly readable"
-  on public.sounds for select
-  using (true);
-
-drop policy if exists "Sound pairs are publicly readable" on public.sound_pairs;
-create policy "Sound pairs are publicly readable"
-  on public.sound_pairs for select
-  using (true);
-
-drop policy if exists "Users can view own sounds" on public.user_sounds;
-create policy "Users can view own sounds"
-  on public.user_sounds for select
-  using (auth.uid() = user_id);
-
-drop policy if exists "Users can insert own sounds" on public.user_sounds;
-create policy "Users can insert own sounds"
-  on public.user_sounds for insert
-  with check (auth.uid() = user_id);
-
-drop policy if exists "Users can update own sounds" on public.user_sounds;
-create policy "Users can update own sounds"
-  on public.user_sounds for update
-  using (auth.uid() = user_id)
-  with check (auth.uid() = user_id);
-
-drop policy if exists "Users can delete own sounds" on public.user_sounds;
-create policy "Users can delete own sounds"
-  on public.user_sounds for delete
-  using (auth.uid() = user_id);
-
 -- ---------------------------------------------------------------------------
 -- Seed: words (32)
 -- ---------------------------------------------------------------------------
@@ -302,28 +241,28 @@ insert into public.words (english, turkish, example_sentence, difficulty) values
   ('school', 'okul', 'The children walk to school.', 1),
   ('happy', 'mutlu', 'She looks happy today.', 1),
   ('water', 'su', 'Please drink more water.', 1),
-  ('friend', 'arkadaş', 'He is my best friend.', 1),
+  ('friend', 'arkadaÅŸ', 'He is my best friend.', 1),
   ('food', 'yemek', 'The food in this restaurant is great.', 1),
   ('time', 'zaman', 'I do not have much time.', 1),
-  ('day', 'gün', 'Have a nice day!', 1),
+  ('day', 'gÃ¼n', 'Have a nice day!', 1),
   ('night', 'gece', 'The stars are bright at night.', 1),
-  ('city', 'şehir', 'Istanbul is a big city.', 1),
+  ('city', 'ÅŸehir', 'Istanbul is a big city.', 1),
   ('family', 'aile', 'I love my family.', 1),
-  ('work', 'iş', 'She goes to work at eight.', 1),
+  ('work', 'iÅŸ', 'She goes to work at eight.', 1),
   ('love', 'sevgi', 'Love makes people kind.', 1),
-  ('music', 'müzik', 'I listen to music every day.', 1),
-  ('dog', 'köpek', 'The dog is playing in the garden.', 1),
+  ('music', 'mÃ¼zik', 'I listen to music every day.', 1),
+  ('dog', 'kÃ¶pek', 'The dog is playing in the garden.', 1),
   ('cat', 'kedi', 'The cat is sleeping on the sofa.', 1),
-  ('tree', 'ağaç', 'There is a tall tree in the park.', 1),
-  ('sun', 'güneş', 'The sun is shining today.', 1),
+  ('tree', 'aÄŸaÃ§', 'There is a tall tree in the park.', 1),
+  ('sun', 'gÃ¼neÅŸ', 'The sun is shining today.', 1),
   ('moon', 'ay', 'The moon looks beautiful tonight.', 1),
-  ('rain', 'yağmur', 'I like walking in the rain.', 1),
-  ('walk', 'yürümek', 'We walk to the beach on Sundays.', 1),
+  ('rain', 'yaÄŸmur', 'I like walking in the rain.', 1),
+  ('walk', 'yÃ¼rÃ¼mek', 'We walk to the beach on Sundays.', 1),
   ('eat', 'yemek', 'They eat breakfast together.', 1),
-  ('drink', 'içmek', 'Would you like to drink tea?', 1),
+  ('drink', 'iÃ§mek', 'Would you like to drink tea?', 1),
   ('sleep', 'uyumak', 'Babies sleep a lot.', 1),
-  ('learn', 'öğrenmek', 'I want to learn English.', 1),
-  ('speak', 'konuşmak', 'Can you speak English?', 1),
+  ('learn', 'Ã¶ÄŸrenmek', 'I want to learn English.', 1),
+  ('speak', 'konuÅŸmak', 'Can you speak English?', 1),
   ('write', 'yazmak', 'Please write your name here.', 1),
   ('read', 'okumak', 'I read a book before bed.', 1),
   ('listen', 'dinlemek', 'Listen to the teacher carefully.', 1)
@@ -342,7 +281,7 @@ insert into public.grammar_rules (title, difficulty, question, correct_answer, e
     1,
     'She ___ (go) to school every day.',
     'goes',
-    'Simple Present, he/she/it öznesinde fiile -s/-es eklenir.',
+    'Simple Present, he/she/it Ã¶znesinde fiile -s/-es eklenir.',
     'She goes to school every day.'
   ),
   (
@@ -350,7 +289,7 @@ insert into public.grammar_rules (title, difficulty, question, correct_answer, e
     1,
     'They ___ (play) football right now.',
     'are playing',
-    'Present Continuous: am/is/are + fiil-ing. Şu anda olan eylemler için kullanılır.',
+    'Present Continuous: am/is/are + fiil-ing. Åu anda olan eylemler iÃ§in kullanÄ±lÄ±r.',
     'They are playing football right now.'
   ),
   (
@@ -358,7 +297,7 @@ insert into public.grammar_rules (title, difficulty, question, correct_answer, e
     2,
     'I ___ (watch) a movie last night.',
     'watched',
-    'Simple Past, düzenli fiillerde -ed alır. Zaman belirteci: last night, yesterday.',
+    'Simple Past, dÃ¼zenli fiillerde -ed alÄ±r. Zaman belirteci: last night, yesterday.',
     'I watched a movie last night.'
   ),
   (
@@ -366,7 +305,7 @@ insert into public.grammar_rules (title, difficulty, question, correct_answer, e
     3,
     'She ___ (live) in London since 2010.',
     'has lived',
-    'Since + geçmiş zaman belirteci Present Perfect ister. have/has + V3.',
+    'Since + geÃ§miÅŸ zaman belirteci Present Perfect ister. have/has + V3.',
     'I have lived here for 3 years.'
   ),
   (
@@ -374,7 +313,7 @@ insert into public.grammar_rules (title, difficulty, question, correct_answer, e
     2,
     'We ___ (visit) our grandparents tomorrow.',
     'will visit',
-    'Gelecek zaman için will + fiil (yalın hali) kullanılır.',
+    'Gelecek zaman iÃ§in will + fiil (yalÄ±n hali) kullanÄ±lÄ±r.',
     'We will visit our grandparents tomorrow.'
   )
 on conflict (title) do nothing;
@@ -427,81 +366,10 @@ insert into public.stories (
   )
 on conflict (title) do nothing;
 
--- ---------------------------------------------------------------------------
--- Seed: sounds + minimal pairs
--- ---------------------------------------------------------------------------
 
-insert into public.sounds (ipa, example_word, category, sort_order) values
-  ('ɑ', 'hot', 'vowel', 1),
-  ('æ', 'cat', 'vowel', 2),
-  ('ʌ', 'but', 'vowel', 3),
-  ('ɛ', 'bed', 'vowel', 4),
-  ('eɪ', 'say', 'vowel', 5),
-  ('ɚ', 'bird', 'vowel', 6),
-  ('ɪ', 'ship', 'vowel', 7),
-  ('i', 'sheep', 'vowel', 8),
-  ('ə', 'about', 'vowel', 9),
-  ('oʊ', 'boat', 'vowel', 10),
-  ('ʊ', 'foot', 'vowel', 11),
-  ('u', 'food', 'vowel', 12),
-  ('aʊ', 'cow', 'vowel', 13),
-  ('aɪ', 'my', 'vowel', 14),
-  ('ɔɪ', 'boy', 'vowel', 15),
-  ('θ', 'think', 'consonant', 16),
-  ('ð', 'this', 'consonant', 17),
-  ('ʃ', 'shoe', 'consonant', 18),
-  ('tʃ', 'chair', 'consonant', 19),
-  ('dʒ', 'jump', 'consonant', 20),
-  ('ŋ', 'sing', 'consonant', 21),
-  ('v', 'van', 'consonant', 22),
-  ('w', 'wine', 'consonant', 23),
-  ('r', 'red', 'consonant', 24),
-  ('l', 'light', 'consonant', 25)
-on conflict (ipa) do nothing;
+-- Optional: drop legacy sounds module if it still exists on older databases.
+alter table if exists public.user_sounds drop constraint if exists user_sounds_sound_id_fkey;
+drop table if exists public.user_sounds;
+drop table if exists public.sound_pairs;
+drop table if exists public.sounds;
 
-insert into public.sound_pairs (sound_id, word_a, word_b, correct)
-select s.id, v.word_a, v.word_b, v.correct
-from (values
-  ('ɑ', 'dock', 'deck', 'a'),
-  ('ɑ', 'hot', 'hat', 'a'),
-  ('æ', 'cat', 'cut', 'a'),
-  ('æ', 'bat', 'bet', 'a'),
-  ('ʌ', 'but', 'bat', 'a'),
-  ('ʌ', 'cut', 'cat', 'a'),
-  ('ɛ', 'bed', 'bad', 'a'),
-  ('ɛ', 'deck', 'dock', 'a'),
-  ('eɪ', 'say', 'see', 'a'),
-  ('eɪ', 'late', 'let', 'a'),
-  ('ɚ', 'bird', 'beard', 'a'),
-  ('ɚ', 'fur', 'far', 'a'),
-  ('ɪ', 'ship', 'sheep', 'a'),
-  ('ɪ', 'bit', 'beat', 'a'),
-  ('i', 'sheep', 'ship', 'a'),
-  ('i', 'beat', 'bit', 'a'),
-  ('ə', 'about', 'a boat', 'a'),
-  ('oʊ', 'boat', 'boot', 'a'),
-  ('oʊ', 'note', 'not', 'a'),
-  ('ʊ', 'full', 'fool', 'a'),
-  ('ʊ', 'pull', 'pool', 'a'),
-  ('u', 'food', 'foot', 'a'),
-  ('u', 'pool', 'pull', 'a'),
-  ('aʊ', 'cow', 'call', 'a'),
-  ('aɪ', 'my', 'me', 'a'),
-  ('ɔɪ', 'boy', 'buy', 'a'),
-  ('θ', 'think', 'sink', 'a'),
-  ('θ', 'thin', 'tin', 'a'),
-  ('ð', 'this', 'dis', 'a'),
-  ('ʃ', 'shoe', 'sue', 'a'),
-  ('tʃ', 'chair', 'share', 'a'),
-  ('dʒ', 'jump', 'dump', 'a'),
-  ('ŋ', 'sing', 'sin', 'a'),
-  ('v', 'van', 'ban', 'a'),
-  ('w', 'wine', 'vine', 'a'),
-  ('r', 'red', 'led', 'a'),
-  ('l', 'light', 'right', 'a')
-) as v(ipa, word_a, word_b, correct)
-join public.sounds s on s.ipa = v.ipa
-where not exists (
-  select 1 from public.sound_pairs sp
-  where sp.sound_id = s.id and sp.word_a = v.word_a and sp.word_b = v.word_b
-);

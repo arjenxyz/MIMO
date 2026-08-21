@@ -17,7 +17,7 @@ export default async function WidgetPreviewPage() {
   const demo = isDemoMode(host);
 
   let profile: Profile = DEMO_PROFILE;
-  let primaryHref = "/sounds";
+  let primaryHref = "/quiz";
   let primaryLabel = "Başlat";
 
   if (!demo) {
@@ -46,6 +46,9 @@ export default async function WidgetPreviewPage() {
     } else if (dueGrammar.length > 0) {
       primaryHref = "/quiz/grammar";
       primaryLabel = "Gramere başla";
+    } else {
+      primaryHref = "/det/read-complete";
+      primaryLabel = "Başlat";
     }
   }
 
