@@ -48,17 +48,6 @@ export default function AboutMimoPage() {
               Tarayıcın video oynatmayı desteklemiyor.
             </video>
           </div>
-          <div className="border-t border-mimo-soft px-5 py-4">
-            <p className="text-[11px] font-black uppercase tracking-[0.16em] text-[#fd860a]">
-              Oluşum süreci
-            </p>
-            <h2 className="mt-1 text-lg font-black text-mimo-title">
-              MIMO nasıl doğdu?
-            </h2>
-            <p className="mt-1.5 text-sm font-semibold leading-relaxed text-mimo-muted">
-              Kısa bir bakış: fikirden uygulamaya, MIMO’nun hikâyesi.
-            </p>
-          </div>
         </section>
 
         <section className="mt-5 space-y-3 rounded-2xl border border-mimo-border bg-mimo-card p-5 shadow-sm">
