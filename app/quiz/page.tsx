@@ -12,6 +12,7 @@ import {
   PracticeExamTopBar,
 } from "@/app/components/PracticeExamChrome";
 import { WordImage } from "@/app/components/WordImage";
+import { WordUploaderAttribution } from "@/app/components/WordUploaderAttribution";
 import { DEMO_DUE_WORDS, isDemoMode } from "@/lib/demo";
 import { playFeedback } from "@/lib/feedbackSound";
 import { playWordAudio } from "@/lib/speak";
@@ -347,6 +348,7 @@ export default function WordQuizPage() {
             {word.phonetic && (
               <p className="mt-1 text-center text-sm font-bold text-mimo-muted">{word.phonetic}</p>
             )}
+            <WordUploaderAttribution word={word} />
 
             <div className="mt-5 grid gap-2">
               {choices.map((option) => {

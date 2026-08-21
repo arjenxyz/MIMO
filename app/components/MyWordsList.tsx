@@ -5,41 +5,17 @@ import { useRouter } from "next/navigation";
 import { playWordAudio } from "@/lib/speak";
 import { isShowGlobalWords } from "@/lib/showGlobalWords";
 import type { DueWordItem, Word } from "@/types";
+import {
+  UploaderBadge,
+  UploaderProfileCard,
+  type UploaderProfile,
+} from "@/app/components/WordUploaderAttribution";
 
 type EditDraft = {
   english: string;
   turkish: string;
   phonetic: string;
 };
-
-function UploaderBadge({ word }: { word: Word }) {
-  if (!word.is_global || !word.created_by) return null;
-  const name = word.uploader_username?.trim() || "Bir kullanıcı";
-  const initial = name.charAt(0).toUpperCase();
-
-  return (
-    <div className="mt-1.5 flex items-center gap-1.5">
-      <span className="relative flex h-5 w-5 shrink-0 overflow-hidden rounded-full bg-[#fd860a] ring-1 ring-mimo-soft">
-        {word.uploader_avatar_url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={word.uploader_avatar_url}
-            alt=""
-            className="h-full w-full object-cover"
-            referrerPolicy="no-referrer"
-          />
-        ) : (
-          <span className="flex h-full w-full items-center justify-center text-[9px] font-black text-[#2a1600]">
-            {initial}
-          </span>
-        )}
-      </span>
-      <p className="truncate text-[11px] font-bold text-mimo-muted">
-        {name} tarafından sisteme yüklendi
-      </p>
-    </div>
-  );
-}
 
 export function MyWordsList({
   words,
@@ -58,6 +34,7 @@ export function MyWordsList({
   const [busyId, setBusyId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [modalError, setModalError] = useState<string | null>(null);
+  const [uploaderProfile, setUploaderProfile] = useState<UploaderProfile | null>(null);
 
   useEffect(() => {
     setRows(words);
@@ -75,9 +52,11 @@ export function MyWordsList({
   }, []);
 
   useEffect(() => {
-    if (!editingRow) return;
+    if (!editingRow && !uploaderProfile) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") cancelEdit();
+      if (e.key !== "Escape") return;
+      if (uploaderProfile) setUploaderProfile(null);
+      else cancelEdit();
     };
     document.addEventListener("keydown", onKey);
     const prev = document.body.style.overflow;
@@ -86,7 +65,7 @@ export function MyWordsList({
       document.removeEventListener("keydown", onKey);
       document.body.style.overflow = prev;
     };
-  }, [editingRow]);
+  }, [editingRow, uploaderProfile]);
 
   const items = useMemo(() => {
     return rows.filter((row) => {
@@ -259,7 +238,7 @@ export function MyWordsList({
                         {word.phonetic}
                       </p>
                     )}
-                    <UploaderBadge word={word} />
+                    <UploaderBadge word={word} onOpen={setUploaderProfile} className="mt-1.5" />
                   </div>
                   <button
                     type="button"
@@ -321,6 +300,13 @@ export function MyWordsList({
             );
           })}
         </ul>
+      )}
+
+      {uploaderProfile && (
+        <UploaderProfileCard
+          profile={uploaderProfile}
+          onClose={() => setUploaderProfile(null)}
+        />
       )}
 
       {editingRow?.words && (
