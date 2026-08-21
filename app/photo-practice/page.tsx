@@ -17,7 +17,7 @@ import { formatTimer } from "@/lib/detCloze";
 import { playFeedback } from "@/lib/feedbackSound";
 import { getRandomImage, stabilizePicsumUrl } from "@/lib/image-api";
 
-type Phase = "ready" | "running" | "evaluating" | "done";
+type Phase = "ready" | "running" | "timeup" | "evaluating" | "done";
 
 const WRITE_SECONDS = 60;
 const MAX_SKIPS = 3;
@@ -152,12 +152,13 @@ export default function PhotoPracticePage() {
   useEffect(() => {
     if (phase !== "running") return;
     if (secondsLeft <= 0) {
-      void runEvaluation(answerRef.current, { force: true });
+      // Do not call Gemini here — wait for explicit "Bitir ve Değerlendir".
+      setPhase("timeup");
       return;
     }
     const t = window.setTimeout(() => setSecondsLeft((s) => s - 1), 1000);
     return () => window.clearTimeout(t);
-  }, [phase, secondsLeft, runEvaluation]);
+  }, [phase, secondsLeft]);
 
   function startSession() {
     setError("");
@@ -206,7 +207,7 @@ export default function PhotoPracticePage() {
     if (stable !== imageUrl) setImageUrl(stable);
   }
 
-  const writing = phase === "running" || phase === "evaluating";
+  const writing = phase === "running" || phase === "timeup" || phase === "evaluating";
 
   if (writing) {
     return (
@@ -268,34 +269,45 @@ export default function PhotoPracticePage() {
               />
             </label>
 
-            {error && phase === "running" && (
+            {error && (phase === "running" || phase === "timeup") && (
               <p className="mt-3 text-center text-sm font-bold text-[#b45309]">{error}</p>
             )}
 
-            {phase === "running" && (
+            {phase === "timeup" && (
+              <p className="mt-3 text-center text-sm font-bold text-[#b45309]">
+                Süre bitti. Değerlendirme için butona bas — AI ancak o zaman çalışır.
+              </p>
+            )}
+
+            {(phase === "running" || phase === "timeup") && (
               <div className="mt-4 flex flex-col items-center gap-2 sm:flex-row sm:justify-center">
                 <PracticeExamPrimaryButton
-                  onClick={() => void runEvaluation(answer)}
-                  disabled={answer.trim().length < 20 || sessionEvalStartedRef.current}
+                  onClick={() => void runEvaluation(answer, { force: phase === "timeup" })}
+                  disabled={
+                    (phase === "running" && answer.trim().length < 20) ||
+                    sessionEvalStartedRef.current
+                  }
                   variant="green"
                   className="w-full sm:w-auto"
                 >
                   Bitir ve Değerlendir
                 </PracticeExamPrimaryButton>
-                <button
-                  type="button"
-                  onClick={resetWithNewImage}
-                  disabled={skipsLeft <= 0}
-                  className="w-full rounded-2xl border border-mimo-soft px-6 py-3 text-sm font-bold text-mimo-muted disabled:opacity-50 sm:w-auto"
-                >
-                  {skipsLeft > 0 ? `Geç (${skipsLeft})` : "Geç hakkı bitti"}
-                </button>
+                {phase === "running" && (
+                  <button
+                    type="button"
+                    onClick={resetWithNewImage}
+                    disabled={skipsLeft <= 0}
+                    className="w-full rounded-2xl border border-mimo-soft px-6 py-3 text-sm font-bold text-mimo-muted disabled:opacity-50 sm:w-auto"
+                  >
+                    {skipsLeft > 0 ? `Geç (${skipsLeft})` : "Geç hakkı bitti"}
+                  </button>
+                )}
               </div>
             )}
 
             {phase === "evaluating" && (
               <p className="mt-4 text-center text-sm font-bold text-mimo-muted">
-                Süre bitti — değerlendiriliyor…
+                Değerlendiriliyor…
               </p>
             )}
           </div>
@@ -344,7 +356,8 @@ export default function PhotoPracticePage() {
                     Fotoğrafı İngilizce anlat
                   </h1>
                   <p className="mt-2 text-sm font-semibold text-mimo-muted">
-                    60 saniye içinde gördüğünü yaz. Süre bitince otomatik değerlendirilir.
+                    60 saniye içinde gördüğünü yaz. AI yalnızca &quot;Bitir ve Değerlendir&quot;
+                    dediğinde çalışır.
                   </p>
                 </div>
                 <div className="flex flex-col items-center gap-2 sm:flex-row sm:justify-center">

@@ -100,6 +100,7 @@ export default function ReadCompletePage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [awaitingStart, setAwaitingStart] = useState(true);
   const timedOutRef = useRef(false);
   const loadGenRef = useRef(0);
 
@@ -126,6 +127,7 @@ export default function ReadCompletePage() {
     setError(opts?.message ?? "");
     setReady(true);
     setGenerating(false);
+    setAwaitingStart(false);
 
     const topics = list.map((ex) => ex.topic).filter((t): t is string => Boolean(t));
     if (topics.length > 0) {
@@ -185,10 +187,17 @@ export default function ReadCompletePage() {
     }
   }, [startSession]);
 
+  const startLocalSession = useCallback(() => {
+    setAwaitingStart(false);
+    startSession(pickSession(DEMO_DET_READ_COMPLETE), {
+      demo: true,
+      message: "Yedek pasajlarla başladın (AI kullanılmadı).",
+    });
+  }, [startSession]);
+
   useEffect(() => {
     setMounted(true);
-    void loadAiSession();
-  }, [loadAiSession]);
+  }, []);
 
   useEffect(() => {
     setValues({});
@@ -258,11 +267,52 @@ export default function ReadCompletePage() {
     return Math.round((correctCount / total) * 100);
   }, [correctCount, wrongCount]);
 
-  if (!mounted || !ready) {
+  if (!mounted) {
     return (
       <main className="min-h-screen bg-mimo-bg text-mimo-fg">
         <div className="mx-auto max-w-3xl px-4 pb-10 pt-5">
           <div className="text-center text-sm font-bold text-mimo-muted">Loading…</div>
+        </div>
+      </main>
+    );
+  }
+
+  if (awaitingStart && !generating) {
+    return (
+      <main className="min-h-screen bg-mimo-bg text-mimo-fg">
+        <div className="mx-auto max-w-xl px-4 pb-10 pt-10">
+          <div className="rounded-2xl border border-mimo-border bg-mimo-card p-6 text-center shadow-sm sm:p-8">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#1cb0f6]">
+              Read and Complete
+            </p>
+            <h1 className="mt-3 text-2xl font-black text-mimo-title">Pasajları hazırla</h1>
+            <p className="mt-2 text-sm font-semibold text-mimo-muted">
+              AI pasaj üretmek token harcar. Yanlışlıkla girdiysen geri dön; hazır olduğunda
+              aşağıdan başlat.
+            </p>
+            <div className="mt-6 flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={() => void loadAiSession()}
+                className="rounded-2xl bg-[#1cb0f6] px-4 py-3 text-sm font-black uppercase tracking-wide text-white shadow-[0_3px_0_#1899d6]"
+              >
+                AI ile pasaj hazırla
+              </button>
+              <button
+                type="button"
+                onClick={startLocalSession}
+                className="rounded-2xl border border-mimo-soft bg-mimo-surface px-4 py-3 text-sm font-extrabold text-mimo-fg"
+              >
+                Yedek pasajlarla başla
+              </button>
+              <Link
+                href="/"
+                className="rounded-2xl px-4 py-3 text-sm font-bold text-mimo-muted hover:text-mimo-fg"
+              >
+                Ana sayfa
+              </Link>
+            </div>
+          </div>
         </div>
       </main>
     );
