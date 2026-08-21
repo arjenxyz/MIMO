@@ -31,37 +31,49 @@ export type PathNode = {
 const TONE = {
   green: {
     fill: "bg-[#58cc02]",
+    muted: "bg-[#86efac]",
     shadow: "shadow-[0_6px_0_#46a302]",
+    mutedShadow: "shadow-[0_6px_0_#4ade80]",
     soft: "text-[#58cc02]",
     ring: "ring-[#58cc02]/35",
   },
   blue: {
     fill: "bg-[#1cb0f6]",
+    muted: "bg-[#7dd3fc]",
     shadow: "shadow-[0_6px_0_#1899d6]",
+    mutedShadow: "shadow-[0_6px_0_#38bdf8]",
     soft: "text-[#1cb0f6]",
     ring: "ring-[#1cb0f6]/35",
   },
   purple: {
     fill: "bg-[#6366f1]",
+    muted: "bg-[#a5b4fc]",
     shadow: "shadow-[0_6px_0_#4f46e5]",
+    mutedShadow: "shadow-[0_6px_0_#818cf8]",
     soft: "text-[#6366f1]",
     ring: "ring-[#6366f1]/30",
   },
   orange: {
     fill: "bg-[#fd860a]",
+    muted: "bg-[#fdba74]",
     shadow: "shadow-[0_6px_0_#c2410c]",
+    mutedShadow: "shadow-[0_6px_0_#fb923c]",
     soft: "text-[#ea580c]",
     ring: "ring-[#fd860a]/35",
   },
   cyan: {
     fill: "bg-[#0d9488]",
+    muted: "bg-[#5eead4]",
     shadow: "shadow-[0_6px_0_#0f766e]",
+    mutedShadow: "shadow-[0_6px_0_#2dd4bf]",
     soft: "text-[#0d9488]",
     ring: "ring-[#0d9488]/30",
   },
   rose: {
     fill: "bg-[#e11d48]",
+    muted: "bg-[#fda4af]",
     shadow: "shadow-[0_6px_0_#be123c]",
+    mutedShadow: "shadow-[0_6px_0_#fb7185]",
     soft: "text-[#e11d48]",
     ring: "ring-[#e11d48]/30",
   },
@@ -299,29 +311,28 @@ export function LearningPath({
 
       <div
         ref={rootRef}
-        className="relative mx-auto mt-10 max-w-sm overflow-x-clip px-2 pb-8 sm:max-w-md"
+        className="relative isolate mx-auto mt-10 max-w-sm overflow-x-clip px-2 pb-8 sm:max-w-md"
       >
         <div
           className="pointer-events-none absolute inset-x-0 -top-6 h-40 bg-[radial-gradient(ellipse_at_center,rgba(28,176,246,0.08),transparent_70%)]"
           aria-hidden
         />
 
+        {/* Path rail — always behind nodes + labels (isolate + z-0). */}
         {rail?.d ? (
           <svg
-            className="pointer-events-none absolute inset-0 -z-0 overflow-visible"
+            className="pointer-events-none absolute inset-0 z-0 overflow-visible"
             width={rail.width}
             height={rail.height}
-            style={{ zIndex: 0 }}
             aria-hidden
           >
             <path
               ref={pathFullRef}
               d={rail.d}
               fill="none"
-              stroke="currentColor"
+              stroke="#cbd5e1"
               strokeWidth={4}
               strokeLinecap="round"
-              className="text-mimo-border/80"
             />
             <path
               d={rail.d}
@@ -343,103 +354,108 @@ export function LearningPath({
           </svg>
         ) : null}
 
-        <div className="relative mb-14 flex justify-center mimo-path-enter" style={{ zIndex: 2 }}>
-          <div className="relative max-w-[300px]">
-            <div
-              ref={startRef}
-              className="rounded-[1.35rem] border border-mimo-border/80 bg-mimo-card px-5 py-3.5 text-center shadow-[0_10px_40px_-18px_rgba(15,23,42,0.35)]"
-            >
-              <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#fd860a]">
-                MIMO
-              </p>
-              <p className="mt-1.5 text-[15px] font-extrabold leading-snug text-mimo-fg">
-                {greeting}
-              </p>
-            </div>
-            <div
-              className="absolute left-1/2 top-full h-3.5 w-3.5 -translate-x-1/2 -translate-y-[7px] rotate-45 border-b border-r border-mimo-border/80 bg-mimo-card"
-              aria-hidden
-            />
-          </div>
-        </div>
-
-        <ol className="relative space-y-12" style={{ zIndex: 2 }}>
-          {nodes.map((node, index) => {
-            const tone = TONE[node.tone];
-            const offset = OFFSETS[index % OFFSETS.length];
-            const isActive = node.state === "active";
-            const isDone = node.state === "done";
-            const isUpcoming = node.state === "upcoming";
-
-            return (
-              <li
-                key={node.id}
-                className="relative flex justify-center mimo-path-enter"
-                style={{ animationDelay: `${index * 55}ms` }}
+        <div className="relative z-10">
+          <div className="mb-14 flex justify-center mimo-path-enter">
+            <div className="relative max-w-[300px]">
+              <div
+                ref={startRef}
+                className="rounded-[1.35rem] border border-mimo-border/80 bg-mimo-card px-5 py-3.5 text-center shadow-[0_10px_40px_-18px_rgba(15,23,42,0.35)]"
               >
-                <div className={`flex flex-col items-center ${offset}`}>
-                  {isActive && (
-                    <span className="relative z-[3] mb-2.5 inline-flex items-center gap-1 rounded-full bg-[#58cc02] px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-[#14260a] shadow-[0_3px_0_#46a302]">
-                      <span className="h-1.5 w-1.5 rounded-full bg-[#14260a]/70" aria-hidden />
-                      Başla
-                    </span>
-                  )}
+                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#fd860a]">
+                  MIMO
+                </p>
+                <p className="mt-1.5 text-[15px] font-extrabold leading-snug text-mimo-fg">
+                  {greeting}
+                </p>
+              </div>
+              <div
+                className="absolute left-1/2 top-full h-3.5 w-3.5 -translate-x-1/2 -translate-y-[7px] rotate-45 border-b border-r border-mimo-border/80 bg-mimo-card"
+                aria-hidden
+              />
+            </div>
+          </div>
 
-                  {/* Opaque disc masks the path under the node so the line never shows through. */}
-                  <div className="relative z-[3]">
-                    <span
-                      className="pointer-events-none absolute left-1/2 top-1/2 h-[5.35rem] w-[5.35rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-mimo-bg"
-                      aria-hidden
-                    />
-                    <Link
-                      ref={(el) => {
-                        nodeRefs.current[index] = el;
-                      }}
-                      href={node.href}
-                      aria-current={isActive ? "step" : undefined}
-                      aria-label={`${node.title}${isActive ? " — sıradaki" : isDone ? " — tamamlandı" : ""}`}
-                      className={[
-                        "group relative flex h-[4.6rem] w-[4.6rem] items-center justify-center rounded-full border-[3.5px] border-white transition duration-200",
-                        "hover:-translate-y-0.5 active:translate-y-1 active:shadow-none dark:border-mimo-bg",
-                        isUpcoming ? "bg-[#94a3b8] shadow-[0_6px_0_#64748b]" : `${tone.fill} ${tone.shadow}`,
-                        isActive ? `ring-4 ${tone.ring} mimo-path-pulse` : "",
-                      ].join(" ")}
-                    >
-                      {isDone ? (
-                        <CheckIcon />
-                      ) : node.icon ? (
-                        <PathIcon name={node.icon} />
-                      ) : (
-                        <span className="text-xl font-black text-white">{index + 1}</span>
-                      )}
-                    </Link>
-                  </div>
+          <ol className="space-y-12">
+            {nodes.map((node, index) => {
+              const tone = TONE[node.tone];
+              const offset = OFFSETS[index % OFFSETS.length];
+              const isActive = node.state === "active";
+              const isDone = node.state === "done";
+              const isUpcoming = node.state === "upcoming";
 
-                  <div className="relative z-[3] mt-3 max-w-[8rem] text-center">
-                    <p
-                      className={`text-[14px] font-black leading-tight tracking-tight ${
-                        isActive ? "text-mimo-title" : isUpcoming ? "text-mimo-muted" : "text-mimo-fg/80"
-                      }`}
-                    >
-                      {node.title}
-                    </p>
-                    {isActive ? (
-                      <p
-                        className={`mt-1 text-[10px] font-black uppercase tracking-[0.14em] ${tone.soft}`}
+              return (
+                <li
+                  key={node.id}
+                  className="relative flex justify-center mimo-path-enter"
+                  style={{ animationDelay: `${index * 55}ms` }}
+                >
+                  <div className={`flex flex-col items-center ${offset}`}>
+                    {isActive && (
+                      <span className="mb-2.5 inline-flex items-center gap-1 rounded-full bg-[#58cc02] px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-[#14260a] shadow-[0_3px_0_#46a302]">
+                        <span className="h-1.5 w-1.5 rounded-full bg-[#14260a]/70" aria-hidden />
+                        Başla
+                      </span>
+                    )}
+
+                    <div className="relative">
+                      {/* Mask so the rail never shows through the circle */}
+                      <span
+                        className="pointer-events-none absolute left-1/2 top-1/2 z-0 h-[5.4rem] w-[5.4rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-mimo-bg"
+                        aria-hidden
+                      />
+                      <Link
+                        ref={(el) => {
+                          nodeRefs.current[index] = el;
+                        }}
+                        href={node.href}
+                        aria-current={isActive ? "step" : undefined}
+                        aria-label={`${node.title}${isActive ? " — sıradaki" : isDone ? " — tamamlandı" : ""}`}
+                        className={[
+                          "group relative z-[1] flex h-[4.6rem] w-[4.6rem] items-center justify-center rounded-full border-[3.5px] border-white transition duration-200",
+                          "hover:-translate-y-0.5 active:translate-y-1 active:shadow-none dark:border-mimo-bg",
+                          isUpcoming
+                            ? `${tone.muted} ${tone.mutedShadow}`
+                            : `${tone.fill} ${tone.shadow}`,
+                          isActive ? `ring-4 ${tone.ring} mimo-path-pulse` : "",
+                        ].join(" ")}
                       >
-                        Sıradaki
+                        {isDone ? (
+                          <CheckIcon />
+                        ) : node.icon ? (
+                          <PathIcon name={node.icon} />
+                        ) : (
+                          <span className="text-xl font-black text-white">{index + 1}</span>
+                        )}
+                      </Link>
+                    </div>
+
+                    {/* Opaque label plate — rail passes under, text stays readable */}
+                    <div className="relative z-[1] mt-3 max-w-[8.5rem] rounded-xl bg-mimo-bg px-2 py-1 text-center">
+                      <p
+                        className={`text-[14px] font-black leading-tight tracking-tight ${
+                          isActive ? "text-mimo-title" : isUpcoming ? "text-mimo-muted" : "text-mimo-fg/80"
+                        }`}
+                      >
+                        {node.title}
                       </p>
-                    ) : isDone ? (
-                      <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.12em] text-mimo-muted">
-                        Tamam
-                      </p>
-                    ) : null}
+                      {isActive ? (
+                        <p
+                          className={`mt-1 text-[10px] font-black uppercase tracking-[0.14em] ${tone.soft}`}
+                        >
+                          Sıradaki
+                        </p>
+                      ) : isDone ? (
+                        <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.12em] text-mimo-muted">
+                          Tamam
+                        </p>
+                      ) : null}
+                    </div>
                   </div>
-                </div>
-              </li>
-            );
-          })}
-        </ol>
+                </li>
+              );
+            })}
+          </ol>
+        </div>
       </div>
     </section>
   );
