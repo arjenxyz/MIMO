@@ -321,7 +321,7 @@ export default function WordQuizPage() {
         </p>
 
         <PracticeExamCard className="!px-0 !py-0 overflow-hidden sm:!px-0 sm:!py-0 lg:grid lg:grid-cols-2 lg:items-stretch">
-          <div className="relative h-36 w-full bg-[#e2e8f0] sm:h-44 lg:h-[16.5rem] lg:min-h-0">
+          <div className="relative h-36 w-full bg-[#e2e8f0] sm:h-44 lg:h-auto lg:min-h-full">
             <WordImage
               english={word.english}
               className="h-full w-full object-cover"
