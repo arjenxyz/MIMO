@@ -21,7 +21,10 @@ const withPWA = withPWAInit({
           pathname.startsWith("/login/") ||
           pathname.startsWith("/register") ||
           pathname.startsWith("/auth") ||
-          pathname.startsWith("/onboarding"),
+          pathname.startsWith("/onboarding") ||
+          pathname.startsWith("/settings") ||
+          pathname.startsWith("/friends") ||
+          pathname.startsWith("/setup"),
         handler: "NetworkOnly",
         method: "GET",
       },
