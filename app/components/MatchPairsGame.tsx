@@ -1,9 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   PracticeExamCard,
+  PracticeExamExitLink,
   PracticeExamEyebrow,
   PracticeExamGhostLink,
   PracticeExamMain,
@@ -406,13 +406,7 @@ export function MatchPairsGame({ words }: { words: MatchWord[] }) {
     <PracticeExamMain>
       <div className="mx-auto flex min-h-screen max-w-lg flex-col px-4 pb-8 pt-4">
         <div className="mb-4 flex items-center gap-3">
-          <Link
-            href="/"
-            aria-label="Çık"
-            className="flex h-10 w-10 items-center justify-center rounded-full text-2xl font-black text-mimo-muted hover:bg-mimo-card hover:text-mimo-fg"
-          >
-            ×
-          </Link>
+          <PracticeExamExitLink href="/" />
 
           <div className="relative min-w-0 flex-1 pt-3">
             <div className="h-3 overflow-hidden rounded-full bg-[#e2e8f0]">

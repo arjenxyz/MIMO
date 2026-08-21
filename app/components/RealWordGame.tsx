@@ -1,9 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   PracticeExamCard,
+  PracticeExamExitLink,
   PracticeExamEyebrow,
   PracticeExamGhostLink,
   PracticeExamMain,
@@ -181,25 +181,7 @@ export function RealWordGame({ seedWords }: { seedWords: string[] }) {
             </span>
             <span>bu soru için</span>
           </div>
-          <Link
-            href="/"
-            className="flex h-9 w-9 items-center justify-center rounded-lg text-mimo-muted hover:bg-mimo-surface hover:text-mimo-fg"
-            aria-label="Çık"
-          >
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.25"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden
-            >
-              <path d="m9 18 6-6-6-6" />
-            </svg>
-          </Link>
+          <PracticeExamExitLink href="/" />
         </div>
 
         <div className="mb-4 flex items-center justify-between text-xs font-black uppercase tracking-wide text-mimo-muted">

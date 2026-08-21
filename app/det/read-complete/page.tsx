@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ClozePassage, scoreCloze } from "@/app/components/det/ClozePassage";
+import { PracticeExamExitLink } from "@/app/components/PracticeExamChrome";
 import { extractGaps, formatTimer, parseClozePassage } from "@/lib/detCloze";
 import { DEMO_DET_READ_COMPLETE, isDemoMode } from "@/lib/demo";
 import { playFeedback } from "@/lib/feedbackSound";
@@ -349,9 +350,7 @@ export default function ReadCompletePage() {
               {paused ? "▶" : "❚❚"}
             </button>
           </div>
-          <Link href="/" className="text-sm font-bold text-mimo-muted hover:text-mimo-fg">
-            Çık
-          </Link>
+          <PracticeExamExitLink href="/" />
         </div>
 
         <p className="mb-5 text-center text-base font-bold text-mimo-fg sm:text-lg">

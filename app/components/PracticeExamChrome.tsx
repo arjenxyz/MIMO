@@ -32,6 +32,43 @@ export function PracticeExamCard({
   );
 }
 
+/** Tappable exit chip — keeps top placement, reads as a real control. */
+export function PracticeExamExitLink({
+  href = "/",
+  label = "Çık",
+  onClick,
+  className = "",
+}: {
+  href?: string;
+  label?: string;
+  onClick?: () => void;
+  className?: string;
+}) {
+  return (
+    <Link
+      href={href}
+      onClick={onClick}
+      aria-label={label}
+      className={`inline-flex h-10 shrink-0 items-center gap-1.5 rounded-xl border border-mimo-soft bg-mimo-card px-3.5 text-sm font-extrabold text-mimo-fg shadow-[0_2px_0_rgba(15,23,42,0.06)] transition hover:border-mimo-border hover:bg-mimo-surface active:translate-y-0.5 active:shadow-none dark:shadow-[0_2px_0_rgba(0,0,0,0.35)] ${className}`.trim()}
+    >
+      <svg
+        width="14"
+        height="14"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.75"
+        strokeLinecap="round"
+        aria-hidden
+        className="opacity-70"
+      >
+        <path d="M6 6l12 12M18 6 6 18" />
+      </svg>
+      <span>{label}</span>
+    </Link>
+  );
+}
+
 export function PracticeExamTopBar({
   left,
   exitHref = "/",
@@ -44,12 +81,7 @@ export function PracticeExamTopBar({
   return (
     <div className="mb-6 flex items-center justify-between gap-3">
       <div className="min-w-0">{left}</div>
-      <Link
-        href={exitHref}
-        className="shrink-0 text-sm font-bold text-mimo-muted hover:text-mimo-fg"
-      >
-        {exitLabel}
-      </Link>
+      <PracticeExamExitLink href={exitHref} label={exitLabel} />
     </div>
   );
 }

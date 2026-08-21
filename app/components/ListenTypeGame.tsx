@@ -1,9 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   PracticeExamCard,
+  PracticeExamExitLink,
   PracticeExamEyebrow,
   PracticeExamGhostLink,
   PracticeExamMain,
@@ -217,25 +217,7 @@ export function ListenTypeGame({ seedWords }: { seedWords: SeedWord[] }) {
             <span className="tabular-nums text-mimo-fg">{formatTimer(secondsLeft)}</span>
             <span>bu soru için</span>
           </div>
-          <Link
-            href="/"
-            className="flex h-9 w-9 items-center justify-center rounded-lg text-mimo-muted hover:bg-mimo-surface hover:text-mimo-fg"
-            aria-label="Kapat"
-            onClick={stopAudio}
-          >
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              aria-hidden
-            >
-              <path d="M6 6l12 12M18 6 6 18" />
-            </svg>
-          </Link>
+          <PracticeExamExitLink href="/" onClick={stopAudio} />
         </div>
 
         <div className="flex flex-1 flex-col items-center pt-4">
