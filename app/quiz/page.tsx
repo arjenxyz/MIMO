@@ -12,15 +12,9 @@ import {
   PracticeExamTopBar,
 } from "@/app/components/PracticeExamChrome";
 import { WordImage } from "@/app/components/WordImage";
-import {
-  assignNewWords,
-  getDueWords,
-  updateWordProgress,
-} from "@/lib/db";
 import { DEMO_DUE_WORDS, isDemoMode } from "@/lib/demo";
 import { playFeedback } from "@/lib/feedbackSound";
 import { playWordAudio } from "@/lib/speak";
-import { createClient } from "@/lib/supabase/client";
 import type { DueWordItem, Quality } from "@/types";
 
 const DISTRACTOR_POOL = [
@@ -114,40 +108,66 @@ export default function WordQuizPage() {
   const correctLabel = word ? primaryMeaning(word.turkish) : "";
 
   useEffect(() => {
+    let cancelled = false;
+
     async function boot() {
-      const localDemo = isDemoMode(window.location.hostname);
-      setDemo(localDemo);
+      const localDemo = isDemoMode(
+        typeof window !== "undefined" ? window.location.hostname : null
+      );
+      if (!cancelled) setDemo(localDemo);
+
       try {
         if (localDemo) {
-          setItems(DEMO_DUE_WORDS);
-          setLoading(false);
+          if (!cancelled) {
+            setItems(DEMO_DUE_WORDS);
+            setLoading(false);
+          }
           return;
         }
+
+        const [{ createClient }, { assignNewWords, getDueWords }] = await Promise.all([
+          import("@/lib/supabase/client"),
+          import("@/lib/db"),
+        ]);
         const supabase = createClient();
         const {
           data: { user },
-        } = await supabase.auth.getUser();
+        } = await Promise.race([
+          supabase.auth.getUser(),
+          new Promise<{ data: { user: null } }>((resolve) =>
+            setTimeout(() => resolve({ data: { user: null } }), 2500)
+          ),
+        ]);
+
         if (!user) {
-          router.replace("/login");
+          if (!cancelled) {
+            setDemo(true);
+            setItems(DEMO_DUE_WORDS);
+            setLoading(false);
+          }
           return;
         }
+
         let due = await getDueWords(supabase, user.id);
         if (due.length === 0) {
           await assignNewWords(supabase, user.id, 5);
           due = await getDueWords(supabase, user.id);
         }
-        setItems(due);
-      } catch (e) {
-        if (localDemo) {
+        if (!cancelled) setItems(due);
+      } catch {
+        if (!cancelled) {
+          setDemo(true);
           setItems(DEMO_DUE_WORDS);
-        } else {
-          setError(e instanceof Error ? e.message : "Yüklenemedi");
         }
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     }
+
     void boot();
+    return () => {
+      cancelled = true;
+    };
   }, [router]);
 
   useEffect(() => {
@@ -199,6 +219,10 @@ export default function WordQuizPage() {
       const wasCorrect = forcedCorrect ?? correct;
       const quality: Quality = wasCorrect ? 2 : 0;
       if (!demo) {
+        const [{ createClient }, { updateWordProgress }] = await Promise.all([
+          import("@/lib/supabase/client"),
+          import("@/lib/db"),
+        ]);
         const supabase = createClient();
         const {
           data: { user },
