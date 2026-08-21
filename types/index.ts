@@ -7,6 +7,27 @@ export interface Profile {
   daily_quest_bonus_date: string | null;
 }
 
+export type FriendshipStatus = "pending" | "accepted" | "rejected";
+
+export type FriendProfile = {
+  id: string;
+  username: string;
+  daily_streak: number;
+};
+
+export type FriendshipRow = {
+  id: number;
+  requester_id: string;
+  addressee_id: string;
+  status: FriendshipStatus;
+  created_at: string;
+  requester: FriendProfile | null;
+  addressee: FriendProfile | null;
+  /** The other person relative to the current viewer. */
+  other: FriendProfile | null;
+  direction: "incoming" | "outgoing";
+};
+
 export interface Word {
   id: number;
   english: string;
