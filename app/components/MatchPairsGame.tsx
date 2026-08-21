@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   PracticeExamCard,
@@ -357,11 +358,20 @@ export function MatchPairsGame({ words }: { words: MatchWord[] }) {
             <p className="mt-5 text-xs font-bold uppercase tracking-[0.12em] text-mimo-muted">
               Havuz · {pool.length} kelime
             </p>
-            <div className="mt-6 flex flex-col items-center gap-2">
-              <PracticeExamPrimaryButton variant="green" onClick={startGame}>
+            <div className="mt-6 flex w-full flex-col gap-3">
+              <PracticeExamPrimaryButton
+                variant="green"
+                className="w-full"
+                onClick={startGame}
+              >
                 Başlat
               </PracticeExamPrimaryButton>
-              <PracticeExamGhostLink href="/">Çık</PracticeExamGhostLink>
+              <Link
+                href="/"
+                className="py-2.5 text-center text-sm font-bold text-mimo-muted transition hover:text-mimo-fg"
+              >
+                Ana sayfaya dön
+              </Link>
             </div>
           </PracticeExamCard>
         </div>
