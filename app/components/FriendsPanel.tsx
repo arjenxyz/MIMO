@@ -311,81 +311,86 @@ export function FriendsPanel({ demo }: { demo: boolean }) {
           </ul>
         )
       ) : tab === "requests" ? (
-        <div className="space-y-5">
-          <section>
-            <h3 className="text-[10px] font-black uppercase tracking-[0.14em] text-[#fd860a]">
-              Gelen istekler
-            </h3>
-            {incoming.length === 0 ? (
-              <p className="mt-2 text-sm font-semibold text-mimo-muted">Bekleyen gelen istek yok.</p>
-            ) : (
-              <ul className="mt-1 divide-y divide-mimo-soft">
-                {incoming.map((row) => {
-                  const name = row.other?.username ?? "Öğrenci";
-                  return (
-                    <PersonRow
-                      key={row.id}
-                      name={name}
-                      streak={row.other?.daily_streak}
-                      trailing={
-                        <>
+        incoming.length === 0 && outgoing.length === 0 ? (
+          <div className="flex min-h-[40vh] flex-col items-center justify-center px-4 text-center">
+            <p className="text-base font-extrabold text-mimo-title">Burada görülecek bir şey yok</p>
+            <p className="mt-1.5 max-w-xs text-sm font-semibold text-mimo-muted">
+              Şu an bekleyen arkadaşlık isteğin bulunmuyor.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-5">
+            {incoming.length > 0 && (
+              <section>
+                <h3 className="text-[10px] font-black uppercase tracking-[0.14em] text-[#fd860a]">
+                  Gelen istekler
+                </h3>
+                <ul className="mt-1 divide-y divide-mimo-soft">
+                  {incoming.map((row) => {
+                    const name = row.other?.username ?? "Öğrenci";
+                    return (
+                      <PersonRow
+                        key={row.id}
+                        name={name}
+                        streak={row.other?.daily_streak}
+                        trailing={
+                          <>
+                            <button
+                              type="button"
+                              disabled={busyId === row.id}
+                              onClick={() => void respond(row.id, "accept")}
+                              className="rounded-xl bg-[#58cc02] px-2.5 py-1.5 text-[11px] font-black text-[#14260a] disabled:opacity-50"
+                            >
+                              Onayla
+                            </button>
+                            <button
+                              type="button"
+                              disabled={busyId === row.id}
+                              onClick={() => void respond(row.id, "reject")}
+                              className="rounded-xl border border-mimo-soft px-2.5 py-1.5 text-[11px] font-extrabold text-mimo-muted disabled:opacity-50"
+                            >
+                              Reddet
+                            </button>
+                          </>
+                        }
+                      />
+                    );
+                  })}
+                </ul>
+              </section>
+            )}
+
+            {outgoing.length > 0 && (
+              <section>
+                <h3 className="text-[10px] font-black uppercase tracking-[0.14em] text-mimo-muted">
+                  Giden istekler
+                </h3>
+                <ul className="mt-1 divide-y divide-mimo-soft">
+                  {outgoing.map((row) => {
+                    const name = row.other?.username ?? "Öğrenci";
+                    return (
+                      <PersonRow
+                        key={row.id}
+                        name={name}
+                        streak={row.other?.daily_streak}
+                        trailing={
                           <button
                             type="button"
                             disabled={busyId === row.id}
-                            onClick={() => void respond(row.id, "accept")}
-                            className="rounded-xl bg-[#58cc02] px-2.5 py-1.5 text-[11px] font-black text-[#14260a] disabled:opacity-50"
-                          >
-                            Onayla
-                          </button>
-                          <button
-                            type="button"
-                            disabled={busyId === row.id}
-                            onClick={() => void respond(row.id, "reject")}
+                            onClick={() => void removeRow(row.id, "cancel")}
                             className="rounded-xl border border-mimo-soft px-2.5 py-1.5 text-[11px] font-extrabold text-mimo-muted disabled:opacity-50"
                           >
-                            Reddet
+                            İptal
                           </button>
-                        </>
-                      }
-                    />
-                  );
-                })}
-              </ul>
+                        }
+                      />
+                    );
+                  })}
+                </ul>
+              </section>
             )}
-          </section>
-
-          <section>
-            <h3 className="text-[10px] font-black uppercase tracking-[0.14em] text-mimo-muted">
-              Giden istekler
-            </h3>
-            {outgoing.length === 0 ? (
-              <p className="mt-2 text-sm font-semibold text-mimo-muted">Bekleyen giden istek yok.</p>
-            ) : (
-              <ul className="mt-1 divide-y divide-mimo-soft">
-                {outgoing.map((row) => {
-                  const name = row.other?.username ?? "Öğrenci";
-                  return (
-                    <PersonRow
-                      key={row.id}
-                      name={name}
-                      streak={row.other?.daily_streak}
-                      trailing={
-                        <button
-                          type="button"
-                          disabled={busyId === row.id}
-                          onClick={() => void removeRow(row.id, "cancel")}
-                          className="rounded-xl border border-mimo-soft px-2.5 py-1.5 text-[11px] font-extrabold text-mimo-muted disabled:opacity-50"
-                        >
-                          İptal
-                        </button>
-                      }
-                    />
-                  );
-                })}
-              </ul>
-            )}
-          </section>
-        </div>
+          </div>
+        )
       ) : (
         <div className="space-y-3">
           <form onSubmit={(e) => void onSearch(e)} className="flex gap-2">
