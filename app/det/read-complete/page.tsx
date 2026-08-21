@@ -383,7 +383,7 @@ export default function ReadCompletePage() {
   return (
     <main className="min-h-[100dvh] bg-mimo-bg text-mimo-fg">
       <PracticeExamStickyBar
-        maxWidthClass="max-w-3xl"
+        maxWidthClass="max-w-3xl lg:max-w-5xl"
         left={
           <div className="flex items-center gap-2">
             <p
@@ -407,20 +407,20 @@ export default function ReadCompletePage() {
       />
       <PracticeExamStickySpacer />
 
-      <div className="mx-auto max-w-3xl px-4 pb-[max(2.5rem,env(safe-area-inset-bottom))]">
-        <p className="mb-4 text-center text-sm font-bold text-mimo-fg sm:mb-5 sm:text-lg">
+      <div className="mx-auto max-w-3xl px-4 pb-[max(2.5rem,env(safe-area-inset-bottom))] lg:max-w-5xl">
+        <p className="mb-4 text-center text-sm font-bold text-mimo-fg sm:mb-5 sm:text-lg lg:text-left lg:text-xl">
           Type the missing letters to complete the text below.
         </p>
 
         {(error || aiSource) && (
-          <p className="mb-4 text-center text-xs font-semibold text-mimo-muted">
+          <p className="mb-4 text-center text-xs font-semibold text-mimo-muted lg:text-left">
             {error || "Yapay zeka ile üretilen yeni pasajlar"}
           </p>
         )}
 
         {current && (
-          <section className="min-w-0 overflow-hidden rounded-2xl border border-mimo-border bg-mimo-card px-3 py-5 shadow-sm sm:px-8 sm:py-8">
-            <h1 className="mb-4 break-words text-center text-base font-black text-mimo-title sm:mb-5 sm:text-xl">
+          <section className="min-w-0 overflow-hidden rounded-2xl border border-mimo-border bg-mimo-card px-3 py-5 shadow-sm sm:px-8 sm:py-8 lg:px-10 lg:py-10">
+            <h1 className="mb-4 break-words text-center text-base font-black text-mimo-title sm:mb-5 sm:text-xl lg:mb-6 lg:text-left lg:text-2xl">
               {current.topic || "Read and Complete"}
             </h1>
 

@@ -201,6 +201,7 @@ export function ListenTypeGame({ seedWords }: { seedWords: SeedWord[] }) {
     <PracticeExamMain className="flex flex-col px-4 pb-6">
       <PracticeExamStickyBar
         onExitClick={stopAudio}
+        maxWidthClass="max-w-lg lg:max-w-5xl"
         left={
           <PracticeExamTimerLabel
             time={formatTimer(secondsLeft)}
@@ -209,71 +210,73 @@ export function ListenTypeGame({ seedWords }: { seedWords: SeedWord[] }) {
         }
       />
       <PracticeExamStickySpacer />
-      <div className="mx-auto flex w-full max-w-lg flex-1 flex-col">
-        <div className="flex flex-1 flex-col items-center pt-2">
-          <p className="text-center text-xl font-black text-mimo-title sm:text-2xl">
-            Duyduğunu yaz
-          </p>
-
-          <button
-            type="button"
-            onClick={onReplay}
-            disabled={phase !== "answering" || playsLeft <= 0}
-            className="mt-8 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#1cb0f6] text-white shadow-[0_4px_0_#1899d6] transition enabled:active:translate-y-0.5 enabled:active:shadow-none disabled:opacity-40"
-            aria-label="Sesi çal"
-          >
-            <svg
-              width="28"
-              height="28"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-              aria-hidden
+      <div className="mx-auto flex w-full max-w-lg flex-1 flex-col lg:max-w-5xl">
+        <div className="flex flex-1 flex-col items-center pt-2 lg:grid lg:grid-cols-[auto_minmax(0,1fr)] lg:items-center lg:gap-10 lg:pt-4">
+          <div className="flex flex-col items-center">
+            <p className="text-center text-xl font-black text-mimo-title sm:text-2xl lg:text-3xl">
+              Duyduğunu yaz
+            </p>
+            <button
+              type="button"
+              onClick={onReplay}
+              disabled={phase !== "answering" || playsLeft <= 0}
+              className="mt-8 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#1cb0f6] text-white shadow-[0_4px_0_#1899d6] transition enabled:active:translate-y-0.5 enabled:active:shadow-none disabled:opacity-40 lg:mt-6 lg:h-20 lg:w-20"
+              aria-label="Sesi çal"
             >
-              <path d="M3 9v6h4l5 4V5L7 9H3z" />
-              <path d="M16.5 12a2.5 2.5 0 0 0-1.5-2.3v4.6a2.5 2.5 0 0 0 1.5-2.3z" opacity=".9" />
-              <path d="M14.5 6.1a6 6 0 0 1 0 11.8" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-            </svg>
-          </button>
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                <path d="M3 9v6h4l5 4V5L7 9H3z" />
+                <path d="M16.5 12a2.5 2.5 0 0 0-1.5-2.3v4.6a2.5 2.5 0 0 0 1.5-2.3z" opacity=".9" />
+                <path
+                  d="M14.5 6.1a6 6 0 0 1 0 11.8"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+              </svg>
+            </button>
+            <span className="mt-3 rounded-full bg-[#e8f6fe] px-3 py-1 text-[10px] font-black uppercase tracking-wide text-[#0369a1] dark:bg-[#0c4a6e] dark:text-[#7dd3fc]">
+              Kalan tekrar: {playsLeft}
+            </span>
+          </div>
 
-          <span className="mt-3 rounded-full bg-[#e8f6fe] px-3 py-1 text-[10px] font-black uppercase tracking-wide text-[#0369a1] dark:bg-[#0c4a6e] dark:text-[#7dd3fc]">
-            Kalan tekrar: {playsLeft}
-          </span>
-
-          {phase === "answering" ? (
-            <textarea
-              value={answer}
-              onChange={(e) => setAnswer(e.target.value)}
-              placeholder="Yanıtın"
-              rows={4}
-              className="mt-8 w-full resize-none rounded-xl border border-mimo-soft bg-mimo-surface px-4 py-3 text-base font-semibold text-mimo-fg outline-none placeholder:font-medium placeholder:text-mimo-muted focus:border-[#1cb0f6]"
-              autoFocus
-            />
-          ) : (
-            <div
-              className={`mt-8 w-full rounded-xl border px-4 py-4 text-left ${
-                lastCorrect
-                  ? "border-[#86efac] bg-[#f0fdf4] dark:border-[#166534] dark:bg-[#052e16]"
-                  : "border-[#fca5a5] bg-[#fef2f2] dark:border-[#991b1b] dark:bg-[#450a0a]"
-              }`}
-            >
-              <p
-                className={`text-sm font-black ${
-                  lastCorrect ? "text-[#15803d]" : "text-[#b91c1c]"
+          <div className="mt-8 w-full lg:mt-0">
+            {phase === "answering" ? (
+              <textarea
+                value={answer}
+                onChange={(e) => setAnswer(e.target.value)}
+                placeholder="Yanıtın"
+                rows={4}
+                className="w-full resize-none rounded-xl border border-mimo-soft bg-mimo-surface px-4 py-3 text-base font-semibold text-mimo-fg outline-none placeholder:font-medium placeholder:text-mimo-muted focus:border-[#1cb0f6] lg:min-h-[10rem] lg:text-lg"
+                autoFocus
+              />
+            ) : (
+              <div
+                className={`w-full rounded-xl border px-4 py-4 text-left ${
+                  lastCorrect
+                    ? "border-[#86efac] bg-[#f0fdf4] dark:border-[#166534] dark:bg-[#052e16]"
+                    : "border-[#fca5a5] bg-[#fef2f2] dark:border-[#991b1b] dark:bg-[#450a0a]"
                 }`}
               >
-                {lastCorrect ? "Doğru!" : "Yanlış veya eksik"}
-              </p>
-              <p className="mt-2 text-sm font-semibold text-mimo-fg">
-                <span className="text-mimo-muted">Doğru cümle: </span>
-                {current?.text}
-              </p>
-              {answer.trim() && !lastCorrect && (
-                <p className="mt-2 text-sm font-semibold text-mimo-muted">
-                  Senin yazdığın: {answer.trim()}
+                <p
+                  className={`text-sm font-black ${
+                    lastCorrect ? "text-[#15803d]" : "text-[#b91c1c]"
+                  }`}
+                >
+                  {lastCorrect ? "Doğru!" : "Yanlış veya eksik"}
                 </p>
-              )}
-            </div>
-          )}
+                <p className="mt-2 text-sm font-semibold text-mimo-fg">
+                  <span className="text-mimo-muted">Doğru cümle: </span>
+                  {current?.text}
+                </p>
+                {answer.trim() && !lastCorrect && (
+                  <p className="mt-2 text-sm font-semibold text-mimo-muted">
+                    Senin yazdığın: {answer.trim()}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="mt-6 border-t border-mimo-soft pt-4">

@@ -126,7 +126,7 @@ export function ClozePassage({
 
   return (
     <div className="min-w-0 overflow-x-hidden">
-      <div className="break-words text-[16px] font-semibold leading-[1.95] text-[#334155] sm:text-[18px] sm:leading-[2.05]">
+      <div className="break-words text-[16px] font-semibold leading-[1.95] text-[#334155] sm:text-[18px] sm:leading-[2.05] lg:text-[20px] lg:leading-[2.1]">
         {parts.map((part, index) => {
           if (part.kind === "text") {
             return (

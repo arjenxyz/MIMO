@@ -305,7 +305,7 @@ export default function WordQuizPage() {
   return (
     <PracticeExamMain className="flex min-h-screen flex-col">
       <div
-        className={`mx-auto w-full max-w-3xl flex-1 px-4 pt-5 ${
+        className={`mx-auto w-full max-w-3xl flex-1 px-4 pt-5 lg:max-w-6xl ${
           checked ? "pb-36" : "pb-10"
         }`}
       >
@@ -316,12 +316,12 @@ export default function WordQuizPage() {
           <PracticeExamExitLink href="/" />
         </div>
 
-        <p className="mb-4 text-center text-base font-bold text-mimo-fg sm:text-lg">
+        <p className="mb-4 text-center text-base font-bold text-mimo-fg lg:mb-6 lg:text-left lg:text-lg">
           Choose the correct Turkish meaning.
         </p>
 
-        <PracticeExamCard className="!px-0 !py-0 overflow-hidden sm:!px-0 sm:!py-0">
-          <div className="relative h-36 w-full bg-[#e2e8f0] sm:h-44">
+        <PracticeExamCard className="!px-0 !py-0 overflow-hidden sm:!px-0 sm:!py-0 lg:grid lg:grid-cols-2 lg:items-stretch">
+          <div className="relative h-36 w-full bg-[#e2e8f0] sm:h-44 lg:h-[16.5rem] lg:min-h-0">
             <WordImage
               english={word.english}
               className="h-full w-full object-cover"
@@ -353,12 +353,14 @@ export default function WordQuizPage() {
             </button>
           </div>
 
-          <div className="px-5 py-5 sm:px-8 sm:py-6">
-            <h1 className="text-center text-3xl font-black tracking-tight text-mimo-title sm:text-4xl">
+          <div className="flex flex-col justify-center px-5 py-5 sm:px-8 sm:py-6 lg:px-8 lg:py-8">
+            <h1 className="text-center text-3xl font-black tracking-tight text-mimo-title lg:text-left sm:text-4xl">
               {word.english}
             </h1>
             {word.phonetic && (
-              <p className="mt-1 text-center text-sm font-bold text-mimo-muted">{word.phonetic}</p>
+              <p className="mt-1 text-center text-sm font-bold text-mimo-muted lg:text-left">
+                {word.phonetic}
+              </p>
             )}
 
             <div className="mt-5 grid gap-2">
@@ -389,14 +391,18 @@ export default function WordQuizPage() {
               })}
             </div>
 
-            {error && <p className="mt-4 text-center text-sm font-bold text-[#b91c1c]">{error}</p>}
+            {error && (
+              <p className="mt-4 text-center text-sm font-bold text-[#b91c1c] lg:text-left">
+                {error}
+              </p>
+            )}
           </div>
         </PracticeExamCard>
       </div>
 
       {checked && (
         <div className="fixed inset-x-0 bottom-0 z-40 border-t border-mimo-soft bg-mimo-bg/95 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur-md">
-          <div className="mx-auto flex w-full max-w-3xl flex-col items-center gap-2">
+          <div className="mx-auto flex w-full max-w-3xl flex-col items-center gap-2 lg:max-w-6xl">
             <p
               className={`text-center text-sm font-bold ${
                 correct ? "text-[#15803d]" : "text-[#b91c1c]"

@@ -322,7 +322,7 @@ export function MatchPairsGame({ words }: { words: MatchWord[] }) {
   if (pool.length < BOARD_PAIRS) {
     return (
       <PracticeExamMain>
-        <div className="mx-auto max-w-lg px-4 py-8">
+        <div className="mx-auto max-w-lg lg:max-w-5xl px-4 py-8">
           <PracticeExamCard className="text-center">
             <PracticeExamEyebrow>Hızlı Eşleştir</PracticeExamEyebrow>
             <h1 className="mt-3 text-2xl font-black">Henüz yeterli kelime yok</h1>
@@ -343,7 +343,7 @@ export function MatchPairsGame({ words }: { words: MatchWord[] }) {
   if (phase === "ready") {
     return (
       <PracticeExamMain className="flex min-h-[100dvh] flex-col">
-        <div className="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center px-4 py-8">
+        <div className="mx-auto flex w-full max-w-lg lg:max-w-5xl flex-1 flex-col justify-center px-4 py-8">
           <PracticeExamCard className="text-center">
             <PracticeExamEyebrow>Hızlı Eşleştir</PracticeExamEyebrow>
             <h1 className="mt-4 text-2xl font-black tracking-tight text-mimo-title sm:text-3xl">
@@ -382,7 +382,7 @@ export function MatchPairsGame({ words }: { words: MatchWord[] }) {
   if (phase === "done") {
     return (
       <PracticeExamMain>
-        <div className="mx-auto max-w-lg px-4 py-8">
+        <div className="mx-auto max-w-lg lg:max-w-5xl px-4 py-8">
           <PracticeExamCard className="text-center">
             <PracticeExamEyebrow>Hızlı Eşleştir</PracticeExamEyebrow>
             <h1 className="mt-3 text-2xl font-black">Süre bitti!</h1>
@@ -417,7 +417,7 @@ export function MatchPairsGame({ words }: { words: MatchWord[] }) {
   return (
     <PracticeExamMain>
       <PracticeExamStickyBar
-        maxWidthClass="max-w-lg"
+        maxWidthClass="max-w-lg lg:max-w-5xl"
         left={
           <p
             className={`text-2xl font-black tabular-nums tracking-tight ${
@@ -429,7 +429,7 @@ export function MatchPairsGame({ words }: { words: MatchWord[] }) {
         }
       />
       <PracticeExamStickySpacer />
-      <div className="mx-auto flex max-w-lg flex-col px-4 pb-8">
+      <div className="mx-auto flex max-w-lg lg:max-w-5xl flex-col px-4 pb-8">
         <h1 className="text-center text-xl font-black text-mimo-fg sm:text-2xl">
           {shuffling ? "Karıştırılıyor…" : "Eşleşen çiftlere dokun"}
         </h1>

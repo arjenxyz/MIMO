@@ -181,13 +181,13 @@ export function GrammarDrill({ topic }: { topic: GrammarTopicDetail }) {
     return (
       <PracticeExamMain className="px-4 pb-10">
         <PracticeExamStickyBar
-          maxWidthClass="max-w-lg"
+          maxWidthClass="max-w-lg lg:max-w-3xl"
           left={<p className="text-sm font-extrabold text-mimo-title">{topic.title}</p>}
           exitHref="/grammar"
           exitLabel="Konular"
         />
         <PracticeExamStickySpacer />
-        <div className="mx-auto max-w-lg space-y-3">
+        <div className="mx-auto max-w-lg lg:max-w-3xl space-y-3">
           <PracticeExamCard>
             <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#ce82ff]">Kural özeti</p>
             <p className="mt-2 text-sm font-semibold leading-relaxed text-mimo-fg">{topic.summary}</p>
@@ -217,13 +217,13 @@ export function GrammarDrill({ topic }: { topic: GrammarTopicDetail }) {
     return (
       <PracticeExamMain className="px-4 pb-10">
         <PracticeExamStickyBar
-          maxWidthClass="max-w-lg"
+          maxWidthClass="max-w-lg lg:max-w-3xl"
           left={<p className="text-sm font-extrabold text-mimo-title">{topic.title}</p>}
           exitHref="/grammar"
           exitLabel="Konular"
         />
         <PracticeExamStickySpacer />
-        <div className="mx-auto max-w-lg space-y-3">
+        <div className="mx-auto max-w-lg lg:max-w-3xl space-y-3">
           <PracticeExamCard>
             <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#ce82ff]">Kural özeti</p>
             <p className="mt-2 text-sm font-semibold leading-relaxed text-mimo-fg">{topic.summary}</p>
@@ -259,11 +259,11 @@ export function GrammarDrill({ topic }: { topic: GrammarTopicDetail }) {
     return (
       <PracticeExamMain className="px-4 pb-10">
         <PracticeExamStickyBar
-          maxWidthClass="max-w-lg"
+          maxWidthClass="max-w-lg lg:max-w-3xl"
           left={<p className="text-sm font-extrabold text-mimo-title">{topic.title}</p>}
         />
         <PracticeExamStickySpacer />
-        <div className="mx-auto max-w-lg text-center">
+        <div className="mx-auto max-w-lg lg:max-w-3xl text-center">
           <PracticeExamCard>
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#1cb0f6]">Tur bitti</p>
             <h1 className="mt-2 text-2xl font-black text-mimo-title">Özet</h1>
@@ -299,7 +299,7 @@ export function GrammarDrill({ topic }: { topic: GrammarTopicDetail }) {
   return (
     <PracticeExamMain className="px-4 pb-10">
       <PracticeExamStickyBar
-        maxWidthClass="max-w-lg"
+        maxWidthClass="max-w-lg lg:max-w-3xl"
         left={
           <p className="text-sm font-extrabold tabular-nums text-mimo-title">
             {index + 1} / {total}
@@ -309,7 +309,7 @@ export function GrammarDrill({ topic }: { topic: GrammarTopicDetail }) {
       />
       <PracticeExamStickySpacer />
 
-      <div className="mx-auto max-w-lg space-y-4">
+      <div className="mx-auto max-w-lg lg:max-w-3xl space-y-4">
         <section className="rounded-2xl border border-mimo-border bg-mimo-card px-4 py-4 shadow-sm">
           <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#1cb0f6]">
             Kural

@@ -250,13 +250,16 @@ export function GrammarCatalog({ topics }: { topics: GrammarTopic[] }) {
                   </span>
                 </div>
 
-                <ul className="overflow-hidden rounded-2xl border border-mimo-border bg-mimo-card shadow-sm">
+                <ul className="overflow-hidden rounded-2xl border border-mimo-border bg-mimo-card shadow-sm lg:grid lg:grid-cols-2 lg:gap-px lg:overflow-visible lg:rounded-none lg:border-0 lg:bg-transparent lg:shadow-none">
                   {list.map((topic, i) => (
-                    <li key={topic.slug}>
+                    <li
+                      key={topic.slug}
+                      className="lg:overflow-hidden lg:rounded-2xl lg:border lg:border-mimo-border lg:bg-mimo-card lg:shadow-sm"
+                    >
                       <Link
                         href={`/grammar/${topic.slug}`}
                         className={`group relative flex gap-3 px-3.5 py-3.5 transition hover:bg-mimo-surface ${
-                          i > 0 ? "border-t border-mimo-soft" : ""
+                          i > 0 ? "border-t border-mimo-soft lg:border-t-0" : ""
                         }`}
                       >
                         <span

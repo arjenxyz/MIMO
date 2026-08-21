@@ -170,8 +170,8 @@ export function RealWordGame({ seedWords }: { seedWords: string[] }) {
         }
       />
       <PracticeExamStickySpacer />
-      <div className="mx-auto w-full max-w-lg">
-        <div className="mb-4 flex items-center justify-between text-xs font-black uppercase tracking-wide text-mimo-muted">
+      <div className="mx-auto w-full max-w-lg lg:max-w-4xl">
+        <div className="mb-4 flex items-center justify-between text-xs font-black uppercase tracking-wide text-mimo-muted lg:mb-6 lg:text-sm">
           <span>
             {index + 1}/{QUESTION_COUNT}
           </span>
@@ -180,66 +180,68 @@ export function RealWordGame({ seedWords }: { seedWords: string[] }) {
           </span>
         </div>
 
-        <section
-          className={`rounded-2xl border px-5 py-12 text-center shadow-sm transition-colors sm:px-8 ${feedbackTint}`}
-        >
-          <p className="text-lg font-black text-mimo-title sm:text-xl">
-            Bu yazım doğru mu?
-          </p>
-          <p className="mt-6 text-4xl font-semibold tracking-tight text-mimo-fg sm:text-5xl">
-            {current?.word}
-          </p>
-
-          {feedback && (
-            <p
-              className={`mt-5 text-sm font-black ${
-                feedback === "correct" ? "text-[#15803d]" : "text-[#b91c1c]"
-              }`}
-            >
-              {feedback === "correct"
-                ? current?.isReal
-                  ? "Doğru — yazım doğru."
-                  : `Doğru — yanlış yazılmış. Doğrusu: ${current?.sourceWord}`
-                : feedback === "timeout"
-                  ? current?.isReal
-                    ? `Süre bitti — doğru yazımdı: ${current?.sourceWord}`
-                    : `Süre bitti — yanlış yazımdı. Doğrusu: ${current?.sourceWord}`
-                  : current?.isReal
-                    ? `Yanlış — yazım doğruydu: ${current?.sourceWord}`
-                    : `Yanlış — yanlış yazımdı. Doğrusu: ${current?.sourceWord}`}
+        <div className="lg:grid lg:grid-cols-[1.4fr_1fr] lg:items-stretch lg:gap-6">
+          <section
+            className={`rounded-2xl border px-5 py-12 text-center shadow-sm transition-colors sm:px-8 lg:flex lg:flex-col lg:justify-center lg:py-16 ${feedbackTint}`}
+          >
+            <p className="text-lg font-black text-mimo-title sm:text-xl lg:text-2xl">
+              Bu yazım doğru mu?
             </p>
-          )}
-        </section>
+            <p className="mt-6 text-4xl font-semibold tracking-tight text-mimo-fg sm:text-5xl lg:mt-8 lg:text-6xl">
+              {current?.word}
+            </p>
 
-        <div className="mt-8 grid grid-cols-2 gap-4">
-          <button
-            type="button"
-            disabled={Boolean(feedback)}
-            onClick={() => resolve(true)}
-            className="flex aspect-square flex-col items-center justify-center gap-2 rounded-2xl border border-mimo-soft bg-mimo-card shadow-[0_4px_0_rgba(0,0,0,0.06)] transition active:translate-y-0.5 active:shadow-none disabled:opacity-60 dark:shadow-[0_4px_0_rgba(0,0,0,0.35)]"
-          >
-            <span className="text-[#1cb0f6]" aria-hidden>
-              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M5 12.5 10 17.5 19 7" />
-              </svg>
-            </span>
-            <span className="text-base font-black text-mimo-title">Evet</span>
-          </button>
-          <button
-            type="button"
-            disabled={Boolean(feedback)}
-            onClick={() => resolve(false)}
-            className="flex aspect-square flex-col items-center justify-center gap-2 rounded-2xl border border-mimo-soft bg-mimo-card shadow-[0_4px_0_rgba(0,0,0,0.06)] transition active:translate-y-0.5 active:shadow-none disabled:opacity-60 dark:shadow-[0_4px_0_rgba(0,0,0,0.35)]"
-          >
-            <span className="text-[#1cb0f6]" aria-hidden>
-              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M6 6l12 12M18 6 6 18" />
-              </svg>
-            </span>
-            <span className="text-base font-black uppercase tracking-wide text-mimo-title">
-              Hayır
-            </span>
-          </button>
+            {feedback && (
+              <p
+                className={`mt-5 text-sm font-black lg:text-base ${
+                  feedback === "correct" ? "text-[#15803d]" : "text-[#b91c1c]"
+                }`}
+              >
+                {feedback === "correct"
+                  ? current?.isReal
+                    ? "Doğru — yazım doğru."
+                    : `Doğru — yanlış yazılmış. Doğrusu: ${current?.sourceWord}`
+                  : feedback === "timeout"
+                    ? current?.isReal
+                      ? `Süre bitti — doğru yazımdı: ${current?.sourceWord}`
+                      : `Süre bitti — yanlış yazımdı. Doğrusu: ${current?.sourceWord}`
+                    : current?.isReal
+                      ? `Yanlış — yazım doğruydu: ${current?.sourceWord}`
+                      : `Yanlış — yanlış yazımdı. Doğrusu: ${current?.sourceWord}`}
+              </p>
+            )}
+          </section>
+
+          <div className="mt-8 grid grid-cols-2 gap-4 lg:mt-0 lg:grid-cols-1 lg:gap-4">
+            <button
+              type="button"
+              disabled={Boolean(feedback)}
+              onClick={() => resolve(true)}
+              className="flex aspect-square flex-col items-center justify-center gap-2 rounded-2xl border border-mimo-soft bg-mimo-card shadow-[0_4px_0_rgba(0,0,0,0.06)] transition active:translate-y-0.5 active:shadow-none disabled:opacity-60 dark:shadow-[0_4px_0_rgba(0,0,0,0.35)] lg:aspect-auto lg:min-h-[9.5rem] lg:flex-row lg:gap-3"
+            >
+              <span className="text-[#1cb0f6]" aria-hidden>
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M5 12.5 10 17.5 19 7" />
+                </svg>
+              </span>
+              <span className="text-base font-black text-mimo-title lg:text-lg">Evet</span>
+            </button>
+            <button
+              type="button"
+              disabled={Boolean(feedback)}
+              onClick={() => resolve(false)}
+              className="flex aspect-square flex-col items-center justify-center gap-2 rounded-2xl border border-mimo-soft bg-mimo-card shadow-[0_4px_0_rgba(0,0,0,0.06)] transition active:translate-y-0.5 active:shadow-none disabled:opacity-60 dark:shadow-[0_4px_0_rgba(0,0,0,0.35)] lg:aspect-auto lg:min-h-[9.5rem] lg:flex-row lg:gap-3"
+            >
+              <span className="text-[#1cb0f6]" aria-hidden>
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M6 6l12 12M18 6 6 18" />
+                </svg>
+              </span>
+              <span className="text-base font-black uppercase tracking-wide text-mimo-title lg:text-lg">
+                Hayır
+              </span>
+            </button>
+          </div>
         </div>
       </div>
     </PracticeExamMain>

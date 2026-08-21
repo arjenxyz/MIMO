@@ -6,11 +6,10 @@ import type { PhotoEvaluation } from "@/app/api/evaluate-photo/route";
 import {
   PracticeExamCard,
   PracticeExamEyebrow,
+  PracticeExamExitLink,
   PracticeExamGhostLink,
   PracticeExamMain,
   PracticeExamPrimaryButton,
-  PracticeExamStickyBar,
-  PracticeExamStickySpacer,
   PracticeExamTopBar,
 } from "@/app/components/PracticeExamChrome";
 import { formatTimer } from "@/lib/detCloze";
@@ -21,8 +20,6 @@ type Phase = "ready" | "running" | "timeup" | "evaluating" | "done";
 
 const WRITE_SECONDS = 60;
 const MAX_SKIPS = 3;
-/** Compact sticky photo while typing — padded card, not a full-bleed banner. */
-const WRITE_PHOTO_PX = 96;
 
 const CEFR_COLOR: Record<string, string> = {
   A1: "bg-[#ffe8e8] text-[#b91c1c] border-[#fecaca]",
@@ -41,6 +38,34 @@ function wordCount(text: string) {
   return text.trim().split(/\s+/).filter(Boolean).length;
 }
 
+/** Keep the writing UI inside the visible area when the mobile keyboard opens. */
+function useVisualViewportBox() {
+  const [box, setBox] = useState({ top: 0, height: 0 });
+
+  useEffect(() => {
+    const sync = () => {
+      const vv = window.visualViewport;
+      if (!vv) {
+        setBox({ top: 0, height: window.innerHeight });
+        return;
+      }
+      setBox({ top: Math.max(0, vv.offsetTop), height: Math.max(260, vv.height) });
+    };
+    sync();
+    const vv = window.visualViewport;
+    vv?.addEventListener("resize", sync);
+    vv?.addEventListener("scroll", sync);
+    window.addEventListener("orientationchange", sync);
+    return () => {
+      vv?.removeEventListener("resize", sync);
+      vv?.removeEventListener("scroll", sync);
+      window.removeEventListener("orientationchange", sync);
+    };
+  }, []);
+
+  return box;
+}
+
 export default function PhotoPracticePage() {
   const [phase, setPhase] = useState<Phase>("ready");
   const [imageUrl, setImageUrl] = useState("");
@@ -56,6 +81,7 @@ export default function PhotoPracticePage() {
   const [cooldownSec, setCooldownSec] = useState(0);
   const [skipsLeft, setSkipsLeft] = useState(MAX_SKIPS);
   const [emptyTimeout, setEmptyTimeout] = useState(false);
+  const viewport = useVisualViewportBox();
 
   useEffect(() => {
     answerRef.current = answer;
@@ -72,6 +98,17 @@ export default function PhotoPracticePage() {
     const t = window.setTimeout(() => setCooldownSec((s) => Math.max(0, s - 1)), 1000);
     return () => window.clearTimeout(t);
   }, [cooldownSec]);
+
+  // Writing mode: lock page scroll so the keyboard cannot shove the photo away.
+  useEffect(() => {
+    const writingNow = phase === "running" || phase === "timeup" || phase === "evaluating";
+    if (!writingNow) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [phase]);
 
   const runEvaluation = useCallback(
     async (text: string, opts?: { force?: boolean }) => {
@@ -210,11 +247,85 @@ export default function PhotoPracticePage() {
   const writing = phase === "running" || phase === "timeup" || phase === "evaluating";
 
   if (writing) {
+    const shellStyle =
+      viewport.height > 0
+        ? {
+            position: "fixed" as const,
+            top: viewport.top,
+            left: 0,
+            right: 0,
+            height: viewport.height,
+          }
+        : undefined;
+
+    const answerPanel = (
+      <div className="flex h-full min-h-0 flex-col rounded-2xl border border-mimo-border bg-mimo-card px-4 py-4 shadow-sm sm:px-6">
+        <label className="flex min-h-0 flex-1 flex-col text-left">
+          <span className="shrink-0 text-[11px] font-bold uppercase tracking-[0.12em] text-mimo-muted">
+            Cevabın · {wordCount(answer)} kelime
+          </span>
+          <textarea
+            value={answer}
+            onChange={(e) => setAnswer(e.target.value)}
+            disabled={phase !== "running"}
+            rows={6}
+            enterKeyHint="done"
+            placeholder="Describe the photo in English…"
+            className="mt-2 min-h-0 w-full flex-1 resize-none rounded-xl border border-mimo-soft bg-mimo-surface px-4 py-3 text-sm font-semibold leading-relaxed text-mimo-fg outline-none placeholder:text-mimo-muted focus:border-[#1cb0f6] disabled:opacity-70 lg:min-h-[16rem]"
+          />
+        </label>
+
+        {error && (phase === "running" || phase === "timeup") && (
+          <p className="mt-3 shrink-0 text-center text-sm font-bold text-[#b45309]">{error}</p>
+        )}
+
+        {phase === "timeup" && (
+          <p className="mt-3 shrink-0 text-center text-sm font-bold text-[#b45309]">
+            Süre bitti. Değerlendirme için butona bas — AI ancak o zaman çalışır.
+          </p>
+        )}
+
+        {(phase === "running" || phase === "timeup") && (
+          <div className="mt-4 flex shrink-0 flex-col items-stretch gap-2 sm:flex-row sm:justify-center">
+            <PracticeExamPrimaryButton
+              onClick={() => void runEvaluation(answer, { force: phase === "timeup" })}
+              disabled={
+                (phase === "running" && answer.trim().length < 20) ||
+                sessionEvalStartedRef.current
+              }
+              variant="green"
+              className="w-full sm:w-auto"
+            >
+              Bitir ve Değerlendir
+            </PracticeExamPrimaryButton>
+            {phase === "running" && (
+              <button
+                type="button"
+                onClick={resetWithNewImage}
+                disabled={skipsLeft <= 0}
+                className="w-full rounded-2xl border border-mimo-soft px-6 py-3 text-sm font-bold text-mimo-muted disabled:opacity-50 sm:w-auto"
+              >
+                {skipsLeft > 0 ? `Geç (${skipsLeft})` : "Geç hakkı bitti"}
+              </button>
+            )}
+          </div>
+        )}
+
+        {phase === "evaluating" && (
+          <p className="mt-4 shrink-0 text-center text-sm font-bold text-mimo-muted">
+            Değerlendiriliyor…
+          </p>
+        )}
+      </div>
+    );
+
     return (
-      <PracticeExamMain>
-        <PracticeExamStickyBar
-          maxWidthClass="max-w-3xl"
-          left={
+      <main
+        className="z-40 flex flex-col overflow-hidden bg-mimo-bg text-mimo-fg"
+        style={shellStyle}
+      >
+        <header className="shrink-0 border-b border-mimo-border/70 bg-mimo-bg/95 px-4 py-3 backdrop-blur-md supports-[padding:env(safe-area-inset-top)]:pt-[max(0.75rem,env(safe-area-inset-top))]">
+          <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3">
             <p
               className={`text-2xl font-black tabular-nums tracking-tight ${
                 secondsLeft <= 10 ? "text-[#ff4b4b]" : "text-mimo-title"
@@ -222,97 +333,64 @@ export default function PhotoPracticePage() {
             >
               {formatTimer(secondsLeft)}
             </p>
-          }
-          below={
-            <div className="border-t border-mimo-border/40 bg-mimo-bg px-4 pb-2.5 pt-2">
-              <div className="mx-auto flex max-w-3xl items-center gap-3">
-                <div className="relative h-20 w-[7.5rem] shrink-0 overflow-hidden rounded-xl border border-mimo-border bg-[#e2e8f0] shadow-sm sm:h-24 sm:w-40">
-                  {imageUrl ? (
-                    <Image
-                      src={imageUrl}
-                      alt="Practice photo"
-                      fill
-                      unoptimized
-                      sizes="160px"
-                      className="object-cover"
-                      priority
-                      onLoadingComplete={onImageReady}
-                    />
-                  ) : null}
-                </div>
-                <p className="min-w-0 text-left text-xs font-bold leading-snug text-mimo-muted sm:text-sm">
-                  Fotoğrafa bakarak yaz.
-                  <span className="mt-0.5 block font-semibold text-mimo-fg/80">
-                    Klavye açıkken görsel burada kalır.
-                  </span>
-                </p>
-              </div>
-            </div>
-          }
-        />
-        <PracticeExamStickySpacer extraPx={WRITE_PHOTO_PX + 12} />
-
-        <div className="mx-auto max-w-3xl px-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-          <div className="rounded-2xl border border-mimo-border bg-mimo-card px-4 py-4 shadow-sm sm:px-6">
-            <label className="block text-left">
-              <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-mimo-muted">
-                Cevabın · {wordCount(answer)} kelime
-              </span>
-              <textarea
-                value={answer}
-                onChange={(e) => setAnswer(e.target.value)}
-                disabled={phase !== "running"}
-                rows={5}
-                enterKeyHint="done"
-                placeholder="Describe the photo in English…"
-                className="mt-2 max-h-[28vh] min-h-[7.5rem] w-full resize-y rounded-xl border border-mimo-soft bg-mimo-surface px-4 py-3 text-sm font-semibold leading-relaxed text-mimo-fg outline-none placeholder:text-mimo-muted focus:border-[#1cb0f6] disabled:opacity-70"
-              />
-            </label>
-
-            {error && (phase === "running" || phase === "timeup") && (
-              <p className="mt-3 text-center text-sm font-bold text-[#b45309]">{error}</p>
-            )}
-
-            {phase === "timeup" && (
-              <p className="mt-3 text-center text-sm font-bold text-[#b45309]">
-                Süre bitti. Değerlendirme için butona bas — AI ancak o zaman çalışır.
-              </p>
-            )}
-
-            {(phase === "running" || phase === "timeup") && (
-              <div className="mt-4 flex flex-col items-center gap-2 sm:flex-row sm:justify-center">
-                <PracticeExamPrimaryButton
-                  onClick={() => void runEvaluation(answer, { force: phase === "timeup" })}
-                  disabled={
-                    (phase === "running" && answer.trim().length < 20) ||
-                    sessionEvalStartedRef.current
-                  }
-                  variant="green"
-                  className="w-full sm:w-auto"
-                >
-                  Bitir ve Değerlendir
-                </PracticeExamPrimaryButton>
-                {phase === "running" && (
-                  <button
-                    type="button"
-                    onClick={resetWithNewImage}
-                    disabled={skipsLeft <= 0}
-                    className="w-full rounded-2xl border border-mimo-soft px-6 py-3 text-sm font-bold text-mimo-muted disabled:opacity-50 sm:w-auto"
-                  >
-                    {skipsLeft > 0 ? `Geç (${skipsLeft})` : "Geç hakkı bitti"}
-                  </button>
-                )}
-              </div>
-            )}
-
-            {phase === "evaluating" && (
-              <p className="mt-4 text-center text-sm font-bold text-mimo-muted">
-                Değerlendiriliyor…
-              </p>
-            )}
+            <PracticeExamExitLink href="/" />
           </div>
+        </header>
+
+        <div className="mx-auto flex min-h-0 w-full max-w-5xl flex-1 flex-col justify-center px-4 py-3 lg:py-6">
+          {/* Mobile: photo stays pinned under the timer while typing */}
+          <div className="mb-3 shrink-0 lg:hidden">
+            <div className="flex items-center gap-3">
+              <div className="relative h-[4.75rem] w-[8.25rem] shrink-0 overflow-hidden rounded-xl border border-mimo-border bg-[#e2e8f0] shadow-sm">
+                {imageUrl ? (
+                  <Image
+                    src={imageUrl}
+                    alt="Practice photo"
+                    fill
+                    unoptimized
+                    sizes="140px"
+                    className="object-cover"
+                    priority
+                    onLoadingComplete={onImageReady}
+                  />
+                ) : null}
+              </div>
+              <p className="min-w-0 text-left text-xs font-bold leading-snug text-mimo-muted">
+                Fotoğrafa bakarak yaz.
+                <span className="mt-0.5 block font-semibold text-mimo-fg/80">
+                  Görsel üstte sabit kalır.
+                </span>
+              </p>
+            </div>
+          </div>
+
+          {/* Desktop: equal photo + answer panels, centered */}
+          <div className="hidden min-h-0 flex-1 lg:grid lg:grid-cols-2 lg:items-stretch lg:gap-6">
+            <div className="relative min-h-[22rem] overflow-hidden rounded-2xl border border-mimo-border bg-[#e2e8f0] shadow-sm">
+              {imageUrl ? (
+                <Image
+                  src={imageUrl}
+                  alt="Practice photo"
+                  fill
+                  unoptimized
+                  sizes="(min-width: 1024px) 40vw, 100vw"
+                  className="object-cover"
+                  priority
+                  onLoadingComplete={onImageReady}
+                />
+              ) : null}
+            </div>
+            <div className="flex min-h-[22rem] flex-col">
+              <p className="mb-2 shrink-0 text-right text-sm font-bold text-mimo-muted">
+                Fotoğrafa bakarak yaz.
+              </p>
+              <div className="min-h-0 flex-1">{answerPanel}</div>
+            </div>
+          </div>
+
+          <div className="min-h-0 flex-1 lg:hidden">{answerPanel}</div>
         </div>
-      </PracticeExamMain>
+      </main>
     );
   }
 
