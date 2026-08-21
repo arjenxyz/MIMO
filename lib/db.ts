@@ -336,6 +336,85 @@ export async function addWordToUserList(
   return { word, alreadyHad: false };
 }
 
+/** Remove a word from the user's practice list (does not delete the global pool row). */
+export async function removeWordFromUserList(
+  supabase: SupabaseClient,
+  userId: string,
+  userWordId: number
+): Promise<void> {
+  const { error } = await supabase
+    .from("user_words")
+    .delete()
+    .eq("id", userWordId)
+    .eq("user_id", userId);
+
+  if (error) throw error;
+}
+
+/** Update word text fields for a word on the user's list. */
+export async function updateUserListWord(
+  supabase: SupabaseClient,
+  userId: string,
+  userWordId: number,
+  patch: {
+    english?: string;
+    turkish?: string;
+    phonetic?: string | null;
+    example_sentence?: string | null;
+  }
+): Promise<Word> {
+  const { data: link, error: linkError } = await supabase
+    .from("user_words")
+    .select("id, word_id, words(*)")
+    .eq("id", userWordId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (linkError) throw linkError;
+  if (!link) throw new Error("Kelime listende bulunamadı.");
+
+  const updates: Record<string, string | null> = {};
+  if (typeof patch.english === "string") {
+    const english = normalizeEnglishKey(patch.english);
+    if (!english) throw new Error("Geçerli bir İngilizce kelime gir.");
+    updates.english = english;
+  }
+  if (typeof patch.turkish === "string") {
+    const turkish = patch.turkish.trim();
+    if (!turkish) throw new Error("Türkçe anlam gerekli.");
+    updates.turkish = turkish;
+  }
+  if (patch.phonetic !== undefined) {
+    updates.phonetic = patch.phonetic?.trim() || null;
+  }
+  if (patch.example_sentence !== undefined) {
+    updates.example_sentence = patch.example_sentence?.trim() || null;
+  }
+
+  if (Object.keys(updates).length === 0) {
+    const current = link.words as Word | Word[] | null;
+    const word = Array.isArray(current) ? current[0] : current;
+    if (!word) throw new Error("Kelime bulunamadı.");
+    return word;
+  }
+
+  const { data: updated, error: updateError } = await supabase
+    .from("words")
+    .update(updates)
+    .eq("id", link.word_id)
+    .select("*")
+    .single();
+
+  if (updateError) {
+    if (updateError.code === "23505") {
+      throw new Error("Bu İngilizce kelime zaten sistemde var.");
+    }
+    throw updateError;
+  }
+
+  return updated as Word;
+}
+
 export async function assignNewGrammar(
   supabase: SupabaseClient,
   userId: string,

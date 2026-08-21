@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { addWordToUserList, findExistingUserWord } from "@/lib/db";
+import {
+  addWordToUserList,
+  findExistingUserWord,
+  removeWordFromUserList,
+  updateUserListWord,
+} from "@/lib/db";
 import { createClient } from "@/lib/supabase/server";
 import { lookupEnglishWord } from "@/lib/wordLookup";
 import { normalizeEnglishKey } from "@/lib/wordNormalize";
@@ -18,13 +23,14 @@ export async function POST(request: NextRequest) {
     }
 
     const body = (await request.json()) as {
-      action?: "lookup" | "save";
+      action?: "lookup" | "save" | "update" | "delete";
       english?: string;
       turkish?: string;
       example_sentence?: string | null;
       phonetic?: string | null;
       audio_url?: string | null;
       difficulty?: number;
+      userWordId?: number;
     };
 
     if (body.action === "lookup") {
@@ -111,9 +117,41 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    if (body.action === "update") {
+      const userWordId = Number(body.userWordId);
+      if (!Number.isFinite(userWordId) || userWordId <= 0) {
+        return NextResponse.json({ error: "Geçersiz kelime." }, { status: 400 });
+      }
+      if (!body.english?.trim() || !body.turkish?.trim()) {
+        return NextResponse.json(
+          { error: "İngilizce kelime ve Türkçe anlam gerekli." },
+          { status: 400 }
+        );
+      }
+
+      const word = await updateUserListWord(supabase, user.id, userWordId, {
+        english: body.english,
+        turkish: body.turkish,
+        phonetic: body.phonetic ?? null,
+        example_sentence: body.example_sentence ?? null,
+      });
+
+      return NextResponse.json({ ok: true, word });
+    }
+
+    if (body.action === "delete") {
+      const userWordId = Number(body.userWordId);
+      if (!Number.isFinite(userWordId) || userWordId <= 0) {
+        return NextResponse.json({ error: "Geçersiz kelime." }, { status: 400 });
+      }
+
+      await removeWordFromUserList(supabase, user.id, userWordId);
+      return NextResponse.json({ ok: true });
+    }
+
     return NextResponse.json({ error: "Geçersiz istek" }, { status: 400 });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Kelime eklenemedi";
+    const message = error instanceof Error ? error.message : "Kelime işlemi başarısız";
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

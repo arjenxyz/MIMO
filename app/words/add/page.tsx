@@ -51,7 +51,7 @@ export default async function AddWordPage() {
         </PracticeExamCard>
 
         <div className="mt-5">
-          <MyWordsList words={words} />
+          <MyWordsList words={words} demo={demo} />
         </div>
       </div>
     </PracticeExamMain>
