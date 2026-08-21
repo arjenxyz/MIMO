@@ -143,7 +143,8 @@ export function misspellLearnedWord(
 
 export function buildRealWordRound(
   userWords: string[],
-  questionCount = 12
+  /** Omit to use every eligible word once. */
+  questionCount?: number
 ): RealWordItem[] {
   const seen = new Set<string>();
   const pool: string[] = [];
@@ -152,7 +153,7 @@ export function buildRealWordRound(
     const w = normalizeWord(raw);
     if (!w || w.length < 3 || seen.has(w)) continue;
     // Prefer spellable single tokens (skip long phrases)
-    if (w.includes(" ") || w.includes("-")) continue;
+    if (w.includes(" ")) continue;
     seen.add(w);
     pool.push(w);
   }
@@ -168,7 +169,8 @@ export function buildRealWordRound(
   }
 
   if (!pool.length) {
-    return DEMO_FALLBACK.slice(0, questionCount).map((word, i) => ({
+    const fallbackCount = questionCount ?? DEMO_FALLBACK.length;
+    return DEMO_FALLBACK.slice(0, fallbackCount).map((word, i) => ({
       id: `q-${i}-${word}`,
       word,
       isReal: true,
@@ -179,9 +181,14 @@ export function buildRealWordRound(
   const blocked = new Set(pool);
   const items: RealWordItem[] = [];
   const order = shuffle(pool);
+  const limit =
+    typeof questionCount === "number"
+      ? Math.min(questionCount, order.length)
+      : order.length;
+  const sources = order.slice(0, limit);
 
-  for (let i = 0; i < questionCount; i++) {
-    const source = order[i % order.length]!;
+  for (let i = 0; i < sources.length; i++) {
+    const source = sources[i]!;
     const wantReal = Math.random() < 0.5;
 
     if (wantReal) {

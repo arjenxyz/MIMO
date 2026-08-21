@@ -16,7 +16,6 @@ import { playFeedback } from "@/lib/feedbackSound";
 import { buildRealWordRound, type RealWordItem } from "@/lib/realWordQuiz";
 
 const QUESTION_SECONDS = 5;
-const QUESTION_COUNT = 12;
 
 type Feedback = "correct" | "wrong" | "timeout" | null;
 
@@ -33,6 +32,9 @@ export function RealWordGame({ seedWords }: { seedWords: string[] }) {
   const advanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const current = items[index] ?? null;
+  const total = items.length;
+  const itemsRef = useRef(items);
+  itemsRef.current = items;
 
   const clearAdvance = () => {
     if (advanceTimer.current) {
@@ -44,7 +46,8 @@ export function RealWordGame({ seedWords }: { seedWords: string[] }) {
   const startRound = useCallback(() => {
     clearAdvance();
     answeringRef.current = false;
-    setItems(buildRealWordRound(seedWords, QUESTION_COUNT));
+    // One question per learned word (no fixed 12-cap).
+    setItems(buildRealWordRound(seedWords));
     setIndex(0);
     setSecondsLeft(QUESTION_SECONDS);
     setScore(0);
@@ -60,7 +63,7 @@ export function RealWordGame({ seedWords }: { seedWords: string[] }) {
     setFeedback(null);
     setIndex((i) => {
       const next = i + 1;
-      if (next >= QUESTION_COUNT) {
+      if (next >= itemsRef.current.length) {
         setPhase("done");
         return i;
       }
@@ -115,8 +118,8 @@ export function RealWordGame({ seedWords }: { seedWords: string[] }) {
           <PracticeExamEyebrow>Kelime doğrulama</PracticeExamEyebrow>
           <h1 className="mt-2 text-2xl font-black text-mimo-title">Yazım doğru mu?</h1>
           <p className="mt-3 text-sm font-semibold text-mimo-muted">
-            Öğrendiğin kelimelerden biri çıkar — bazen doğru, bazen yanlış yazılmış
-            (friend → firiend gibi). Gerçek yazım mı, değil mi? Her soru için{" "}
+            Listedeki kelimelerinin hepsi bu turda çıkar — bazen doğru, bazen yanlış
+            yazılmış (friend → firiend gibi). Gerçek yazım mı, değil mi? Her soru için{" "}
             {QUESTION_SECONDS} saniyen var.
           </p>
           <PracticeExamPrimaryButton className="mt-6 w-full" onClick={startRound}>
@@ -136,7 +139,7 @@ export function RealWordGame({ seedWords }: { seedWords: string[] }) {
         <PracticeExamCard className="w-full max-w-md text-center">
           <PracticeExamEyebrow>Tur bitti</PracticeExamEyebrow>
           <h1 className="mt-2 text-3xl font-black text-mimo-title">
-            {score}/{QUESTION_COUNT}
+            {score}/{total || "—"}
           </h1>
           <p className="mt-2 text-sm font-semibold text-mimo-muted">
             En uzun seri: {bestStreak}
@@ -173,7 +176,7 @@ export function RealWordGame({ seedWords }: { seedWords: string[] }) {
       <div className="mx-auto w-full max-w-lg lg:max-w-4xl">
         <div className="mb-4 flex items-center justify-between text-xs font-black uppercase tracking-wide text-mimo-muted lg:mb-6 lg:text-sm">
           <span>
-            {index + 1}/{QUESTION_COUNT}
+            {index + 1}/{total}
           </span>
           <span>
             Skor {score} · Seri {streak}

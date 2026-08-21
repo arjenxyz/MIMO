@@ -1,6 +1,6 @@
 import { headers } from "next/headers";
 import { RealWordGame } from "@/app/components/RealWordGame";
-import { getLearnedWords, getUserWords } from "@/lib/db";
+import { getUserWords } from "@/lib/db";
 import { DEMO_DUE_WORDS, isDemoMode } from "@/lib/demo";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
@@ -26,14 +26,9 @@ export default async function RealWordQuizPage() {
     } = await supabase.auth.getUser();
     if (!user) redirect("/login");
 
-    const learned = await getLearnedWords(supabase, user.id, 8);
-    const fromLearned = learned.filter((row) => row.words).map((row) => row.words!.english);
-    if (fromLearned.length >= 6) {
-      seedWords = fromLearned;
-    } else {
-      const all = await getUserWords(supabase, user.id);
-      seedWords = all.filter((row) => row.words).map((row) => row.words!.english);
-    }
+    // Full vocabulary list — every word on the account is fair game.
+    const all = await getUserWords(supabase, user.id);
+    seedWords = all.filter((row) => row.words).map((row) => row.words!.english);
   }
 
   return <RealWordGame seedWords={seedWords} />;
