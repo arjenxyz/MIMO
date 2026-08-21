@@ -91,6 +91,7 @@ export function AddWordForm({ demo = false }: { demo?: boolean }) {
   const [modalError, setModalError] = useState("");
   const [success, setSuccess] = useState("");
   const [alreadyOwned, setAlreadyOwned] = useState(false);
+  const [poolNotice, setPoolNotice] = useState("");
   const [shareMode, setShareMode] = useState<"private" | "global">("private");
   const [imagePool, setImagePool] = useState<string[]>([]);
   const [imageIndex, setImageIndex] = useState(0);
@@ -101,6 +102,7 @@ export function AddWordForm({ demo = false }: { demo?: boolean }) {
     setLookup(null);
     setModalError("");
     setAlreadyOwned(false);
+    setPoolNotice("");
     setImagePool([]);
     setImageIndex(0);
     setTriedUrls([]);
@@ -141,6 +143,7 @@ export function AddWordForm({ demo = false }: { demo?: boolean }) {
     setLookup(null);
     setModalOpen(false);
     setAlreadyOwned(false);
+    setPoolNotice("");
     setImagePool([]);
     setImageIndex(0);
     setTriedUrls([]);
@@ -166,7 +169,9 @@ export function AddWordForm({ demo = false }: { demo?: boolean }) {
       const data = (await res.json()) as {
         lookup?: WordLookupResult;
         alreadyOwned?: boolean;
+        inPool?: boolean;
         message?: string;
+        poolMessage?: string;
         error?: string;
       };
       if (!res.ok) throw new Error(data.error || "Bulunamadı");
@@ -175,6 +180,7 @@ export function AddWordForm({ demo = false }: { demo?: boolean }) {
       const result = data.lookup;
       const owned = Boolean(data.alreadyOwned);
       setAlreadyOwned(owned);
+      setPoolNotice(!owned && data.inPool ? data.poolMessage || "" : "");
 
       if (owned) {
         setLookup({ ...result, image_url: result.image_url ?? null });
@@ -265,6 +271,8 @@ export function AddWordForm({ demo = false }: { demo?: boolean }) {
         error?: string;
         alreadyHad?: boolean;
         ok?: boolean;
+        reusedPool?: boolean;
+        message?: string;
       };
       if (!res.ok) {
         if (data.alreadyHad) {
@@ -274,7 +282,12 @@ export function AddWordForm({ demo = false }: { demo?: boolean }) {
         }
         throw new Error(data.error || "Kaydedilemedi");
       }
-      setSuccess(`"${lookup.english}" listene eklendi.`);
+      setSuccess(
+        data.message ||
+          (data.reusedPool
+            ? `"${lookup.english}" havuzdaki kayıttan listene eklendi.`
+            : `"${lookup.english}" listene eklendi.`)
+      );
       setQuery("");
       closeModal();
       router.refresh();
@@ -470,6 +483,12 @@ export function AddWordForm({ demo = false }: { demo?: boolean }) {
                     {swapping ? "Aranıyor…" : "Değiştir"}
                   </button>
                 </div>
+              )}
+
+              {poolNotice && !alreadyOwned && (
+                <p className="rounded-xl border border-[#bfdbfe] bg-[#eff6ff] px-3 py-2 text-sm font-bold text-[#1d4ed8] dark:border-[#1e3a8a] dark:bg-[#172554] dark:text-[#93c5fd]">
+                  {poolNotice}
+                </p>
               )}
 
               {modalError && (

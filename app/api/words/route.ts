@@ -56,10 +56,29 @@ export async function POST(request: NextRequest) {
         });
       }
 
+      const inPool = Boolean(existing?.word);
+      const poolUploader =
+        existing?.word?.uploader_username?.trim() ||
+        (existing?.word?.created_by ? "başka bir kullanıcı" : null);
+
       return NextResponse.json({
-        lookup: result,
+        lookup: inPool
+          ? {
+              ...result,
+              english: existing!.word.english,
+              turkish: existing!.word.turkish || result.turkish,
+              phonetic: existing!.word.phonetic ?? result.phonetic,
+              audio_url: existing!.word.audio_url ?? result.audio_url,
+              example_sentence: existing!.word.example_sentence ?? result.example_sentence,
+            }
+          : result,
         alreadyOwned: false,
-        inPool: Boolean(existing?.word),
+        inPool,
+        poolMessage: inPool
+          ? poolUploader
+            ? `"${existing!.word.english}" zaten global havuzda (${poolUploader}). Yeni kopya oluşmaz — listene eklenebilir.`
+            : `"${existing!.word.english}" zaten sistemde var. Yeni kopya oluşmaz — listene eklenebilir.`
+          : undefined,
       });
     }
 
@@ -141,7 +160,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         ok: true,
         alreadyHad: false,
+        reusedPool: Boolean(precheck?.word),
         word: saved.word,
+        message: precheck?.word
+          ? `"${saved.word.english}" zaten havuzdaydı — listene eklendi (yeni kopya yok).`
+          : undefined,
       });
     }
 
