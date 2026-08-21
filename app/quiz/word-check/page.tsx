@@ -7,23 +7,6 @@ import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
-const DEMO_EXTRA = [
-  "friend",
-  "mother",
-  "father",
-  "water",
-  "school",
-  "please",
-  "because",
-  "beautiful",
-  "together",
-  "important",
-  "people",
-  "believe",
-  "receive",
-  "enough",
-];
-
 export default async function RealWordQuizPage() {
   const headerList = await headers();
   const host = headerList.get("host")?.split(":")[0] ?? null;
@@ -32,10 +15,7 @@ export default async function RealWordQuizPage() {
   let seedWords: string[] = [];
 
   if (demo) {
-    seedWords = [
-      ...DEMO_DUE_WORDS.filter((row) => row.words).map((row) => row.words!.english),
-      ...DEMO_EXTRA,
-    ];
+    seedWords = DEMO_DUE_WORDS.filter((row) => row.words).map((row) => row.words!.english);
   } else {
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
       redirect("/login");
@@ -46,7 +26,6 @@ export default async function RealWordQuizPage() {
     } = await supabase.auth.getUser();
     if (!user) redirect("/login");
 
-    // Prefer actively learned words; fall back to full list.
     const learned = await getLearnedWords(supabase, user.id, 8);
     const fromLearned = learned.filter((row) => row.words).map((row) => row.words!.english);
     if (fromLearned.length >= 6) {

@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { SocialAuthButtons } from "@/app/components/SocialAuthButtons";
 import { createClient } from "@/lib/supabase/client";
@@ -29,16 +30,35 @@ function Decor() {
   );
 }
 
+function DemoContinue() {
+  return (
+    <div className="mt-5 space-y-3">
+      <Link
+        href="/"
+        className="flex w-full items-center justify-center rounded-2xl bg-[#1cb0f6] px-6 py-3.5 text-sm font-black uppercase tracking-wide text-white shadow-[0_3px_0_#1899d6] transition active:translate-y-0.5 active:shadow-none"
+      >
+        Örnek verilerle devam et
+      </Link>
+      <p className="text-center text-xs font-bold text-[#9ca3af]">
+        Giriş gerekmez — güncel yol ve pratikler demo ile dolu
+      </p>
+    </div>
+  );
+}
+
 export default function LoginPage() {
   const [checking, setChecking] = useState(true);
+  const [demo, setDemo] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
 
     async function gate() {
-      // Demo / local: stay on login UI for design work.
       if (isDemoMode(window.location.hostname)) {
-        if (!cancelled) setChecking(false);
+        if (!cancelled) {
+          setDemo(true);
+          setChecking(false);
+        }
         return;
       }
 
@@ -48,7 +68,6 @@ export default function LoginPage() {
           data: { user },
         } = await supabase.auth.getUser();
         if (user) {
-          // Hard navigation so URL cannot stay stuck on /login with home HTML (SW bug).
           window.location.replace("/");
           return;
         }
@@ -66,7 +85,7 @@ export default function LoginPage() {
 
   if (checking) {
     return (
-      <main className="flex min-h-[100dvh] items-center justify-center bg-[#fff8f1] font-extrabold text-[#6b7280]">
+      <main className="flex min-h-[100dvh] items-center justify-center bg-mimo-bg font-extrabold text-mimo-muted">
         Yükleniyor…
       </main>
     );
@@ -87,10 +106,16 @@ export default function LoginPage() {
             className="mx-auto h-28 w-28 rounded-full object-cover shadow-lg ring-4 ring-[#fd860a]/25"
           />
           <h1 className="mt-5 text-4xl font-black tracking-tight text-[#1f2937]">Hoş geldin!</h1>
-          <p className="mt-2 font-bold text-[#6b7280]">Devam etmek için giriş yap</p>
-          <div className="mt-8">
-            <SocialAuthButtons />
-          </div>
+          <p className="mt-2 font-bold text-[#6b7280]">
+            {demo ? "Lokalde demo açık — örnek verilerle gez" : "Devam etmek için giriş yap"}
+          </p>
+          {demo ? (
+            <DemoContinue />
+          ) : (
+            <div className="mt-8">
+              <SocialAuthButtons />
+            </div>
+          )}
         </section>
       </div>
 
@@ -123,13 +148,19 @@ export default function LoginPage() {
             />
             <div>
               <h1 className="text-3xl font-black tracking-tight text-[#1f2937]">Hoş geldin!</h1>
-              <p className="font-bold text-[#6b7280]">Devam etmek için giriş yap</p>
+              <p className="font-bold text-[#6b7280]">
+                {demo ? "Lokalde demo açık — örnek verilerle gez" : "Devam etmek için giriş yap"}
+              </p>
             </div>
           </div>
 
-          <div className="mt-8">
-            <SocialAuthButtons />
-          </div>
+          {demo ? (
+            <DemoContinue />
+          ) : (
+            <div className="mt-8">
+              <SocialAuthButtons />
+            </div>
+          )}
         </section>
       </div>
     </main>
