@@ -198,13 +198,13 @@ export function FriendsPanel({ demo }: { demo: boolean }) {
             onClick={() => setTab(t.id)}
             className={`rounded-lg px-2 py-2 text-center text-xs font-extrabold transition ${
               tab === t.id
-                ? "bg-mimo-card text-mimo-title shadow-sm ring-1 ring-mimo-border"
+                ? "bg-[#fff3e0] text-[#c2410c] shadow-sm ring-1 ring-[#fd860a]/40 dark:bg-[#3a2208] dark:text-[#fdba74]"
                 : "text-mimo-muted hover:text-mimo-fg"
             }`}
           >
             {t.label}
             {typeof t.badge === "number" && t.badge > 0 ? (
-              <span className="ml-1 tabular-nums text-[#1cb0f6]">({t.badge})</span>
+              <span className="ml-1 tabular-nums text-[#fd860a]">({t.badge})</span>
             ) : null}
           </button>
         ))}
@@ -233,7 +233,7 @@ export function FriendsPanel({ demo }: { demo: boolean }) {
             <button
               type="button"
               onClick={() => setTab("add")}
-              className="mt-4 rounded-2xl bg-[#1cb0f6] px-4 py-2.5 text-xs font-black uppercase tracking-wide text-white"
+              className="mt-4 rounded-2xl bg-[#fd860a] px-4 py-2.5 text-xs font-black uppercase tracking-wide text-[#2a1600] shadow-[0_3px_0_#c2410c]"
             >
               Arkadaş ekle
             </button>
@@ -265,7 +265,7 @@ export function FriendsPanel({ demo }: { demo: boolean }) {
       ) : tab === "requests" ? (
         <div className="space-y-5">
           <section>
-            <h3 className="text-[10px] font-black uppercase tracking-[0.14em] text-[#1cb0f6]">
+            <h3 className="text-[10px] font-black uppercase tracking-[0.14em] text-[#fd860a]">
               Gelen istekler
             </h3>
             {incoming.length === 0 ? (
@@ -350,7 +350,7 @@ export function FriendsPanel({ demo }: { demo: boolean }) {
             <button
               type="submit"
               disabled={busyId === "search"}
-              className="shrink-0 rounded-xl bg-[#1cb0f6] px-4 py-2.5 text-sm font-black text-white disabled:opacity-50"
+              className="shrink-0 rounded-xl bg-[#fd860a] px-4 py-2.5 text-sm font-black text-[#2a1600] disabled:opacity-50"
             >
               Ara
             </button>
