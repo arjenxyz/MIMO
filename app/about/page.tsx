@@ -103,22 +103,57 @@ export default function AboutMimoPage() {
           </p>
         </section>
 
-        <section className="mt-5 rounded-2xl border border-mimo-border bg-mimo-card p-5 shadow-sm">
+        <section className="relative mt-5 overflow-hidden rounded-2xl border border-mimo-border bg-mimo-card p-5 shadow-sm">
+          <div
+            className="pointer-events-none absolute -right-8 -top-10 h-28 w-28 rounded-full bg-[radial-gradient(circle,rgba(253,134,10,0.22),transparent_70%)]"
+            aria-hidden
+          />
           <p className="text-[11px] font-black uppercase tracking-[0.16em] text-[#fd860a]">
             Geliştirici
           </p>
-          <h2 className="mt-2 text-base font-black text-mimo-title">Arjen</h2>
-          <p className="mt-1.5 text-sm font-semibold leading-relaxed text-mimo-muted">
-            MIMO’nun tasarımı, geliştirmesi ve hikâyesi.
-          </p>
+
+          <div className="mt-4 flex items-start gap-3.5">
+            <Image
+              src="https://avatars.githubusercontent.com/arjenxyz"
+              alt="Arjen"
+              width={64}
+              height={64}
+              className="h-16 w-16 shrink-0 rounded-2xl object-cover ring-2 ring-[#fd860a]/40"
+            />
+            <div className="min-w-0 pt-0.5">
+              <h2 className="text-xl font-black tracking-tight text-mimo-title">Arjen</h2>
+              <p className="mt-0.5 text-sm font-bold text-mimo-muted">
+                Kurucu · Tasarım · Geliştirme
+              </p>
+              <p className="mt-2 text-sm font-semibold leading-relaxed text-mimo-muted">
+                MIMO’yu uçtan uca tasarlayan ve kodlayan kişi. Ürünün arayüzü, öğrenme yolu ve
+                hikâyesi onun elinden çıktı.
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-4 flex flex-wrap gap-2">
+            {["Next.js", "Ürün", "Öğrenme deneyimi"].map((tag) => (
+              <span
+                key={tag}
+                className="rounded-lg border border-mimo-soft bg-mimo-bg px-2.5 py-1 text-[11px] font-extrabold text-mimo-fg/80"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+
           <a
             href="https://github.com/arjenxyz"
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-4 inline-flex items-center gap-2.5 rounded-xl border border-mimo-soft bg-mimo-bg px-3.5 py-2.5 text-sm font-extrabold text-mimo-fg transition hover:border-mimo-border hover:bg-mimo-card"
+            className="mt-5 flex w-full items-center justify-between gap-3 rounded-xl border border-mimo-soft bg-mimo-bg px-3.5 py-3 transition hover:border-mimo-border hover:bg-white dark:hover:bg-mimo-card"
           >
-            <GitHubIcon className="h-5 w-5 shrink-0" />
-            <span>arjenxyz</span>
+            <span className="inline-flex items-center gap-2.5 text-sm font-extrabold text-mimo-fg">
+              <GitHubIcon className="h-5 w-5 shrink-0" />
+              arjenxyz
+            </span>
+            <span className="text-xs font-bold text-mimo-muted">GitHub →</span>
           </a>
         </section>
       </div>
