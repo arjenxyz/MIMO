@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import AboutStoryVideo from "@/app/components/AboutStoryVideo";
 
 export const dynamic = "force-dynamic";
 
@@ -38,11 +39,17 @@ export default function AboutMimoPage() {
         <section className="mt-6 overflow-hidden rounded-[1.75rem] border border-mimo-border bg-mimo-card shadow-sm">
           <div className="relative aspect-video w-full bg-[#0f172a]">
             <video
-              className="h-full w-full object-cover"
-              controls
+              className="pointer-events-none h-full w-full select-none object-cover"
+              autoPlay
+              muted
+              loop
               playsInline
-              preload="metadata"
+              preload="auto"
               poster="/mimo-avatar.png"
+              controlsList="nodownload nofullscreen noremoteplayback"
+              disablePictureInPicture
+              disableRemotePlayback
+              onContextMenu={(e) => e.preventDefault()}
             >
               <source src="/mimo-story.mp4" type="video/mp4" />
               Tarayıcın video oynatmayı desteklemiyor.
