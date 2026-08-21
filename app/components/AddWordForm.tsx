@@ -366,45 +366,43 @@ export function AddWordForm({ demo = false }: { demo?: boolean }) {
               </div>
 
               {!alreadyOwned && (
-                <fieldset className="space-y-2 rounded-xl border border-[#ce82ff]/35 bg-[#faf5ff] p-3 dark:bg-[#1e1033]">
-                  <legend className="px-1 text-[10px] font-black uppercase tracking-wide text-[#7c3aed]">
+                <div>
+                  <p className="mb-1.5 text-[10px] font-black uppercase tracking-wide text-mimo-muted">
                     Kayıt türü
-                  </legend>
-                  <label className="flex cursor-pointer items-start gap-2.5 rounded-xl border border-mimo-border bg-mimo-card px-3 py-2.5">
-                    <input
-                      type="radio"
-                      name="shareMode"
-                      checked={shareMode === "private"}
-                      onChange={() => setShareMode("private")}
-                      className="mt-1"
-                    />
-                    <span>
-                      <span className="block text-sm font-extrabold text-mimo-title">
-                        Yalnızca kendim için
-                      </span>
-                      <span className="mt-0.5 block text-xs font-semibold text-mimo-muted">
-                        Başka hesaplara yüklenmez.
-                      </span>
-                    </span>
-                  </label>
-                  <label className="flex cursor-pointer items-start gap-2.5 rounded-xl border border-mimo-border bg-mimo-card px-3 py-2.5">
-                    <input
-                      type="radio"
-                      name="shareMode"
-                      checked={shareMode === "global"}
-                      onChange={() => setShareMode("global")}
-                      className="mt-1"
-                    />
-                    <span>
-                      <span className="block text-sm font-extrabold text-mimo-title">
-                        Global kelime sistemine yükle
-                      </span>
-                      <span className="mt-0.5 block text-xs font-semibold text-mimo-muted">
-                        Topluluk havuzuna eklenir.
-                      </span>
-                    </span>
-                  </label>
-                </fieldset>
+                  </p>
+                  <div
+                    role="radiogroup"
+                    aria-label="Kayıt türü"
+                    className="grid grid-cols-2 gap-1 rounded-xl border border-mimo-soft bg-mimo-surface p-1"
+                  >
+                    <button
+                      type="button"
+                      role="radio"
+                      aria-checked={shareMode === "private"}
+                      onClick={() => setShareMode("private")}
+                      className={`rounded-lg px-2 py-2 text-center text-xs font-extrabold transition ${
+                        shareMode === "private"
+                          ? "bg-mimo-card text-mimo-title shadow-sm ring-1 ring-mimo-border"
+                          : "text-mimo-muted hover:text-mimo-fg"
+                      }`}
+                    >
+                      Yalnızca kendim
+                    </button>
+                    <button
+                      type="button"
+                      role="radio"
+                      aria-checked={shareMode === "global"}
+                      onClick={() => setShareMode("global")}
+                      className={`rounded-lg px-2 py-2 text-center text-xs font-extrabold transition ${
+                        shareMode === "global"
+                          ? "bg-[#f3e8ff] text-[#7c3aed] shadow-sm ring-1 ring-[#ce82ff]/50 dark:bg-[#2a1845]"
+                          : "text-mimo-muted hover:text-mimo-fg"
+                      }`}
+                    >
+                      Global yükle
+                    </button>
+                  </div>
+                </div>
               )}
 
               {!alreadyOwned && (
