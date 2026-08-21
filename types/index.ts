@@ -160,3 +160,34 @@ export interface UserDETAnswer {
   is_correct: boolean;
   answered_at: string;
 }
+
+export type ChallengeModule = "match" | "word_check";
+export type ChallengeStatus =
+  | "pending"
+  | "declined"
+  | "active"
+  | "finished"
+  | "cancelled";
+
+export type ChallengeSeedWord = {
+  id: number;
+  english: string;
+  turkish: string;
+};
+
+export type ChallengeRow = {
+  id: number;
+  challenger_id: string;
+  opponent_id: string;
+  module: ChallengeModule;
+  status: ChallengeStatus;
+  seed_words: ChallengeSeedWord[];
+  challenger_score: number;
+  opponent_score: number;
+  winner_id: string | null;
+  created_at: string;
+  started_at: string | null;
+  finished_at: string | null;
+  challenger: FriendProfile | null;
+  opponent: FriendProfile | null;
+};

@@ -108,9 +108,68 @@ body {
   animation: mimo-path-enter 0.45s ease-out both;
 }
 
+@keyframes mimo-score-float {
+  0% {
+    opacity: 0;
+    transform: translateY(8px) scale(0.9);
+  }
+  20% {
+    opacity: 1;
+    transform: translateY(0) scale(1.08);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-36px) scale(1);
+  }
+}
+
+@keyframes mimo-score-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.06);
+  }
+}
+
+@keyframes mimo-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-6px);
+  }
+  40% {
+    transform: translateX(6px);
+  }
+  60% {
+    transform: translateX(-4px);
+  }
+  80% {
+    transform: translateX(4px);
+  }
+}
+
+.mimo-score-float {
+  animation: mimo-score-float 0.9s ease-out forwards;
+}
+
+.mimo-score-pulse {
+  animation: mimo-score-pulse 0.55s ease-out;
+}
+
+.mimo-shake {
+  animation: mimo-shake 0.4s ease-in-out;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .mimo-path-pulse,
-  .mimo-path-enter {
+  .mimo-path-enter,
+  .mimo-score-float,
+  .mimo-score-pulse,
+  .mimo-shake {
     animation: none;
   }
 }

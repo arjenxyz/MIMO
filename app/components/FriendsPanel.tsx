@@ -1,8 +1,10 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useState, type ReactNode } from "react";
+import { useRouter } from "next/navigation";
+import { ChallengeInviteModal } from "@/app/components/ChallengeInviteModal";
 import { DEMO_FRIENDS } from "@/lib/demo";
-import type { FriendProfile, FriendshipRow } from "@/types";
+import type { ChallengeRow, FriendProfile, FriendshipRow } from "@/types";
 
 type Tab = "friends" | "requests" | "add";
 
@@ -42,17 +44,54 @@ function PersonRow({
   );
 }
 
+function moduleLabel(module: ChallengeRow["module"]) {
+  return module === "match" ? "Hızlı eşleştir" : "Yazım doğru mu?";
+}
+
 export function FriendsPanel({ demo }: { demo: boolean }) {
+  const router = useRouter();
   const [tab, setTab] = useState<Tab>("friends");
   const [friends, setFriends] = useState<FriendshipRow[]>([]);
   const [incoming, setIncoming] = useState<FriendshipRow[]>([]);
   const [outgoing, setOutgoing] = useState<FriendshipRow[]>([]);
+  const [challengeIncoming, setChallengeIncoming] = useState<ChallengeRow[]>([]);
+  const [challengeOutgoing, setChallengeOutgoing] = useState<ChallengeRow[]>([]);
+  const [challengeActive, setChallengeActive] = useState<ChallengeRow[]>([]);
   const [results, setResults] = useState<FriendProfile[]>([]);
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | number | null>(null);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [inviteFriend, setInviteFriend] = useState<FriendProfile | null>(null);
+
+  const loadChallenges = useCallback(async () => {
+    if (demo) {
+      setChallengeIncoming([]);
+      setChallengeOutgoing([]);
+      setChallengeActive([]);
+      return;
+    }
+    try {
+      const res = await fetch("/api/challenges");
+      const data = (await res.json()) as {
+        incoming?: ChallengeRow[];
+        outgoing?: ChallengeRow[];
+        active?: ChallengeRow[];
+        error?: string;
+      };
+      if (!res.ok) {
+        // Table may not exist yet — don't block friends UI.
+        if (res.status === 503) return;
+        throw new Error(data.error || "Meydan okumalar alınamadı");
+      }
+      setChallengeIncoming(data.incoming ?? []);
+      setChallengeOutgoing(data.outgoing ?? []);
+      setChallengeActive(data.active ?? []);
+    } catch {
+      // ignore soft failures
+    }
+  }, [demo]);
 
   const load = useCallback(async () => {
     if (demo) {
@@ -61,6 +100,7 @@ export function FriendsPanel({ demo }: { demo: boolean }) {
       setOutgoing(DEMO_FRIENDS.outgoing.map((r) => ({ ...r })));
       setLoading(false);
       setError("");
+      void loadChallenges();
       return;
     }
 
@@ -78,12 +118,13 @@ export function FriendsPanel({ demo }: { demo: boolean }) {
       setFriends(data.friends ?? []);
       setIncoming(data.incoming ?? []);
       setOutgoing(data.outgoing ?? []);
+      await loadChallenges();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Liste alınamadı");
     } finally {
       setLoading(false);
     }
-  }, [demo]);
+  }, [demo, loadChallenges]);
 
   useEffect(() => {
     void load();
@@ -97,6 +138,30 @@ export function FriendsPanel({ demo }: { demo: boolean }) {
     });
     const data = (await res.json()) as { error?: string };
     if (!res.ok) throw new Error(data.error || "İşlem başarısız");
+  }
+
+  async function challengeAction(action: "accept" | "decline" | "cancel", challengeId: number) {
+    setBusyId(`c-${challengeId}`);
+    setError("");
+    try {
+      const res = await fetch("/api/challenges", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action, challengeId }),
+      });
+      const data = (await res.json()) as { challenge?: ChallengeRow; error?: string };
+      if (!res.ok || !data.challenge) throw new Error(data.error || "İşlem başarısız");
+      if (action === "accept") {
+        router.push(`/challenge/${data.challenge.id}`);
+        return;
+      }
+      await loadChallenges();
+      setNotice(action === "cancel" ? "Davet iptal edildi." : "Davet reddedildi.");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "İşlem başarısız");
+    } finally {
+      setBusyId(null);
+    }
   }
 
   async function onSearch(e: FormEvent) {
@@ -275,6 +340,98 @@ export function FriendsPanel({ demo }: { demo: boolean }) {
         </p>
       )}
 
+      {!loading &&
+        (challengeIncoming.length > 0 ||
+          challengeOutgoing.length > 0 ||
+          challengeActive.length > 0) && (
+          <section className="rounded-2xl border border-[#fd860a]/35 bg-[#fff7ed] px-3 py-3 dark:bg-[#3a2208]/40">
+            <h3 className="text-[10px] font-black uppercase tracking-[0.14em] text-[#fd860a]">
+              Meydan okumalar
+            </h3>
+            <ul className="mt-1 divide-y divide-[#fed7aa]/60">
+              {challengeActive.map((c) => {
+                const label = `${c.challenger?.username ?? "?"} vs ${c.opponent?.username ?? "?"}`;
+                return (
+                  <li key={`a-${c.id}`} className="flex items-center justify-between gap-2 py-2.5">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-extrabold text-mimo-title">{label}</p>
+                      <p className="text-[11px] font-bold text-mimo-muted">
+                        Aktif · {moduleLabel(c.module)}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => router.push(`/challenge/${c.id}`)}
+                      className="shrink-0 rounded-xl bg-[#fd860a] px-2.5 py-1.5 text-[11px] font-black text-[#2a1600]"
+                    >
+                      Arenaya git
+                    </button>
+                  </li>
+                );
+              })}
+              {challengeIncoming.map((c) => (
+                <li key={`i-${c.id}`} className="flex items-center justify-between gap-2 py-2.5">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-extrabold text-mimo-title">
+                      {c.challenger?.username ?? "Öğrenci"}
+                    </p>
+                    <p className="text-[11px] font-bold text-mimo-muted">
+                      Gelen · {moduleLabel(c.module)}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 gap-1.5">
+                    <button
+                      type="button"
+                      disabled={busyId === `c-${c.id}`}
+                      onClick={() => void challengeAction("accept", c.id)}
+                      className="rounded-xl bg-[#58cc02] px-2.5 py-1.5 text-[11px] font-black text-[#14260a] disabled:opacity-50"
+                    >
+                      Kabul
+                    </button>
+                    <button
+                      type="button"
+                      disabled={busyId === `c-${c.id}`}
+                      onClick={() => void challengeAction("decline", c.id)}
+                      className="rounded-xl border border-mimo-soft px-2.5 py-1.5 text-[11px] font-extrabold text-mimo-muted disabled:opacity-50"
+                    >
+                      Red
+                    </button>
+                  </div>
+                </li>
+              ))}
+              {challengeOutgoing.map((c) => (
+                <li key={`o-${c.id}`} className="flex items-center justify-between gap-2 py-2.5">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-extrabold text-mimo-title">
+                      {c.opponent?.username ?? "Öğrenci"}
+                    </p>
+                    <p className="text-[11px] font-bold text-mimo-muted">
+                      Bekliyor · {moduleLabel(c.module)}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => router.push(`/challenge/${c.id}`)}
+                      className="rounded-xl border border-mimo-soft px-2.5 py-1.5 text-[11px] font-extrabold text-mimo-fg"
+                    >
+                      Aç
+                    </button>
+                    <button
+                      type="button"
+                      disabled={busyId === `c-${c.id}`}
+                      onClick={() => void challengeAction("cancel", c.id)}
+                      className="rounded-xl border border-mimo-soft px-2.5 py-1.5 text-[11px] font-extrabold text-[#b91c1c] disabled:opacity-50"
+                    >
+                      İptal
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
       {loading ? (
         <p className="py-8 text-center text-sm font-bold text-mimo-muted">Yükleniyor…</p>
       ) : tab === "friends" ? (
@@ -296,20 +453,32 @@ export function FriendsPanel({ demo }: { demo: boolean }) {
           <ul className="divide-y divide-mimo-soft">
             {friends.map((row) => {
               const name = row.other?.username ?? "Öğrenci";
+              const friend = row.other;
               return (
                 <PersonRow
                   key={row.id}
                   name={name}
                   streak={row.other?.daily_streak}
                   trailing={
-                    <button
-                      type="button"
-                      disabled={busyId === row.id}
-                      onClick={() => void removeRow(row.id, "remove")}
-                      className="rounded-xl border border-mimo-soft px-2.5 py-1.5 text-[11px] font-extrabold text-[#b91c1c] disabled:opacity-50"
-                    >
-                      Kaldır
-                    </button>
+                    <>
+                      {friend ? (
+                        <button
+                          type="button"
+                          onClick={() => setInviteFriend(friend)}
+                          className="rounded-xl bg-[#1cb0f6] px-2.5 py-1.5 text-[11px] font-black text-white shadow-[0_2px_0_#1899d6]"
+                        >
+                          Meydan oku
+                        </button>
+                      ) : null}
+                      <button
+                        type="button"
+                        disabled={busyId === row.id}
+                        onClick={() => void removeRow(row.id, "remove")}
+                        className="rounded-xl border border-mimo-soft px-2.5 py-1.5 text-[11px] font-extrabold text-[#b91c1c] disabled:opacity-50"
+                      >
+                        Kaldır
+                      </button>
+                    </>
                   }
                 />
               );
@@ -438,6 +607,14 @@ export function FriendsPanel({ demo }: { demo: boolean }) {
           </ul>
         </div>
       )}
+
+      {inviteFriend ? (
+        <ChallengeInviteModal
+          friend={inviteFriend}
+          demo={demo}
+          onClose={() => setInviteFriend(null)}
+        />
+      ) : null}
     </div>
   );
 }
