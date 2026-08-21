@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Nunito } from "next/font/google";
 import "./globals.css";
 import { Navbar } from "@/app/components/Navbar";
+import { AuthSessionGuard } from "@/app/components/AuthSessionGuard";
 import { ClearStaleAppShellCache } from "@/app/components/ClearStaleAppShellCache";
 import { FeedbackSoundBoot } from "@/app/components/FeedbackSoundBoot";
 import { ThemeProvider } from "@/app/components/ThemeProvider";
@@ -70,6 +71,7 @@ export default function RootLayout({
         <ThemeProvider>
           <UnregisterDevServiceWorker />
           <ClearStaleAppShellCache />
+          <AuthSessionGuard />
           <FeedbackSoundBoot />
           <Navbar />
           {children}

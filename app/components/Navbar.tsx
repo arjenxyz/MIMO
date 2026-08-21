@@ -175,13 +175,14 @@ export function Navbar() {
   async function signOut() {
     detailsRef.current?.removeAttribute("open");
     if (demo) {
-      router.push("/login");
+      window.location.assign("/login");
       return;
     }
+    const { clearClientCaches, hardNavigate } = await import("@/lib/clearClientCaches");
     const supabase = createClient();
-    await supabase.auth.signOut();
-    router.replace("/login");
-    router.refresh();
+    await supabase.auth.signOut({ scope: "local" });
+    await clearClientCaches();
+    hardNavigate("/login");
   }
 
   const displayName = profile.display_name || profile.username || "Öğrenci";

@@ -13,18 +13,41 @@ const withPWA = withPWAInit({
     cleanupOutdatedCaches: true,
     skipWaiting: true,
     clientsClaim: true,
-    // Auth HTML must always hit the network — cached redirects poison /login with "/".
+    // Never cache HTML/RSC/API — otherwise account A data survives for account B.
     runtimeCaching: [
       {
-        urlPattern: ({ url: { pathname } }) =>
-          pathname === "/login" ||
-          pathname.startsWith("/login/") ||
-          pathname.startsWith("/register") ||
-          pathname.startsWith("/auth") ||
-          pathname.startsWith("/onboarding") ||
-          pathname.startsWith("/settings") ||
-          pathname.startsWith("/friends") ||
-          pathname.startsWith("/setup"),
+        urlPattern: ({ request, url }) => {
+          const { pathname } = url;
+          if (pathname.startsWith("/api/")) return true;
+          if (request.mode === "navigate" || request.destination === "document") {
+            return true;
+          }
+          // Next.js App Router flight / RSC payloads
+          try {
+            if (request.headers.get("RSC") === "1") return true;
+            if (request.headers.get("Next-Router-Prefetch") === "1") return true;
+            if (request.headers.get("Next-Router-State-Tree")) return true;
+          } catch {
+            // ignore
+          }
+          return (
+            pathname === "/login" ||
+            pathname.startsWith("/login/") ||
+            pathname.startsWith("/register") ||
+            pathname.startsWith("/auth") ||
+            pathname.startsWith("/onboarding") ||
+            pathname.startsWith("/settings") ||
+            pathname.startsWith("/friends") ||
+            pathname.startsWith("/setup") ||
+            pathname === "/" ||
+            pathname.startsWith("/quiz") ||
+            pathname.startsWith("/words") ||
+            pathname.startsWith("/det") ||
+            pathname.startsWith("/photo-practice") ||
+            pathname.startsWith("/reading") ||
+            pathname.startsWith("/widget")
+          );
+        },
         handler: "NetworkOnly",
         method: "GET",
       },
