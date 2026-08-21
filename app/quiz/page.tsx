@@ -386,12 +386,6 @@ export default function WordQuizPage() {
             {error && <p className="mt-4 text-center text-sm font-bold text-[#b91c1c]">{error}</p>}
           </div>
         </PracticeExamCard>
-
-        <p className="mt-4 text-center text-xs font-semibold text-mimo-muted">
-          <Link href="/" className="hover:text-mimo-muted">
-            Ana sayfa
-          </Link>
-        </p>
       </div>
 
       {checked && (
