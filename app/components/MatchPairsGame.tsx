@@ -34,9 +34,6 @@ type Board = {
 
 const SESSION_SECONDS = 120;
 const BOARD_PAIRS = 5;
-const SHUFFLE_EVERY_SEC = 30;
-const SHUFFLE_DURATION_MS = 2500;
-const SHUFFLE_STEPS = 7;
 
 function shuffle<T>(items: T[]) {
   const copy = [...items];
@@ -135,9 +132,8 @@ export function MatchPairsGame({ words }: { words: MatchWord[] }) {
     [words]
   );
 
-  const [phase, setPhase] = useState<"ready" | "running" | "shuffling" | "done">("ready");
+  const [phase, setPhase] = useState<"ready" | "running" | "done">("ready");
   const [secondsLeft, setSecondsLeft] = useState(SESSION_SECONDS);
-  const [shuffleIn, setShuffleIn] = useState(SHUFFLE_EVERY_SEC);
   const [board, setBoard] = useState<Board>({ en: [], tr: [] });
   const [selected, setSelected] = useState<string[]>([]);
   const [flash, setFlash] = useState<Record<string, "ok" | "bad">>({});
@@ -147,41 +143,8 @@ export function MatchPairsGame({ words }: { words: MatchWord[] }) {
   const [bestCombo, setBestCombo] = useState(0);
   const [misses, setMisses] = useState(0);
   const boardWordIdsRef = useRef<Set<number>>(new Set());
-  const shuffleTimersRef = useRef<number[]>([]);
-
-  const clearShuffleTimers = useCallback(() => {
-    for (const id of shuffleTimersRef.current) window.clearTimeout(id);
-    shuffleTimersRef.current = [];
-  }, []);
-
-  const runShuffleSequence = useCallback(() => {
-    clearShuffleTimers();
-    setSelected([]);
-    setFlash({});
-    setLocked(true);
-    setPhase("shuffling");
-
-    const stepMs = Math.floor(SHUFFLE_DURATION_MS / SHUFFLE_STEPS);
-
-    for (let step = 0; step < SHUFFLE_STEPS; step++) {
-      const id = window.setTimeout(() => {
-        setBoard((prev) => ensureMovedBoard(prev));
-      }, step * stepMs);
-      shuffleTimersRef.current.push(id);
-    }
-
-    const doneId = window.setTimeout(() => {
-      setBoard((prev) => ensureMovedBoard(prev));
-      setShuffleIn(SHUFFLE_EVERY_SEC);
-      setLocked(false);
-      setPhase("running");
-      shuffleTimersRef.current = [];
-    }, SHUFFLE_DURATION_MS);
-    shuffleTimersRef.current.push(doneId);
-  }, [clearShuffleTimers]);
 
   const startGame = useCallback(() => {
-    clearShuffleTimers();
     const starter = pickFreshWords(pool, new Set(), BOARD_PAIRS);
     boardWordIdsRef.current = new Set(starter.map((w) => w.id));
     setBoard(boardFromWords(starter));
@@ -193,13 +156,10 @@ export function MatchPairsGame({ words }: { words: MatchWord[] }) {
     setBestCombo(0);
     setMisses(0);
     setSecondsLeft(SESSION_SECONDS);
-    setShuffleIn(SHUFFLE_EVERY_SEC);
     setPhase("running");
-  }, [clearShuffleTimers, pool]);
+  }, [pool]);
 
-  useEffect(() => () => clearShuffleTimers(), [clearShuffleTimers]);
-
-  // Main race timer — paused while shuffling.
+  // Main race timer
   useEffect(() => {
     if (phase !== "running") return;
     if (secondsLeft <= 0) {
@@ -209,17 +169,6 @@ export function MatchPairsGame({ words }: { words: MatchWord[] }) {
     const t = window.setTimeout(() => setSecondsLeft((s) => s - 1), 1000);
     return () => window.clearTimeout(t);
   }, [phase, secondsLeft]);
-
-  // Visible 10s shuffle countdown — also paused while shuffling.
-  useEffect(() => {
-    if (phase !== "running") return;
-    if (shuffleIn <= 0) {
-      runShuffleSequence();
-      return;
-    }
-    const t = window.setTimeout(() => setShuffleIn((s) => s - 1), 1000);
-    return () => window.clearTimeout(t);
-  }, [phase, shuffleIn, runShuffleSequence]);
 
   function onTap(tile: Tile) {
     if (phase !== "running" || locked || flash[tile.uid]) return;
@@ -319,9 +268,6 @@ export function MatchPairsGame({ words }: { words: MatchWord[] }) {
           if (state === "ok") style = "border-[#58cc02] bg-[#ecfce5] text-[#15803d]";
           else if (state === "bad") style = "border-[#ff4b4b] bg-[#ffe8e8] text-[#b91c1c]";
           else if (isSel) style = "border-[#1cb0f6] bg-[#e8f6fe] text-mimo-fg";
-          else if (phase === "shuffling") {
-            style = "border-mimo-border bg-mimo-surface text-[#334155] animate-pulse";
-          }
 
           return (
             <button
@@ -432,8 +378,6 @@ export function MatchPairsGame({ words }: { words: MatchWord[] }) {
     );
   }
 
-  const shuffling = phase === "shuffling";
-
   return (
     <PracticeExamMain>
       <PracticeExamStickyBar
@@ -442,55 +386,30 @@ export function MatchPairsGame({ words }: { words: MatchWord[] }) {
           <p
             className={`text-2xl font-black tabular-nums tracking-tight ${
               secondsLeft <= 20 ? "text-[#ff4b4b]" : "text-mimo-title"
-            } ${shuffling ? "opacity-50" : ""}`}
+            }`}
           >
             {formatTimer(secondsLeft)}
           </p>
         }
       />
       <PracticeExamStickySpacer />
-      <div className="mx-auto flex max-w-lg lg:max-w-5xl flex-col px-4 pb-8">
+      <div className="mx-auto flex max-w-lg flex-col px-4 pb-8 lg:max-w-5xl">
         <h1 className="text-center text-xl font-black text-mimo-fg sm:text-2xl">
-          {shuffling ? "Karıştırılıyor…" : "Eşleşen çiftlere dokun"}
+          Eşleşen çiftlere dokun
         </h1>
 
-        <div className="mt-2 flex items-center justify-center gap-4">
+        <div className="mt-2 flex items-center justify-center">
           <p className="flex items-center gap-1.5 text-sm font-black uppercase tracking-wide text-mimo-muted">
             <span aria-hidden className="text-[#f59e0b]">
               ⚡
             </span>
             Kombo x{combo}
           </p>
-
-          <div
-            className={`flex h-9 min-w-[2.5rem] items-center justify-center rounded-full border px-2.5 text-sm font-black tabular-nums ${
-              shuffling
-                ? "border-[#1cb0f6] bg-[#e8f6fe] text-[#0369a1]"
-                : shuffleIn <= 3
-                  ? "border-[#ff4b4b] bg-[#ffe8e8] text-[#b91c1c]"
-                  : "border-mimo-soft bg-mimo-card text-mimo-title"
-            }`}
-            title="Sonraki karıştırma"
-            aria-label={shuffling ? "Karıştırılıyor" : `${shuffleIn} saniye sonra karışır`}
-          >
-            {shuffling ? "…" : shuffleIn}
-          </div>
         </div>
 
         <div className="relative mt-5 flex flex-1 gap-2.5 sm:gap-3">
           {renderColumn(board.en, "English")}
           {renderColumn(board.tr, "Türkçe")}
-
-          {shuffling && (
-            <div className="pointer-events-none absolute inset-0 flex items-center justify-center rounded-2xl bg-black/10 backdrop-blur-[1px] dark:bg-black/40">
-              <div className="rounded-2xl border border-mimo-soft bg-mimo-card px-5 py-3 text-center shadow-sm">
-                <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#1cb0f6]">
-                  Karıştırma
-                </p>
-                <p className="mt-1 text-sm font-black text-mimo-title">Süre durdu · kombo korunuyor</p>
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </PracticeExamMain>
