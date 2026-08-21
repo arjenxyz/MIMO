@@ -499,12 +499,6 @@ export function AddWordForm({ demo = false }: { demo?: boolean }) {
                     />
                   </label>
 
-                  {lookup.example_sentence && (
-                    <p className="text-sm font-semibold italic text-mimo-muted">
-                      “{lookup.example_sentence}”
-                    </p>
-                  )}
-
                   <button
                     type="button"
                     disabled={saving || !turkish.trim()}
