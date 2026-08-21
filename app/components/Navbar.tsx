@@ -131,14 +131,12 @@ function AccountInfoModal({
       : `@${rawUsername}`
     : "—";
   const age = typeof profile.age === "number" ? String(profile.age) : "—";
-  const lastActive = profile.last_active || "—";
 
   const rows: { label: string; value: string }[] = [
     { label: "Kullanıcı adı", value: username },
     { label: "Yaş", value: age },
     { label: "Günlük seri", value: `${profile.daily_streak} gün` },
     { label: "Toplam ders", value: String(profile.total_lessons ?? 0) },
-    { label: "Son aktif", value: lastActive },
   ];
   if (email) rows.unshift({ label: "E-posta", value: email });
   if (demo) rows.push({ label: "Mod", value: "Demo (örnek veri)" });
