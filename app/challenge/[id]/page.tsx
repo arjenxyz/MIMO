@@ -36,14 +36,14 @@ export default async function ChallengePage({ params, searchParams }: Props) {
   const demoHost = isDemoMode(host);
 
   if (idParam === "demo" || (demoHost && !Number.isFinite(Number(idParam)))) {
-    const module: ChallengeModule =
+    const challengeModule: ChallengeModule =
       q.module === "word_check" ? "word_check" : "match";
     const vs = q.vs?.trim() || "Demo Rakip";
     const demoChallenge: ChallengeRow = {
       id: 0,
       challenger_id: "demo-me",
       opponent_id: "demo-opp",
-      module,
+      module: challengeModule,
       status: "active",
       seed_words: DEMO_WORDS,
       challenger_score: 0,

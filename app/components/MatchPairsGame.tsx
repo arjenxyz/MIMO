@@ -49,7 +49,7 @@ function deepShuffleBoard(board: Board, remintUids = false): Board {
   const mint = (tiles: Tile[]) =>
     remintUids ? tiles.map((t) => ({ ...t, uid: nextUid() })) : [...tiles];
 
-  let en = shuffle(mint(board.en));
+  const en = shuffle(mint(board.en));
   let tr = shuffle(mint(board.tr));
 
   for (let attempt = 0; attempt < 16; attempt++) {
