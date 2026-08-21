@@ -415,22 +415,34 @@ export function MatchPairsGame({ words }: { words: MatchWord[] }) {
       <PracticeExamStickyBar
         maxWidthClass="max-w-lg"
         left={
-          <div className="flex w-full min-w-0 items-end gap-3 pr-1">
-            <div className="min-w-0 flex-1">
-              <div className="mb-1 flex items-center justify-between gap-2 text-[10px] font-black tabular-nums text-mimo-muted">
-                {MILESTONES.map((m) => (
-                  <span
-                    key={m}
-                    className={matches >= m ? "text-[#ff4b4b]" : undefined}
-                  >
-                    {m}
-                  </span>
-                ))}
+          <p
+            className={`text-2xl font-black tabular-nums tracking-tight ${
+              secondsLeft <= 20 ? "text-[#ff4b4b]" : "text-mimo-title"
+            } ${shuffling ? "opacity-50" : ""}`}
+          >
+            {formatTimer(secondsLeft)}
+          </p>
+        }
+        below={
+          <div className="border-t border-mimo-border/40 bg-mimo-bg/95 px-4 pb-2.5 pt-2">
+            <div className="mx-auto max-w-lg">
+              <div className="mb-1 flex items-center justify-between gap-2 text-[11px] font-black tabular-nums text-mimo-muted">
+                <span className="text-mimo-fg">{matches} eşleşme</span>
+                <span className="flex gap-3">
+                  {MILESTONES.map((m) => (
+                    <span
+                      key={m}
+                      className={matches >= m ? "text-[#ff4b4b]" : undefined}
+                    >
+                      {m}
+                    </span>
+                  ))}
+                </span>
               </div>
-              <div className="h-2.5 overflow-hidden rounded-full bg-[#e2e8f0]">
+              <div className="h-2 overflow-hidden rounded-full bg-[#e2e8f0]">
                 <div
                   className="h-full rounded-full bg-[#ff4b4b] transition-all duration-300"
-                  style={{ width: `${Math.max(4, progressPct)}%` }}
+                  style={{ width: `${Math.max(3, progressPct)}%` }}
                   role="progressbar"
                   aria-valuenow={matches}
                   aria-valuemin={0}
@@ -439,17 +451,10 @@ export function MatchPairsGame({ words }: { words: MatchWord[] }) {
                 />
               </div>
             </div>
-            <p
-              className={`shrink-0 pb-px text-lg font-black tabular-nums leading-none ${
-                secondsLeft <= 20 ? "text-[#ff4b4b]" : "text-mimo-title"
-              } ${shuffling ? "opacity-50" : ""}`}
-            >
-              {formatTimer(secondsLeft)}
-            </p>
           </div>
         }
       />
-      <PracticeExamStickySpacer />
+      <PracticeExamStickySpacer extraPx={44} />
       <div className="mx-auto flex max-w-lg flex-col px-4 pb-8">
         <h1 className="text-center text-xl font-black text-mimo-fg sm:text-2xl">
           {shuffling ? "Karıştırılıyor…" : "Eşleşen çiftlere dokun"}
