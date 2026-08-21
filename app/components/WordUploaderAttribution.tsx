@@ -25,11 +25,14 @@ export function UploaderBadge({
   onOpen,
   className = "",
   centered = false,
+  overlay = false,
 }: {
   word: Word;
   onOpen: (profile: UploaderProfile) => void;
   className?: string;
   centered?: boolean;
+  /** Compact pill for photo corners (e.g. quiz). */
+  overlay?: boolean;
 }) {
   const profile = profileFromWord(word);
   if (!profile) return null;
@@ -39,12 +42,18 @@ export function UploaderBadge({
     <button
       type="button"
       onClick={() => onOpen(profile)}
-      className={`flex max-w-full items-center gap-1.5 rounded-full py-0.5 pr-1 text-left transition hover:bg-mimo-surface ${
-        centered ? "mx-auto" : ""
+      className={`flex max-w-[min(100%,11rem)] items-center gap-1.5 text-left transition ${
+        overlay
+          ? "rounded-full bg-black/45 py-1 pl-1 pr-2.5 text-white backdrop-blur-sm hover:bg-black/55"
+          : `rounded-full py-0.5 pr-1 hover:bg-mimo-surface ${centered ? "mx-auto" : ""}`
       } ${className}`}
       aria-label={`${profile.name} profilini aç`}
     >
-      <span className="relative flex h-5 w-5 shrink-0 overflow-hidden rounded-full bg-[#fd860a] ring-1 ring-mimo-soft">
+      <span
+        className={`relative flex shrink-0 overflow-hidden rounded-full bg-[#fd860a] ${
+          overlay ? "h-6 w-6 ring-1 ring-white/40" : "h-5 w-5 ring-1 ring-mimo-soft"
+        }`}
+      >
         {profile.avatarUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -54,12 +63,20 @@ export function UploaderBadge({
             referrerPolicy="no-referrer"
           />
         ) : (
-          <span className="flex h-full w-full items-center justify-center text-[9px] font-black text-[#2a1600]">
+          <span
+            className={`flex h-full w-full items-center justify-center font-black text-[#2a1600] ${
+              overlay ? "text-[10px]" : "text-[9px]"
+            }`}
+          >
             {initial}
           </span>
         )}
       </span>
-      <span className="truncate text-[11px] font-bold text-mimo-muted underline-offset-2 hover:underline">
+      <span
+        className={`truncate font-bold underline-offset-2 hover:underline ${
+          overlay ? "text-[11px] text-white" : "text-[11px] text-mimo-muted"
+        }`}
+      >
         {profile.name}
       </span>
     </button>
@@ -137,7 +154,15 @@ export function UploaderProfileCard({
 }
 
 /** Badge + profile modal for a single word context (e.g. quiz). */
-export function WordUploaderAttribution({ word }: { word: Word }) {
+export function WordUploaderAttribution({
+  word,
+  overlay = false,
+  className = "",
+}: {
+  word: Word;
+  overlay?: boolean;
+  className?: string;
+}) {
   const [profile, setProfile] = useState<UploaderProfile | null>(null);
   if (!profileFromWord(word) && !profile) return null;
 
@@ -146,8 +171,9 @@ export function WordUploaderAttribution({ word }: { word: Word }) {
       <UploaderBadge
         word={word}
         onOpen={setProfile}
-        centered
-        className="mt-2"
+        overlay={overlay}
+        centered={!overlay}
+        className={className || (overlay ? "" : "mt-2")}
       />
       {profile && (
         <UploaderProfileCard profile={profile} onClose={() => setProfile(null)} />

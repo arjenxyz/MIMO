@@ -318,11 +318,14 @@ export default function WordQuizPage() {
               className="h-full w-full object-cover"
               alt={`${word.english} görseli`}
             />
+            <div className="absolute bottom-3 left-3 z-10 max-w-[calc(100%-4.5rem)]">
+              <WordUploaderAttribution word={word} overlay />
+            </div>
             <button
               type="button"
               onClick={listen}
               aria-label="Kelimeyi dinle"
-              className="absolute bottom-3 right-3 flex h-11 w-11 items-center justify-center rounded-full bg-[#1cb0f6] text-white shadow-[0_3px_0_#1899d6]"
+              className="absolute bottom-3 right-3 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-[#1cb0f6] text-white shadow-[0_3px_0_#1899d6]"
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
                 <path
@@ -348,7 +351,6 @@ export default function WordQuizPage() {
             {word.phonetic && (
               <p className="mt-1 text-center text-sm font-bold text-mimo-muted">{word.phonetic}</p>
             )}
-            <WordUploaderAttribution word={word} />
 
             <div className="mt-5 grid gap-2">
               {choices.map((option) => {
