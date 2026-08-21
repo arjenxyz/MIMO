@@ -111,6 +111,14 @@ export default async function DashboardPage() {
       icon: "match",
       state: "upcoming",
     },
+    {
+      id: "word-check",
+      title: "Gerçek mi?",
+      href: "/quiz/word-check",
+      tone: "rose",
+      icon: "verify",
+      state: "upcoming",
+    },
   ];
 
   const activeIndex = nodes.findIndex((n) => n.id === activeId);

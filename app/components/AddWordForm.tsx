@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { playWordAudio } from "@/lib/speak";
 import { WordImage } from "@/app/components/WordImage";
 import type { WordLookupResult } from "@/lib/wordLookup";
+import { detectWordLevelSync } from "@/lib/wordLevel";
 
 async function demoLookupEnglish(raw: string): Promise<WordLookupResult> {
   const word = raw.trim().toLowerCase().replace(/\s+/g, " ");
@@ -61,6 +62,8 @@ async function demoLookupEnglish(raw: string): Promise<WordLookupResult> {
     throw new Error("Türkçe anlam bulunamadı. Kelimeyi kontrol et.");
   }
 
+  const level = detectWordLevelSync(english);
+
   return {
     english,
     turkish,
@@ -68,6 +71,9 @@ async function demoLookupEnglish(raw: string): Promise<WordLookupResult> {
     phonetic,
     audio_url,
     image_url: null,
+    cefr: level.cefr,
+    difficulty: level.difficulty,
+    level_source: level.source,
     source: "dictionary+mymemory",
   };
 }
@@ -223,6 +229,7 @@ export function AddWordForm({ demo = false }: { demo?: boolean }) {
           example_sentence: lookup.example_sentence,
           phonetic: lookup.phonetic,
           audio_url: lookup.audio_url,
+          difficulty: lookup.difficulty,
         }),
       });
       const data = (await res.json()) as {
@@ -313,7 +320,12 @@ export function AddWordForm({ demo = false }: { demo?: boolean }) {
 
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="text-xl font-black text-mimo-title">{lookup.english}</p>
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="text-xl font-black text-mimo-title">{lookup.english}</p>
+                <span className="rounded-md bg-[#e8f6fe] px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-[#0369a1] dark:bg-[#0c4a6e] dark:text-[#7dd3fc]">
+                  {lookup.cefr}
+                </span>
+              </div>
               {lookup.phonetic && (
                 <p className="text-xs font-bold text-mimo-muted">{lookup.phonetic}</p>
               )}

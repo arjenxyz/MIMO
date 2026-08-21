@@ -1,4 +1,5 @@
 import { findWordImageUrl } from "@/lib/wordImage";
+import { detectWordLevel, type CefrLevel } from "@/lib/wordLevel";
 
 export type WordLookupResult = {
   english: string;
@@ -7,6 +8,9 @@ export type WordLookupResult = {
   phonetic: string | null;
   audio_url: string | null;
   image_url: string | null;
+  cefr: CefrLevel;
+  difficulty: 1 | 2 | 3 | 4 | 5;
+  level_source: "list" | "gemini" | "heuristic";
   source: "dictionary+mymemory" | "mymemory" | "manual";
 };
 
@@ -92,9 +96,10 @@ export async function lookupEnglishWord(raw: string): Promise<WordLookupResult |
 
   const dict = await fetchDictionary(word);
   const english = dict?.english || word;
-  const [turkish, image_url] = await Promise.all([
+  const [turkish, image_url, level] = await Promise.all([
     translateToTurkish(english),
     findWordImageUrl(english),
+    detectWordLevel(english),
   ]);
 
   if (!turkish) {
@@ -111,6 +116,9 @@ export async function lookupEnglishWord(raw: string): Promise<WordLookupResult |
     phonetic: dict?.phonetic ?? null,
     audio_url: dict?.audio_url ?? null,
     image_url,
+    cefr: level.cefr,
+    difficulty: level.difficulty,
+    level_source: level.source,
     source: dict ? "dictionary+mymemory" : "mymemory",
   };
 }

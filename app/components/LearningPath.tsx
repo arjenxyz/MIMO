@@ -1,13 +1,13 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
-export type PathIconName = "books" | "sound" | "write" | "photo" | "match";
+export type PathIconName = "books" | "sound" | "write" | "photo" | "match" | "verify";
 
 export type PathNode = {
   id: string;
   title: string;
   href: string;
-  tone: "green" | "blue" | "purple" | "orange" | "cyan";
+  tone: "green" | "blue" | "purple" | "orange" | "cyan" | "rose";
   state: "done" | "active" | "upcoming";
   icon?: PathIconName;
 };
@@ -43,6 +43,12 @@ const TONE = {
     soft: "text-[#0d9488]",
     glow: "shadow-[0_0_0_6px_rgba(13,148,136,0.14)]",
   },
+  rose: {
+    fill: "bg-[#e11d48]",
+    shadow: "shadow-[0_5px_0_#be123c]",
+    soft: "text-[#e11d48]",
+    glow: "shadow-[0_0_0_6px_rgba(225,29,72,0.14)]",
+  },
 };
 
 /** Zigzag offsets that stay inside the path column (no horizontal page scroll). */
@@ -52,6 +58,7 @@ const OFFSETS = [
   "translate-x-14 sm:translate-x-16",
   "-translate-x-10 sm:-translate-x-12",
   "translate-x-12 sm:translate-x-14",
+  "-translate-x-14 sm:-translate-x-16",
 ];
 
 function PathIcon({ name }: { name: PathIconName }) {
@@ -101,6 +108,12 @@ function PathIcon({ name }: { name: PathIconName }) {
         <rect x="3" y="3" width="8" height="8" rx="1.5" />
         <rect x="13" y="13" width="8" height="8" rx="1.5" />
         <path d="M14 6h4M16 4v4M6 14h4M8 12v4" />
+      </svg>
+    ),
+    verify: (
+      <svg {...common}>
+        <circle cx="12" cy="12" r="9" />
+        <path d="M8 12.5 11 15.5 16 9" />
       </svg>
     ),
   };

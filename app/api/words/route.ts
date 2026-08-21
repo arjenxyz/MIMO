@@ -24,6 +24,7 @@ export async function POST(request: NextRequest) {
       example_sentence?: string | null;
       phonetic?: string | null;
       audio_url?: string | null;
+      difficulty?: number;
     };
 
     if (body.action === "lookup") {
@@ -76,12 +77,20 @@ export async function POST(request: NextRequest) {
         );
       }
 
+      const difficulty =
+        typeof body.difficulty === "number" &&
+        body.difficulty >= 1 &&
+        body.difficulty <= 5
+          ? body.difficulty
+          : undefined;
+
       const saved = await addWordToUserList(supabase, user.id, {
         english: body.english,
         turkish: body.turkish,
         example_sentence: body.example_sentence ?? null,
         phonetic: body.phonetic ?? null,
         audio_url: body.audio_url ?? null,
+        difficulty,
       });
 
       if (saved.alreadyHad) {
