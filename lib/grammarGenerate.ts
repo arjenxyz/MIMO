@@ -1,6 +1,6 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import type { CefrBand, CurriculumTopic } from "@/lib/grammarCurriculum";
 import { CEFR_LABEL } from "@/lib/grammarCurriculum";
+import { generateGeminiContent } from "@/lib/gemini";
 import {
   generateLocalGrammarFallback,
   type GeneratedGrammarItem,
@@ -114,11 +114,7 @@ export async function generateGrammarQuestionsForTopic(
   }
 
   try {
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-3.6-flash" });
-
-    const result = await model.generateContent(buildPrompt(topic, n));
-    const text = result.response.text();
+    const { text } = await generateGeminiContent(buildPrompt(topic, n));
     const items = extractJsonArray(text)
       .map((row) => normalizeItem(row, topic.difficulty))
       .filter((row): row is GeneratedGrammarItem => Boolean(row))

@@ -348,15 +348,13 @@ async function detectCefrWithGemini(english: string): Promise<CefrLevel | null> 
   if (!apiKey) return null;
 
   try {
-    const { GoogleGenerativeAI } = await import("@google/generative-ai");
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-3.6-flash" });
-    const result = await model.generateContent(
+    const { generateGeminiContent } = await import("@/lib/gemini");
+    const { text } = await generateGeminiContent(
       `Classify the CEFR level of this English vocabulary word for language learners.
 Word: "${english}"
 Reply with ONLY one token: A1, A2, B1, B2, C1, or C2.`
     );
-    return parseCefr(result.response.text());
+    return parseCefr(text);
   } catch {
     return null;
   }

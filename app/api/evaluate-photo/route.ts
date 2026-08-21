@@ -1,5 +1,5 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextRequest, NextResponse } from "next/server";
+import { generateGeminiContent } from "@/lib/gemini";
 import { clientKeyFromRequest, consumeRateLimit } from "@/lib/rateLimit";
 
 export const dynamic = "force-dynamic";
@@ -122,9 +122,6 @@ export async function POST(request: NextRequest) {
 
     const imagePart = await fetchImagePart(imageUrl);
 
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-3.6-flash" });
-
     const prompt = `You are an expert Duolingo English Test evaluator for the "Describe the photo" / "Write about the photo" task.
 
 IMPORTANT: An image is attached. You MUST look at the attached photo carefully.
@@ -156,11 +153,7 @@ B2 criteria:
 
 Only return valid JSON, no other text.`;
 
-    const result = await model.generateContent([
-      { text: prompt },
-      imagePart,
-    ]);
-    const text = result.response.text();
+    const { text } = await generateGeminiContent([{ text: prompt }, imagePart]);
     const evaluation = extractJson(text);
 
     const levels = new Set(["A1", "A2", "B1", "B2", "C1", "C2"]);

@@ -13,13 +13,13 @@
 
 import { config } from "dotenv";
 import { resolve } from "path";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { createClient } from "@supabase/supabase-js";
 import {
   buildMixedClozePrompt,
   mixedClozeDifficulty,
   pickTopics,
 } from "../lib/detClozeCurriculum";
+import { generateGeminiContent } from "../lib/gemini";
 
 config({ path: resolve(process.cwd(), ".env.local") });
 
@@ -79,24 +79,19 @@ function extractJsonArray(text: string): ClozeItem[] {
     .filter((row): row is ClozeItem => Boolean(row));
 }
 
-async function generateBatch(
-  model: ReturnType<GoogleGenerativeAI["getGenerativeModel"]>,
-  count: number
-) {
+async function generateBatch(count: number) {
   const topics = pickTopics(Math.min(5, count + 1));
   const prompt = buildMixedClozePrompt({ count, topics });
-  const result = await model.generateContent(prompt);
-  return extractJsonArray(result.response.text());
+  const { text } = await generateGeminiContent(prompt);
+  return extractJsonArray(text);
 }
 
 async function main() {
-  const geminiKey = requireEnv("GEMINI_API_KEY");
+  requireEnv("GEMINI_API_KEY");
   const supabaseUrl = requireEnv("NEXT_PUBLIC_SUPABASE_URL");
   const serviceKey = requireEnv("SUPABASE_SERVICE_ROLE_KEY");
   const { count } = parseArgs();
 
-  const genAI = new GoogleGenerativeAI(geminiKey);
-  const model = genAI.getGenerativeModel({ model: "gemini-3.6-flash" });
   const supabase = createClient(supabaseUrl, serviceKey);
 
   const { data: typeRow, error: typeError } = await supabase
@@ -124,7 +119,7 @@ async function main() {
     const n = Math.min(chunkSize, count - offset);
     try {
       console.log(`Batch ${offset + 1}–${offset + n}…`);
-      const items = await generateBatch(model, n);
+      const items = await generateBatch(n);
       if (items.length === 0) {
         console.warn("  No items");
         failedBatches += 1;

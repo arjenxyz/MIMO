@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { generateGeminiContent } from "@/lib/gemini";
 import { extractGaps, parseClozePassage } from "@/lib/detCloze";
 import {
   buildMixedClozePrompt,
@@ -77,17 +77,13 @@ export async function generateClozeSession(opts: {
   const avoid = opts.avoidTopics ?? [];
   const topics = pickTopics(Math.min(4, count + 1), avoid);
 
-  const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: "gemini-3.6-flash" });
-
   const prompt = buildMixedClozePrompt({
     count,
     topics,
     avoidTopics: avoid,
   });
 
-  const result = await model.generateContent(prompt);
-  const text = result.response.text();
+  const { text } = await generateGeminiContent(prompt);
   const valid = extractJsonArray(text)
     .map(validateCloze)
     .filter((row): row is GeneratedCloze => Boolean(row))

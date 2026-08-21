@@ -65,7 +65,10 @@ export async function POST(request: NextRequest) {
       source: "gemini",
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Pasaj üretilemedi";
+    const raw = error instanceof Error ? error.message : "Pasaj üretilemedi";
+    const message = /429|quota|rate.?limit|too many requests/i.test(raw)
+      ? "Gemini kotası dolu. Biraz sonra tekrar dene; şimdilik yedek pasajlar kullanılacak."
+      : raw;
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
