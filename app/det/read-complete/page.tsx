@@ -279,8 +279,8 @@ export default function ReadCompletePage() {
 
   if (awaitingStart && !generating) {
     return (
-      <main className="min-h-screen bg-mimo-bg text-mimo-fg">
-        <div className="mx-auto max-w-xl px-4 pb-10 pt-10">
+      <main className="flex min-h-[100dvh] items-center justify-center bg-mimo-bg text-mimo-fg">
+        <div className="mx-auto w-full max-w-xl px-4 py-8">
           <div className="rounded-2xl border border-mimo-border bg-mimo-card p-6 text-center shadow-sm sm:p-8">
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#1cb0f6]">
               Read and Complete
