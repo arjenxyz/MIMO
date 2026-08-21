@@ -34,6 +34,13 @@ export default function Error({
       eyebrow="Bir aksilik oldu"
       title="Bir şeyler ters gitti"
       description="Beklenmeyen bir hata oluştu. Tekrar deneyebilir veya ana sayfaya dönebilirsin."
+      detail={
+        process.env.NODE_ENV === "development"
+          ? error.message || error.digest || undefined
+          : error.digest
+            ? `Kod: ${error.digest}`
+            : undefined
+      }
       primary={<StatusPrimaryButton onClick={reset}>Tekrar dene</StatusPrimaryButton>}
       secondary={<StatusSecondaryLink href="/">Ana sayfaya dön</StatusSecondaryLink>}
     />

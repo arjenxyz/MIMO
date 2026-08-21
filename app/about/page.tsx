@@ -118,6 +118,7 @@ export default function AboutMimoPage() {
               alt="Arjen"
               width={64}
               height={64}
+              unoptimized
               className="h-16 w-16 shrink-0 rounded-2xl object-cover ring-2 ring-[#fd860a]/40"
             />
             <div className="min-w-0 pt-0.5">

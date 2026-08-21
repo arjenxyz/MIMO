@@ -7,6 +7,7 @@ type StatusScreenProps = {
   eyebrow: string;
   title: string;
   description: string;
+  detail?: string;
   primary?: ReactNode;
   secondary?: ReactNode;
 };
@@ -17,6 +18,7 @@ export function StatusScreen({
   eyebrow,
   title,
   description,
+  detail,
   primary,
   secondary,
 }: StatusScreenProps) {
@@ -54,6 +56,11 @@ export function StatusScreen({
         <p className="mx-auto mt-3 max-w-sm text-sm font-semibold leading-relaxed text-mimo-muted">
           {description}
         </p>
+        {detail ? (
+          <pre className="mx-auto mt-4 max-h-40 max-w-sm overflow-auto rounded-xl border border-mimo-soft bg-mimo-card px-3 py-2 text-left text-[11px] font-semibold leading-relaxed text-mimo-muted whitespace-pre-wrap break-words">
+            {detail}
+          </pre>
+        ) : null}
 
         <div className="mt-8 flex flex-col gap-2.5">
           {primary}
