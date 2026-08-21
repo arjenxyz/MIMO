@@ -85,12 +85,34 @@ body {
     transform: scale(1);
   }
   50% {
-    transform: scale(1.04);
+    transform: scale(1.035);
   }
 }
 
 .mimo-path-pulse {
-  animation: mimo-path-pulse 1.8s ease-in-out infinite;
+  animation: mimo-path-pulse 2s ease-in-out infinite;
+}
+
+@keyframes mimo-path-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.mimo-path-enter {
+  animation: mimo-path-enter 0.45s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mimo-path-pulse,
+  .mimo-path-enter {
+    animation: none;
+  }
 }
 
 .duo-btn {
