@@ -125,8 +125,8 @@ export function ClozePassage({
     : [];
 
   return (
-    <div>
-      <div className="text-[17px] font-semibold leading-[2] text-[#334155] sm:text-[18px] sm:leading-[2.05]">
+    <div className="min-w-0 overflow-x-hidden">
+      <div className="break-words text-[16px] font-semibold leading-[1.95] text-[#334155] sm:text-[18px] sm:leading-[2.05]">
         {parts.map((part, index) => {
           if (part.kind === "text") {
             return (
@@ -152,14 +152,17 @@ export function ClozePassage({
                 : "border-[#94a3b8] bg-mimo-card";
 
           return (
-            <span key={gap.id} className="inline whitespace-nowrap align-baseline">
-              <span className="text-mimo-fg">{prefix}</span>
+            <span
+              key={gap.id}
+              className="inline-flex max-w-full flex-wrap items-end gap-y-1 align-baseline"
+            >
+              <span className="mr-0.5 shrink-0 text-mimo-fg">{prefix}</span>
               {chars.map((display, letterIndex) => {
                 const filled = Boolean(display);
                 const revealed = showResults && status === "bad";
                 const sizeClass = filled
-                  ? "mx-px h-[1em] w-[0.7em] rounded-sm border-0 border-b border-[#64748b] bg-transparent p-0 text-[1em] leading-none align-baseline"
-                  : "mx-[2px] h-8 w-7 rounded-md border sm:h-9 sm:w-8 align-[-0.2em]";
+                  ? "mx-px h-[1em] w-[0.7em] rounded-sm border-0 border-b border-[#64748b] bg-transparent p-0 text-[1em] leading-none"
+                  : "mx-[1px] h-7 w-6 rounded-md border text-[13px] sm:mx-[2px] sm:h-9 sm:w-8 sm:text-[15px]";
                 return (
                   <input
                     key={`${gap.id}-${letterIndex}`}
@@ -177,7 +180,7 @@ export function ClozePassage({
                     aria-label={`${gap.answer} letter ${letterIndex + 1}`}
                     onChange={(e) => setLetter(gap, letterIndex, e.target.value)}
                     onKeyDown={(e) => onKeyDown(gap, letterIndex, e)}
-                    className={`inline-block appearance-none border-solid text-center font-semibold lowercase text-mimo-fg outline-none transition-all duration-150 focus:border-[#1cb0f6] focus:ring-1 focus:ring-[#1cb0f6]/25 disabled:opacity-90 ${sizeClass} ${
+                    className={`inline-block shrink-0 scroll-mt-24 appearance-none border-solid text-center font-semibold lowercase text-mimo-fg outline-none transition-all duration-150 focus:border-[#1cb0f6] focus:ring-1 focus:ring-[#1cb0f6]/25 disabled:opacity-90 ${sizeClass} ${
                       filled ? "" : ring
                     } ${
                       filled && status === "ok"

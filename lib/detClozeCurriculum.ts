@@ -1,181 +1,110 @@
-import { cefrToDifficulty, type CefrLevel } from "@/lib/wordLevel";
+/** Shared cloze generation: each passage mixes A1–B2 grammar (not level-by-level sessions). */
 
-/** Cloze generation targets A1–B2 only (not C1/C2). */
-export type ClozeCefr = Extract<CefrLevel, "A1" | "A2" | "B1" | "B2">;
+export const CLOZE_TOPICS = [
+  "Daily life and routines",
+  "Travel and weekends",
+  "School and studying",
+  "Work and careers",
+  "Health and habits",
+  "Food and cooking",
+  "Friends and family",
+  "City life",
+  "Sports and hobbies",
+  "Shopping and money",
+  "Technology at home",
+  "Environment and recycling",
+  "Weather and seasons",
+  "Culture and free time",
+  "Online learning",
+  "Public transport",
+] as const;
 
-export const CLOZE_CEFR_ORDER: ClozeCefr[] = ["A1", "A2", "B1", "B2"];
+/** Grammar bands that MUST appear together inside ONE passage (mixed, not sequential levels). */
+export const MIXED_GRAMMAR_BANDS = {
+  A1: [
+    "Present Simple (habits/facts: lives, goes, likes)",
+    "be / have got",
+    "there is / there are",
+  ],
+  A2: [
+    "Past Simple (went, saw, cooked, visited)",
+    "Present Continuous (is studying, are waiting)",
+    "going to future",
+    "can / must / should (basic)",
+  ],
+  B1: [
+    "Present Perfect (have/has + past participle)",
+    "Past Continuous vs Past Simple",
+    "First Conditional (if + present, will…)",
+    "Passive Voice Present/Past Simple (is made, was built)",
+  ],
+  B2: [
+    "Second Conditional (if + past, would…)",
+    "Third Conditional (light use: if + past perfect, would have…)",
+    "Passive in other common forms OR reported speech (said that…)",
+    "Connectors (although, however, therefore, despite)",
+  ],
+} as const;
 
-export type ClozeLevelSpec = {
-  cefr: ClozeCefr;
-  difficulty: 1 | 2 | 3 | 4;
-  /** Everyday → school → opinions → abstract */
-  topics: string[];
-  grammarFocus: string[];
-  vocabGuide: string;
-  sentenceCount: string;
-  gapCount: string;
-  examplePassage: string;
-};
+export const MIXED_CLOZE_EXAMPLE = `{"title":"A Busy Week in Town","question":"Maya [[lives:2]] near the park and [[goes:2]] to work by bus every day. Last Friday she [[visited:3]] a new cafe while her friends were [[waiting:3]] outside. She has [[tried:3]] many recipes this month, and if the weather [[stays:2]] warm, they will [[walk:2]] by the river. The cafe was [[opened:3]] last year; Maya said she would [[return:3]] if the coffee [[stayed:3]] this good.","answer":"lives|goes|visited|waiting|tried|stays|walk|opened|return|stayed"}`;
 
-export const CLOZE_LEVELS: Record<ClozeCefr, ClozeLevelSpec> = {
-  A1: {
-    cefr: "A1",
-    difficulty: 1,
-    topics: [
-      "Daily routines",
-      "Family and friends",
-      "Food and meals",
-      "School life",
-      "Home and rooms",
-      "Weather",
-      "Hobbies",
-      "Shopping",
-    ],
-    grammarFocus: [
-      "Present Simple (I/you/we/they + verb, he/she/it + -s)",
-      "be / have got",
-      "there is / there are",
-      "Basic prepositions of place (in, on, at)",
-      "Simple questions with do/does",
-    ],
-    vocabGuide:
-      "High-frequency A1 words only (go, eat, live, like, friend, school, morning, water, happy). No academic or rare words.",
-    sentenceCount: "1-2 short sentences",
-    gapCount: "3 to 5",
-    examplePassage:
-      '{"title":"Morning at Home","question":"Anna [[wakes:2]] up early every day. She [[eats:2]] breakfast and then [[goes:2]] to school.","answer":"wakes|eats|goes"}',
-  },
-  A2: {
-    cefr: "A2",
-    difficulty: 2,
-    topics: [
-      "Travel and holidays",
-      "Jobs and work",
-      "Town and city",
-      "Sports and free time",
-      "Health and habits",
-      "Weekend plans",
-      "Clothes and shopping",
-      "Past weekends",
-    ],
-    grammarFocus: [
-      "Past Simple (regular and common irregular: went, saw, made)",
-      "Present Continuous",
-      "going to future",
-      "Comparatives and superlatives (bigger, more interesting)",
-      "Countable / uncountable (some, any, much, many)",
-      "Modals can / must / should (basic)",
-    ],
-    vocabGuide:
-      "Common A2 vocabulary (travel, holiday, busy, cheap, healthy, weather, cinema). Avoid abstract academic terms.",
-    sentenceCount: "2-3 sentences",
-    gapCount: "4 to 6",
-    examplePassage:
-      '{"title":"A Trip to the City","question":"Last weekend we [[visited:3]] our cousins in London. While we were [[walking:3]] in the park, it [[started:3]] to rain, so we [[went:2]] to a cafe.","answer":"visited|walking|started|went"}',
-  },
-  B1: {
-    cefr: "B1",
-    difficulty: 3,
-    topics: [
-      "Education and learning",
-      "Technology in everyday life",
-      "Environment and recycling",
-      "Work and careers",
-      "Healthy lifestyle",
-      "Media and news",
-      "Culture and festivals",
-      "Travel experiences",
-    ],
-    grammarFocus: [
-      "Present Perfect (have/has + past participle) for experience and recent results",
-      "Past Continuous vs Past Simple",
-      "First Conditional (if + present, will…)",
-      "Passive Voice (Present/Past Simple: is made, was built)",
-      "Modals of advice and possibility (should, might, could)",
-      "Relative clauses with who/which/that (basic)",
-    ],
-    vocabGuide:
-      "Solid B1 words (improve, experience, environment, opportunity, decision, recommend). Still everyday/learner-friendly — not C1 academic jargon.",
-    sentenceCount: "2-3 sentences",
-    gapCount: "5 to 7",
-    examplePassage:
-      '{"title":"Learning Online","question":"Many students have [[improved:4]] their English because they [[practice:4]] every day. If you [[study:3]] regularly, you will [[notice:3]] better results. Online courses are often [[designed:4]] for busy people.","answer":"improved|practice|study|notice|designed"}',
-  },
-  B2: {
-    cefr: "B2",
-    difficulty: 4,
-    topics: [
-      "Education systems",
-      "Climate and sustainability",
-      "Workplace skills",
-      "Urban life",
-      "Science in daily life",
-      "Social media and society",
-      "Public health",
-      "Arts and culture",
-    ],
-    grammarFocus: [
-      "Second Conditional (if + past, would…)",
-      "Third Conditional (if + past perfect, would have…)",
-      "Passive Voice (all common tenses, including present perfect passive)",
-      "Reported speech",
-      "Relative clauses (including where/whose)",
-      "Mixed conditionals (light use)",
-      "Connectors (although, despite, however, therefore)",
-    ],
-    vocabGuide:
-      "Upper-intermediate B2 words (challenge, significant, require, encourage, policy, impact). Do NOT use rare C1–C2 vocabulary (serendipity, exacerbate, unprecedented, constraints as academic filler).",
-    sentenceCount: "2-4 sentences",
-    gapCount: "5 to 8",
-    examplePassage:
-      '{"title":"Greener Cities","question":"City planners are redesigning streets to [[encourage:4]] walking and cycling. Although traffic is still a [[challenge:4]], better public transport has [[reduced:4]] air pollution. If more people [[chose:3]] bikes, cities would become quieter and [[healthier:4]].","answer":"encourage|challenge|reduced|chose|healthier"}',
-  },
-};
-
-export function clozeDifficulty(cefr: ClozeCefr): 1 | 2 | 3 | 4 {
-  return cefrToDifficulty(cefr) as 1 | 2 | 3 | 4;
+export function pickTopics(count: number, avoid: string[] = []): string[] {
+  const avoidSet = new Set(avoid.map((t) => t.toLowerCase()));
+  const pool = CLOZE_TOPICS.filter((t) => !avoidSet.has(t.toLowerCase()));
+  const source = pool.length > 0 ? [...pool] : [...CLOZE_TOPICS];
+  for (let i = source.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [source[i], source[j]] = [source[j], source[i]];
+  }
+  return source.slice(0, Math.max(1, Math.min(count, source.length)));
 }
 
-/** Build a progressive level list for a live session (easy → hard). */
-export function sessionLevels(count: number): ClozeCefr[] {
-  const n = Math.min(5, Math.max(3, count));
-  if (n === 3) return ["A1", "A2", "B1"];
-  if (n === 4) return ["A1", "A2", "B1", "B2"];
-  return ["A1", "A2", "B1", "B2", "B2"];
+/** Random mid difficulty for mixed A1–B2 passages (not a CEFR ladder). */
+export function mixedClozeDifficulty(): 2 | 3 | 4 {
+  const roll = Math.random();
+  if (roll < 0.35) return 2;
+  if (roll < 0.75) return 3;
+  return 4;
 }
 
-export function buildClozePrompt(opts: {
-  cefr: ClozeCefr;
+export function buildMixedClozePrompt(opts: {
   count: number;
   topics: string[];
   avoidTopics?: string[];
 }): string {
-  const spec = CLOZE_LEVELS[opts.cefr];
   const topicLine = opts.topics.join(", ");
-  const grammarLine = spec.grammarFocus.map((g) => `- ${g}`).join("\n");
   const avoidLine =
     opts.avoidTopics && opts.avoidTopics.length > 0
       ? `Do NOT reuse these recent titles/themes: ${opts.avoidTopics.slice(0, 8).join(", ")}.`
       : "";
 
-  return `Generate ${opts.count} unique CEFR ${opts.cefr} English "Read and Complete" PASSAGES for language learners (Duolingo-style cloze), NOT C1/C2 academic DET 120+ material.
+  const bandBlock = (["A1", "A2", "B1", "B2"] as const)
+    .map((band) => {
+      const lines = MIXED_GRAMMAR_BANDS[band].map((g) => `  - ${g}`).join("\n");
+      return `${band}:\n${lines}`;
+    })
+    .join("\n");
 
-Level: ${opts.cefr} (difficulty ${spec.difficulty}/5)
-Themes to use (pick fresh angles): ${topicLine}.
+  return `Generate ${opts.count} unique English "Read and Complete" PASSAGES for language learners (Duolingo-style cloze).
+
+CRITICAL DESIGN (follow exactly):
+- Do NOT create one easy passage then one hard passage.
+- Do NOT label or order passages as A1 then A2 then B1 then B2.
+- EVERY single passage must MIX grammar from A1, A2, B1, and B2 inside the SAME text (several sentences weaving them together).
+- Vocabulary stays learner-friendly (roughly A2–B2 words). Never use rare C1–C2 academic jargon (no exacerbate, serendipity, microcirculation, unprecedented, deliberation, etc.).
+
+Themes to invent fresh stories from: ${topicLine}.
 ${avoidLine}
 
-Grammar focus for this level (target blanks should often test these forms):
-${grammarLine}
+In EACH passage, include useful blanks that exercise forms from ALL four bands below (at least one clear signal from each band):
+${bandBlock}
 
-Vocabulary rules:
-- ${spec.vocabGuide}
-- Gap words must be common at ${opts.cefr}; prefer content words (verbs, nouns, adjectives, adverbs) that fit the grammar focus.
-- Do not invent obscure academic vocabulary.
+Gap targets should often be the grammar-bearing words (verbs/forms), not random tiny words like "to" or "a".
 
 Each passage must:
-- Have a short, clear title suitable for ${opts.cefr} learners
-- Be ${spec.sentenceCount} long
-- Contain ${spec.gapCount} incomplete words marked exactly like this: [[fullword:shownCount]]
+- Have a short clear title (no CEFR tags like [A1] in the title)
+- Be 3-5 sentences that feel like one coherent mini-story or explanation
+- Contain 6 to 10 incomplete words marked exactly like this: [[fullword:shownCount]]
   Example: [[send:2]] shows "se" + boxes for remaining letters
 - shownCount must be an integer >= 1 and less than the word length
 - Be DIFFERENT from the others (new title, new situation)
@@ -184,21 +113,9 @@ Return ONLY a valid JSON array of objects:
 - "title": string
 - "question": full passage including [[word:n]] markers
 - "answer": pipe-separated full words in order
-- "cefr": "${opts.cefr}"
 
-Example object:
-${spec.examplePassage}
+Example object (mixed grammar in one passage — imitate this style, invent new content):
+${MIXED_CLOZE_EXAMPLE}
 
 Only return valid JSON, no markdown fences, no other text.`;
-}
-
-export function pickLevelTopics(cefr: ClozeCefr, count: number, avoid: string[] = []): string[] {
-  const avoidSet = new Set(avoid.map((t) => t.toLowerCase()));
-  const pool = CLOZE_LEVELS[cefr].topics.filter((t) => !avoidSet.has(t.toLowerCase()));
-  const source = pool.length > 0 ? [...pool] : [...CLOZE_LEVELS[cefr].topics];
-  for (let i = source.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [source[i], source[j]] = [source[j], source[i]];
-  }
-  return source.slice(0, Math.max(1, Math.min(count, source.length)));
 }

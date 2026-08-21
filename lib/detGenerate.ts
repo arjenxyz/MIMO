@@ -1,11 +1,9 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { extractGaps, parseClozePassage } from "@/lib/detCloze";
 import {
-  buildClozePrompt,
-  clozeDifficulty,
-  pickLevelTopics,
-  sessionLevels,
-  type ClozeCefr,
+  buildMixedClozePrompt,
+  mixedClozeDifficulty,
+  pickTopics,
 } from "@/lib/detClozeCurriculum";
 import type { DETExercise } from "@/types";
 
@@ -13,10 +11,9 @@ export type GeneratedCloze = {
   title: string;
   question: string;
   answer: string;
-  cefr: ClozeCefr;
 };
 
-function extractJsonArray(text: string, fallbackCefr: ClozeCefr): GeneratedCloze[] {
+function extractJsonArray(text: string): GeneratedCloze[] {
   const cleaned = text
     .replace(/^```json\s*/i, "")
     .replace(/^```\s*/i, "")
@@ -35,49 +32,24 @@ function extractJsonArray(text: string, fallbackCefr: ClozeCefr): GeneratedCloze
   return parsed
     .map((row) => {
       if (!row || typeof row !== "object") return null;
-      const obj = row as {
-        title?: unknown;
-        question?: unknown;
-        answer?: unknown;
-        cefr?: unknown;
-      };
+      const obj = row as { title?: unknown; question?: unknown; answer?: unknown };
       const q = obj.question;
       const a = obj.answer;
       const title = typeof obj.title === "string" ? obj.title.trim() : "";
       if (typeof q !== "string" || typeof a !== "string") return null;
       if (!q.includes("[[") || !q.includes("]]")) return null;
-      const rawCefr = typeof obj.cefr === "string" ? obj.cefr.toUpperCase() : "";
-      const cefr: ClozeCefr =
-        rawCefr === "A1" || rawCefr === "A2" || rawCefr === "B1" || rawCefr === "B2"
-          ? rawCefr
-          : fallbackCefr;
       return {
         title: title || "Read and Complete",
         question: q.trim(),
         answer: a.trim(),
-        cefr,
       };
     })
     .filter((row): row is GeneratedCloze => Boolean(row));
 }
 
-function gapBounds(cefr: ClozeCefr): { min: number; max: number } {
-  switch (cefr) {
-    case "A1":
-      return { min: 3, max: 5 };
-    case "A2":
-      return { min: 4, max: 6 };
-    case "B1":
-      return { min: 5, max: 7 };
-    case "B2":
-      return { min: 5, max: 8 };
-  }
-}
-
 function validateCloze(item: GeneratedCloze): GeneratedCloze | null {
   const gaps = extractGaps(parseClozePassage(item.question, item.answer));
-  const { min, max } = gapBounds(item.cefr);
-  if (gaps.length < min || gaps.length > max) return null;
+  if (gaps.length < 5 || gaps.length > 12) return null;
 
   for (const gap of gaps) {
     if (gap.answer.length < 2) return null;
@@ -86,34 +58,10 @@ function validateCloze(item: GeneratedCloze): GeneratedCloze | null {
   }
 
   return {
-    title: item.title,
+    title: item.title.replace(/^\[(A1|A2|B1|B2)\]\s*/i, "").trim() || item.title,
     question: item.question,
     answer: gaps.map((g) => g.answer).join("|"),
-    cefr: item.cefr,
   };
-}
-
-async function generateOneLevel(
-  model: ReturnType<GoogleGenerativeAI["getGenerativeModel"]>,
-  cefr: ClozeCefr,
-  avoidTopics: string[]
-): Promise<GeneratedCloze | null> {
-  const topics = pickLevelTopics(cefr, 2, avoidTopics);
-  const prompt = buildClozePrompt({
-    cefr,
-    count: 1,
-    topics,
-    avoidTopics,
-  });
-
-  const result = await model.generateContent(prompt);
-  const text = result.response.text();
-  const raw = extractJsonArray(text, cefr);
-  const valid = raw
-    .map((row) => validateCloze({ ...row, cefr }))
-    .filter((row): row is GeneratedCloze => Boolean(row));
-
-  return valid[0] ?? null;
 }
 
 export async function generateClozeSession(opts: {
@@ -126,55 +74,43 @@ export async function generateClozeSession(opts: {
   }
 
   const count = Math.min(5, Math.max(3, opts.count ?? 4));
-  const levels = sessionLevels(count);
   const avoid = opts.avoidTopics ?? [];
+  const topics = pickTopics(Math.min(4, count + 1), avoid);
 
   const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({ model: "gemini-3.6-flash" });
 
-  const valid: GeneratedCloze[] = [];
-  const usedTitles: string[] = [...avoid];
+  const prompt = buildMixedClozePrompt({
+    count,
+    topics,
+    avoidTopics: avoid,
+  });
 
-  for (const cefr of levels) {
-    try {
-      const item = await generateOneLevel(model, cefr, usedTitles);
-      if (item) {
-        valid.push(item);
-        usedTitles.push(item.title);
-      }
-    } catch {
-      // try next level
-    }
-  }
-
-  // If some levels failed, top up with B1 (still within A1–B2)
-  while (valid.length < Math.min(3, count)) {
-    try {
-      const item = await generateOneLevel(model, "B1", usedTitles);
-      if (!item) break;
-      valid.push(item);
-      usedTitles.push(item.title);
-    } catch {
-      break;
-    }
-  }
+  const result = await model.generateContent(prompt);
+  const text = result.response.text();
+  const valid = extractJsonArray(text)
+    .map(validateCloze)
+    .filter((row): row is GeneratedCloze => Boolean(row))
+    .slice(0, count);
 
   if (valid.length === 0) {
     throw new Error("Geçerli pasaj üretilemedi");
   }
 
-  // Keep easy → hard order by CEFR
-  const order: Record<ClozeCefr, number> = { A1: 0, A2: 1, B1: 2, B2: 3 };
-  valid.sort((a, b) => order[a.cefr] - order[b.cefr]);
+  // Shuffle so session order is not an implied difficulty ladder
+  for (let i = valid.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [valid[i], valid[j]] = [valid[j], valid[i]];
+  }
 
   const stamp = Date.now();
-  return valid.slice(0, count).map((item, i) => ({
+  return valid.map((item, i) => ({
     id: -(stamp + i),
     question_type_id: 1,
     question_text: item.question,
     correct_answer: item.answer,
-    difficulty: clozeDifficulty(item.cefr),
-    topic: `[${item.cefr}] ${item.title}`,
+    difficulty: mixedClozeDifficulty(),
+    topic: item.title,
     created_at: new Date().toISOString().slice(0, 10),
   }));
 }

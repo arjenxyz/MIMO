@@ -329,9 +329,9 @@ export default function ReadCompletePage() {
   }
 
   return (
-    <main className="min-h-screen bg-mimo-bg text-mimo-fg">
-      <div className="mx-auto max-w-3xl px-4 pb-10 pt-5">
-        <div className="mb-6 flex items-center justify-between gap-3">
+    <main className="min-h-[100dvh] bg-mimo-bg text-mimo-fg">
+      <header className="fixed inset-x-0 top-0 z-40 border-b border-mimo-border/70 bg-mimo-bg/95 backdrop-blur-md supports-[padding:env(safe-area-inset-top)]:pt-[env(safe-area-inset-top)]">
+        <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 px-4 py-3">
           <div className="flex items-center gap-2">
             <p
               className={`text-2xl font-black tabular-nums tracking-tight ${
@@ -352,8 +352,10 @@ export default function ReadCompletePage() {
           </div>
           <PracticeExamExitLink href="/" />
         </div>
+      </header>
 
-        <p className="mb-5 text-center text-base font-bold text-mimo-fg sm:text-lg">
+      <div className="mx-auto max-w-3xl px-4 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[calc(4.25rem+env(safe-area-inset-top,0px))]">
+        <p className="mb-4 text-center text-sm font-bold text-mimo-fg sm:mb-5 sm:text-lg">
           Type the missing letters to complete the text below.
         </p>
 
@@ -364,8 +366,8 @@ export default function ReadCompletePage() {
         )}
 
         {current && (
-          <section className="rounded-2xl border border-mimo-border bg-mimo-card px-5 py-6 shadow-sm sm:px-8 sm:py-8">
-            <h1 className="mb-5 text-center text-lg font-black text-mimo-title sm:text-xl">
+          <section className="min-w-0 overflow-hidden rounded-2xl border border-mimo-border bg-mimo-card px-3 py-5 shadow-sm sm:px-8 sm:py-8">
+            <h1 className="mb-4 break-words text-center text-base font-black text-mimo-title sm:mb-5 sm:text-xl">
               {current.topic || "Read and Complete"}
             </h1>
 
@@ -378,7 +380,7 @@ export default function ReadCompletePage() {
               showResults={checked}
             />
 
-            <div className="mt-8 flex flex-col items-center gap-3">
+            <div className="mt-8 flex flex-col items-center gap-3 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
               {!checked ? (
                 <button
                   type="button"

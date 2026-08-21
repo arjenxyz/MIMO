@@ -1,6 +1,6 @@
 /**
  * Generate DET Read and Complete cloze questions via Gemini and insert into Supabase.
- * Produces A1 → B2 passages (easy to hard) with level-appropriate grammar.
+ * Each passage mixes A1–B2 grammar in one text (not level-by-level sessions).
  *
  * Requires in .env.local:
  *   GEMINI_API_KEY
@@ -8,7 +8,7 @@
  *   SUPABASE_SERVICE_ROLE_KEY
  *
  * Run: npm run generate-cloze
- * Optional: npm run generate-cloze -- --level=A2 --per-level=2
+ * Optional: npm run generate-cloze -- --count=8
  */
 
 import { config } from "dotenv";
@@ -16,17 +16,14 @@ import { resolve } from "path";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { createClient } from "@supabase/supabase-js";
 import {
-  buildClozePrompt,
-  CLOZE_CEFR_ORDER,
-  CLOZE_LEVELS,
-  clozeDifficulty,
-  pickLevelTopics,
-  type ClozeCefr,
+  buildMixedClozePrompt,
+  mixedClozeDifficulty,
+  pickTopics,
 } from "../lib/detClozeCurriculum";
 
 config({ path: resolve(process.cwd(), ".env.local") });
 
-type ClozeItem = { title: string; question: string; answer: string; cefr: ClozeCefr };
+type ClozeItem = { title: string; question: string; answer: string };
 
 function requireEnv(name: string) {
   const value = process.env[name];
@@ -36,21 +33,16 @@ function requireEnv(name: string) {
 
 function parseArgs() {
   const args = process.argv.slice(2);
-  let levelFilter: ClozeCefr | null = null;
-  let perLevel = 3;
+  let count = 8;
 
   for (const arg of args) {
-    if (arg.startsWith("--level=")) {
-      const v = arg.slice("--level=".length).toUpperCase();
-      if (v === "A1" || v === "A2" || v === "B1" || v === "B2") levelFilter = v;
-    }
-    if (arg.startsWith("--per-level=")) {
-      const n = Number(arg.slice("--per-level=".length));
-      if (Number.isFinite(n)) perLevel = Math.min(6, Math.max(1, Math.round(n)));
+    if (arg.startsWith("--count=")) {
+      const n = Number(arg.slice("--count=".length));
+      if (Number.isFinite(n)) count = Math.min(20, Math.max(1, Math.round(n)));
     }
   }
 
-  return { levelFilter, perLevel };
+  return { count };
 }
 
 function extractJsonArray(text: string): ClozeItem[] {
@@ -72,49 +64,36 @@ function extractJsonArray(text: string): ClozeItem[] {
   return parsed
     .map((row) => {
       if (!row || typeof row !== "object") return null;
-      const obj = row as {
-        title?: unknown;
-        question?: unknown;
-        answer?: unknown;
-        cefr?: unknown;
-      };
+      const obj = row as { title?: unknown; question?: unknown; answer?: unknown };
       const q = obj.question;
       const a = obj.answer;
       const title = typeof obj.title === "string" ? obj.title.trim() : "";
       if (typeof q !== "string" || typeof a !== "string") return null;
       if (!q.includes("[[") || !q.includes("]]")) return null;
-      const rawCefr = typeof obj.cefr === "string" ? obj.cefr.toUpperCase() : "";
-      const cefr: ClozeCefr =
-        rawCefr === "A1" || rawCefr === "A2" || rawCefr === "B1" || rawCefr === "B2"
-          ? rawCefr
-          : "B1";
       return {
-        title: title || "Read and Complete",
+        title: (title || "Read and Complete").replace(/^\[(A1|A2|B1|B2)\]\s*/i, "").trim(),
         question: q.trim(),
         answer: a.trim(),
-        cefr,
       };
     })
     .filter((row): row is ClozeItem => Boolean(row));
 }
 
-async function generateForLevel(
+async function generateBatch(
   model: ReturnType<GoogleGenerativeAI["getGenerativeModel"]>,
-  cefr: ClozeCefr,
   count: number
 ) {
-  const topics = pickLevelTopics(cefr, Math.min(3, count + 1));
-  const prompt = buildClozePrompt({ cefr, count, topics });
+  const topics = pickTopics(Math.min(5, count + 1));
+  const prompt = buildMixedClozePrompt({ count, topics });
   const result = await model.generateContent(prompt);
-  const text = result.response.text();
-  return extractJsonArray(text).map((item) => ({ ...item, cefr }));
+  return extractJsonArray(result.response.text());
 }
 
 async function main() {
   const geminiKey = requireEnv("GEMINI_API_KEY");
   const supabaseUrl = requireEnv("NEXT_PUBLIC_SUPABASE_URL");
   const serviceKey = requireEnv("SUPABASE_SERVICE_ROLE_KEY");
-  const { levelFilter, perLevel } = parseArgs();
+  const { count } = parseArgs();
 
   const genAI = new GoogleGenerativeAI(geminiKey);
   const model = genAI.getGenerativeModel({ model: "gemini-3.6-flash" });
@@ -132,22 +111,22 @@ async function main() {
   }
 
   const typeId = typeRow.id as number;
+  // Gemini quality drops on huge batches — chunk requests
+  const chunkSize = 4;
   let inserted = 0;
   let failedBatches = 0;
 
-  const levels = levelFilter ? [levelFilter] : CLOZE_CEFR_ORDER;
-
   console.log(
-    `Generating cloze for levels: ${levels.join(" → ")} (${perLevel} each, easy → hard)\n`
+    `Generating ${count} mixed A1–B2 cloze passages (grammar mixed inside each passage)…\n`
   );
 
-  for (const cefr of levels) {
-    const spec = CLOZE_LEVELS[cefr];
+  for (let offset = 0; offset < count; offset += chunkSize) {
+    const n = Math.min(chunkSize, count - offset);
     try {
-      console.log(`${cefr} (difficulty ${spec.difficulty}) — grammar: ${spec.grammarFocus[0]}…`);
-      const items = await generateForLevel(model, cefr, perLevel);
+      console.log(`Batch ${offset + 1}–${offset + n}…`);
+      const items = await generateBatch(model, n);
       if (items.length === 0) {
-        console.warn(`  No items for ${cefr}`);
+        console.warn("  No items");
         failedBatches += 1;
         continue;
       }
@@ -156,18 +135,18 @@ async function main() {
         question_type_id: typeId,
         question_text: item.question,
         correct_answer: item.answer,
-        difficulty: clozeDifficulty(cefr),
-        topic: `[${cefr}] ${item.title}`,
+        difficulty: mixedClozeDifficulty(),
+        topic: item.title,
       }));
 
       const { error } = await supabase.from("det_exercises").insert(rows);
       if (error) throw error;
 
       inserted += rows.length;
-      console.log(`  +${rows.length} passages`);
+      console.log(`  +${rows.length}`);
     } catch (error) {
       failedBatches += 1;
-      console.error(`  Failed ${cefr}:`, error instanceof Error ? error.message : error);
+      console.error(`  Failed:`, error instanceof Error ? error.message : error);
     }
   }
 
