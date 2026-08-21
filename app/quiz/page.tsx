@@ -182,21 +182,32 @@ export default function WordQuizPage() {
     setCorrect(ok);
     setChecked(true);
     playFeedback(ok);
+
+    // Last word: skip the extra "Sonuçlar" tap — go straight to summary.
+    if (index + 1 >= items.length) {
+      window.setTimeout(() => {
+        void continueNext(ok);
+      }, 750);
+    }
   }
 
-  async function continueNext() {
+  async function continueNext(forcedCorrect?: boolean) {
     if (!current || saving || !checked) return;
     setSaving(true);
     setError("");
     try {
-      const quality: Quality = correct ? 2 : 0;
+      const wasCorrect = forcedCorrect ?? correct;
+      const quality: Quality = wasCorrect ? 2 : 0;
       if (!demo) {
         const supabase = createClient();
         const {
           data: { user },
         } = await supabase.auth.getUser();
-        if (!user) return;
-        await updateWordProgress(supabase, current, quality, correct);
+        if (!user) {
+          setError("Oturum bulunamadı. Yeniden giriş yap.");
+          return;
+        }
+        await updateWordProgress(supabase, current, quality, wasCorrect);
         window.dispatchEvent(new Event("profile-updated"));
       }
       const nextIndex = index + 1;
@@ -362,14 +373,20 @@ export default function WordQuizPage() {
             >
               {correct ? "Harika! Doğru." : `Yanlış. Doğru cevap: ${correctLabel}`}
             </p>
-            <PracticeExamPrimaryButton
-              className="w-full max-w-sm"
-              disabled={saving}
-              onClick={() => void continueNext()}
-              variant="green"
-            >
-              {saving ? "..." : index + 1 >= items.length ? "Sonuçlar" : "Devam"}
-            </PracticeExamPrimaryButton>
+            {index + 1 >= items.length ? (
+              <p className="py-2 text-sm font-bold text-mimo-muted">
+                {saving ? "Kaydediliyor…" : "Sonuçlar açılıyor…"}
+              </p>
+            ) : (
+              <PracticeExamPrimaryButton
+                className="w-full max-w-sm"
+                disabled={saving}
+                onClick={() => void continueNext()}
+                variant="green"
+              >
+                {saving ? "..." : "Devam"}
+              </PracticeExamPrimaryButton>
+            )}
           </div>
         </div>
       )}
