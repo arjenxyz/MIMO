@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import type { Word } from "@/types";
 
 export type UploaderProfile = {
@@ -41,7 +42,10 @@ export function UploaderBadge({
   return (
     <button
       type="button"
-      onClick={() => onOpen(profile)}
+      onClick={(e) => {
+        e.stopPropagation();
+        onOpen(profile);
+      }}
       className={`flex max-w-[min(100%,11rem)] items-center gap-1.5 text-left transition ${
         overlay
           ? "rounded-full bg-black/45 py-1 pl-1 pr-2.5 text-white backdrop-blur-sm hover:bg-black/55"
@@ -90,7 +94,10 @@ export function UploaderProfileCard({
   profile: UploaderProfile;
   onClose: () => void;
 }) {
+  const [mounted, setMounted] = useState(false);
+
   useEffect(() => {
+    setMounted(true);
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
@@ -103,9 +110,11 @@ export function UploaderProfileCard({
     };
   }, [onClose]);
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <div
-      className="fixed inset-0 z-[310] flex items-center justify-center bg-black/45 p-4"
+      className="fixed inset-0 z-[500] flex items-center justify-center bg-black/55 p-4 backdrop-blur-md"
       role="presentation"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
@@ -115,7 +124,8 @@ export function UploaderProfileCard({
         role="dialog"
         aria-modal="true"
         aria-labelledby="uploader-profile-title"
-        className="w-full max-w-sm rounded-2xl border border-mimo-border bg-mimo-card p-6 text-center shadow-xl"
+        className="relative z-[501] w-full max-w-sm rounded-2xl border border-mimo-border bg-mimo-card p-6 text-center shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
       >
         <div className="mx-auto flex h-20 w-20 overflow-hidden rounded-full bg-[#fd860a] ring-4 ring-[#fff3e0] dark:ring-[#3a2208]">
           {profile.avatarUrl ? (
@@ -149,7 +159,8 @@ export function UploaderProfileCard({
           Kapat
         </button>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
