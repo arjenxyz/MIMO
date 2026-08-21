@@ -63,7 +63,7 @@ export default async function GrammarCatalogPage() {
           <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#ce82ff]">Gramer</p>
           <h1 className="mt-1 text-2xl font-black text-mimo-title">Tüm konular</h1>
           <p className="mt-1 text-sm font-semibold text-mimo-muted">
-            A1–C1 İngilizce dil bilgisi — {total} konu. Özet oku, sorusu olanlarda alıştırma çöz.
+            A1–C1 İngilizce dil bilgisi — {total} konu. Her konuda yalnızca o kurala özel sorular üretilir.
           </p>
         </div>
         <Link
@@ -88,8 +88,6 @@ export default async function GrammarCatalogPage() {
               </div>
               <ul className="space-y-2.5">
                 {list.map((topic) => {
-                  const count = topic.item_count ?? 0;
-                  const hasDrill = count > 0;
                   return (
                     <li key={topic.slug}>
                       <Link
@@ -107,12 +105,8 @@ export default async function GrammarCatalogPage() {
                             {difficultyLabel(topic.difficulty)}
                           </span>
                         </div>
-                        <p
-                          className={`mt-2.5 text-xs font-bold uppercase tracking-wide ${
-                            hasDrill ? "text-[#ce82ff]" : "text-mimo-muted"
-                          }`}
-                        >
-                          {hasDrill ? `${count} soru · Başla →` : "Özet · Aç →"}
+                        <p className="mt-2.5 text-xs font-bold uppercase tracking-wide text-[#ce82ff]">
+                          Alıştırma · Başla →
                         </p>
                       </Link>
                     </li>

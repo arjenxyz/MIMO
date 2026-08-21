@@ -48,6 +48,7 @@ export async function updateSession(request: NextRequest) {
     pathname.startsWith("/api/report-error") ||
     pathname.startsWith("/api/cron") ||
     pathname.startsWith("/api/status") ||
+    pathname.startsWith("/api/grammar") ||
     pathname === "/status" ||
     pathname.startsWith("/grammar");
 

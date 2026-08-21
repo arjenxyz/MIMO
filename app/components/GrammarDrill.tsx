@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import {
   PracticeExamCard,
@@ -14,14 +14,125 @@ import { playFeedback } from "@/lib/feedbackSound";
 import type { GrammarItem, GrammarTopicDetail } from "@/lib/grammarTopics";
 import { answersMatch } from "@/lib/srs";
 
+type ApiItem = {
+  question: string;
+  correct_answer: string;
+  explanation?: string;
+  example?: string;
+  difficulty?: number;
+};
+
+function cacheKey(slug: string) {
+  return `mimo-grammar-q:${slug}`;
+}
+
+function readCache(slug: string): GrammarItem[] | null {
+  try {
+    const raw = sessionStorage.getItem(cacheKey(slug));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { items?: GrammarItem[]; at?: number };
+    if (!parsed.items?.length) return null;
+    // Keep for 2 hours in this tab session
+    if (parsed.at && Date.now() - parsed.at > 2 * 60 * 60 * 1000) return null;
+    return parsed.items;
+  } catch {
+    return null;
+  }
+}
+
+function writeCache(slug: string, items: GrammarItem[]) {
+  try {
+    sessionStorage.setItem(cacheKey(slug), JSON.stringify({ items, at: Date.now() }));
+  } catch {
+    // ignore quota
+  }
+}
+
+function mapApiItems(topicId: number, rows: ApiItem[]): GrammarItem[] {
+  return rows.map((row, j) => ({
+    id: topicId * 1000 + j + 1,
+    topic_id: topicId,
+    question: row.question,
+    correct_answer: row.correct_answer,
+    explanation: row.explanation ?? null,
+    example: row.example ?? null,
+    difficulty: row.difficulty ?? 1,
+    sort_order: j + 1,
+  }));
+}
+
 export function GrammarDrill({ topic }: { topic: GrammarTopicDetail }) {
-  const items = useMemo(() => topic.items, [topic.items]);
+  const [items, setItems] = useState<GrammarItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [index, setIndex] = useState(0);
   const [answer, setAnswer] = useState("");
   const [checked, setChecked] = useState(false);
   const [correct, setCorrect] = useState(false);
   const [correctCount, setCorrectCount] = useState(0);
   const [finished, setFinished] = useState(false);
+
+  const loadQuestions = useCallback(
+    async (force = false) => {
+      setLoading(true);
+      setError(null);
+      setFinished(false);
+      setIndex(0);
+      setAnswer("");
+      setChecked(false);
+      setCorrect(false);
+      setCorrectCount(0);
+
+      if (!force) {
+        const cached = readCache(topic.slug);
+        if (cached?.length) {
+          setItems(cached);
+          setLoading(false);
+          return;
+        }
+      } else {
+        try {
+          sessionStorage.removeItem(cacheKey(topic.slug));
+        } catch {
+          // ignore
+        }
+      }
+
+      try {
+        const res = await fetch("/api/grammar/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ slug: topic.slug, count: 10 }),
+        });
+        const data = (await res.json()) as { items?: ApiItem[]; error?: string };
+        if (!res.ok) {
+          throw new Error(data.error || `Soru alınamadı (${res.status})`);
+        }
+        if (!data.items?.length) {
+          throw new Error("Bu konu için soru gelmedi");
+        }
+        const mapped = mapApiItems(topic.id, data.items);
+        writeCache(topic.slug, mapped);
+        setItems(mapped);
+      } catch (err) {
+        // Local seed pack as last resort (topic-scoped only)
+        if (topic.items.length > 0) {
+          setItems(topic.items);
+          setError(null);
+        } else {
+          setItems([]);
+          setError(err instanceof Error ? err.message : "Soru alınamadı");
+        }
+      } finally {
+        setLoading(false);
+      }
+    },
+    [topic.id, topic.items, topic.slug]
+  );
+
+  useEffect(() => {
+    void loadQuestions(false);
+  }, [loadQuestions]);
 
   const current: GrammarItem | undefined = items[index];
   const total = items.length;
@@ -56,7 +167,43 @@ export function GrammarDrill({ topic }: { topic: GrammarTopicDetail }) {
     setFinished(false);
   }
 
-  if (!items.length) {
+  if (loading) {
+    return (
+      <PracticeExamMain className="px-4 pb-10">
+        <PracticeExamStickyBar
+          maxWidthClass="max-w-lg"
+          left={<p className="text-sm font-extrabold text-mimo-title">{topic.title}</p>}
+          exitHref="/grammar"
+          exitLabel="Konular"
+        />
+        <PracticeExamStickySpacer />
+        <div className="mx-auto max-w-lg space-y-3">
+          <PracticeExamCard>
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#ce82ff]">Kural özeti</p>
+            <p className="mt-2 text-sm font-semibold leading-relaxed text-mimo-fg">{topic.summary}</p>
+            {topic.tip_tr && (
+              <p className="mt-3 rounded-xl bg-mimo-surface px-3 py-2 text-sm font-bold text-mimo-title">
+                {topic.tip_tr}
+              </p>
+            )}
+          </PracticeExamCard>
+          <PracticeExamCard>
+            <p className="text-center text-sm font-bold text-mimo-muted">
+              {topic.title} için sorular hazırlanıyor…
+            </p>
+            <div
+              className="mx-auto mt-4 h-1.5 w-40 overflow-hidden rounded-full bg-mimo-surface"
+              aria-hidden
+            >
+              <div className="h-full w-1/2 animate-pulse rounded-full bg-[#ce82ff]" />
+            </div>
+          </PracticeExamCard>
+        </div>
+      </PracticeExamMain>
+    );
+  }
+
+  if (error && !items.length) {
     return (
       <PracticeExamMain className="px-4 pb-10">
         <PracticeExamStickyBar
@@ -80,10 +227,15 @@ export function GrammarDrill({ topic }: { topic: GrammarTopicDetail }) {
             )}
           </PracticeExamCard>
           <PracticeExamCard>
-            <p className="text-center text-sm font-bold text-mimo-muted">
-              Bu konuda alıştırma soruları yakında eklenecek.
-            </p>
-            <div className="mt-4">
+            <p className="text-center text-sm font-bold text-[#b91c1c]">{error}</p>
+            <div className="mt-4 flex flex-col gap-2">
+              <PracticeExamPrimaryButton
+                type="button"
+                onClick={() => void loadQuestions(true)}
+                className="w-full"
+              >
+                Tekrar dene
+              </PracticeExamPrimaryButton>
               <PracticeExamGhostLink href="/grammar">Tüm konulara dön</PracticeExamGhostLink>
             </div>
           </PracticeExamCard>
@@ -118,6 +270,13 @@ export function GrammarDrill({ topic }: { topic: GrammarTopicDetail }) {
             <div className="mt-6 flex flex-col gap-2">
               <PracticeExamPrimaryButton onClick={restart} variant="green" className="w-full">
                 Tekrar çöz
+              </PracticeExamPrimaryButton>
+              <PracticeExamPrimaryButton
+                type="button"
+                onClick={() => void loadQuestions(true)}
+                className="w-full"
+              >
+                Yeni sorular üret
               </PracticeExamPrimaryButton>
               <PracticeExamGhostLink href="/grammar">Konulara dön</PracticeExamGhostLink>
             </div>
@@ -207,6 +366,14 @@ export function GrammarDrill({ topic }: { topic: GrammarTopicDetail }) {
         </PracticeExamCard>
 
         <p className="text-center text-xs font-semibold text-mimo-muted">
+          <button
+            type="button"
+            onClick={() => void loadQuestions(true)}
+            className="underline-offset-2 hover:underline"
+          >
+            Yeni sorular
+          </button>
+          {" · "}
           <Link href="/grammar" className="underline-offset-2 hover:underline">
             Tüm konular
           </Link>
