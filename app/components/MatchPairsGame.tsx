@@ -33,7 +33,6 @@ type Board = {
 
 const SESSION_SECONDS = 120;
 const BOARD_PAIRS = 5;
-const MILESTONES = [5, 10, 35];
 const SHUFFLE_EVERY_SEC = 30;
 const SHUFFLE_DURATION_MS = 2500;
 const SHUFFLE_STEPS = 7;
@@ -201,11 +200,6 @@ export function MatchPairsGame({ words }: { words: MatchWord[] }) {
     const t = window.setTimeout(() => setShuffleIn((s) => s - 1), 1000);
     return () => window.clearTimeout(t);
   }, [phase, shuffleIn, runShuffleSequence]);
-
-  const progressPct = useMemo(() => {
-    const goal = MILESTONES[MILESTONES.length - 1];
-    return Math.min(100, Math.round((matches / goal) * 100));
-  }, [matches]);
 
   function onTap(tile: Tile) {
     if (phase !== "running" || locked || flash[tile.uid]) return;
@@ -423,38 +417,8 @@ export function MatchPairsGame({ words }: { words: MatchWord[] }) {
             {formatTimer(secondsLeft)}
           </p>
         }
-        below={
-          <div className="border-t border-mimo-border/40 bg-mimo-bg/95 px-4 pb-2.5 pt-2">
-            <div className="mx-auto max-w-lg">
-              <div className="mb-1 flex items-center justify-between gap-2 text-[11px] font-black tabular-nums text-mimo-muted">
-                <span className="text-mimo-fg">{matches} eşleşme</span>
-                <span className="flex gap-3">
-                  {MILESTONES.map((m) => (
-                    <span
-                      key={m}
-                      className={matches >= m ? "text-[#ff4b4b]" : undefined}
-                    >
-                      {m}
-                    </span>
-                  ))}
-                </span>
-              </div>
-              <div className="h-2 overflow-hidden rounded-full bg-[#e2e8f0]">
-                <div
-                  className="h-full rounded-full bg-[#ff4b4b] transition-all duration-300"
-                  style={{ width: `${Math.max(3, progressPct)}%` }}
-                  role="progressbar"
-                  aria-valuenow={matches}
-                  aria-valuemin={0}
-                  aria-valuemax={MILESTONES[MILESTONES.length - 1]}
-                  aria-label={`${matches} eşleşme`}
-                />
-              </div>
-            </div>
-          </div>
-        }
       />
-      <PracticeExamStickySpacer extraPx={44} />
+      <PracticeExamStickySpacer />
       <div className="mx-auto flex max-w-lg flex-col px-4 pb-8">
         <h1 className="text-center text-xl font-black text-mimo-fg sm:text-2xl">
           {shuffling ? "Karıştırılıyor…" : "Eşleşen çiftlere dokun"}
