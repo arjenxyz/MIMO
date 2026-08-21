@@ -33,12 +33,15 @@ function Decor() {
 function DemoContinue() {
   return (
     <div className="mt-5 space-y-3">
-      <Link
-        href="/"
+      <button
+        type="button"
+        onClick={() => {
+          window.location.assign("/");
+        }}
         className="flex w-full items-center justify-center rounded-2xl bg-[#1cb0f6] px-6 py-3.5 text-sm font-black uppercase tracking-wide text-white shadow-[0_3px_0_#1899d6] transition active:translate-y-0.5 active:shadow-none"
       >
         Örnek verilerle devam et
-      </Link>
+      </button>
       <p className="text-center text-xs font-bold text-[#9ca3af]">
         Giriş gerekmez — güncel yol ve pratikler demo ile dolu
       </p>
