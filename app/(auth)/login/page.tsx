@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import { SocialAuthButtons } from "@/app/components/SocialAuthButtons";
 import { createClient } from "@/lib/supabase/client";
