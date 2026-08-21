@@ -213,7 +213,10 @@ export default function WordQuizPage() {
   }
 
   async function continueNext(forcedCorrect?: boolean) {
-    if (!current || saving || !checked) return;
+    // When auto-advancing after the last answer, `forcedCorrect` is set from `pick`
+    // before React has re-rendered — do not rely on the stale `checked` closure.
+    if (!current || saving) return;
+    if (forcedCorrect === undefined && !checked) return;
     setSaving(true);
     setError("");
     try {
@@ -318,7 +321,7 @@ export default function WordQuizPage() {
               className="h-full w-full object-cover"
               alt={`${word.english} görseli`}
             />
-            <div className="absolute bottom-3 left-3 z-10 max-w-[calc(100%-4.5rem)]">
+            <div className="absolute top-3 left-3 z-10 max-w-[calc(100%-4.5rem)]">
               <WordUploaderAttribution word={word} overlay />
             </div>
             <button
