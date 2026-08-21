@@ -7,7 +7,8 @@ export type PathIconName =
   | "photo"
   | "match"
   | "verify"
-  | "listen";
+  | "listen"
+  | "grammar";
 
 export type PathNode = {
   id: string;
@@ -122,6 +123,13 @@ function PathIcon({ name }: { name: PathIconName }) {
         <path d="M8.5 8.5a5 5 0 0 0 7 0" />
         <rect x="9" y="13" width="6" height="4" rx="1" />
         <path d="M12 17v2M9 21h6" />
+      </svg>
+    ),
+    grammar: (
+      <svg {...common}>
+        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+        <path d="M9 8h7M9 12h5M9 16h6" />
       </svg>
     ),
   };

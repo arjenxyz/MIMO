@@ -80,6 +80,14 @@ export default async function DashboardPage() {
       state: activeId === "words" ? "active" : dueWordCount === 0 ? "done" : "upcoming",
     },
     {
+      id: "grammar",
+      title: "Gramer",
+      href: "/grammar",
+      tone: "purple",
+      icon: "grammar",
+      state: "upcoming",
+    },
+    {
       id: "det",
       title: "Read & Complete",
       href: "/det/read-complete",
