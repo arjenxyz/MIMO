@@ -39,6 +39,7 @@ const withPWA = withPWAInit({
             pathname.startsWith("/settings") ||
             pathname.startsWith("/friends") ||
             pathname.startsWith("/setup") ||
+            pathname.startsWith("/about") ||
             pathname === "/" ||
             pathname.startsWith("/quiz") ||
             pathname.startsWith("/words") ||

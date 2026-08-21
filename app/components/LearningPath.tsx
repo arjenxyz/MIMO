@@ -1,5 +1,14 @@
+"use client";
+
 import Link from "next/link";
-import type { ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 
 export type PathIconName =
   | "books"
@@ -25,55 +34,63 @@ const TONE = {
     shadow: "shadow-[0_6px_0_#46a302]",
     soft: "text-[#58cc02]",
     ring: "ring-[#58cc02]/35",
-    track: "bg-[#58cc02]",
   },
   blue: {
     fill: "bg-[#1cb0f6]",
     shadow: "shadow-[0_6px_0_#1899d6]",
     soft: "text-[#1cb0f6]",
     ring: "ring-[#1cb0f6]/35",
-    track: "bg-[#1cb0f6]",
   },
   purple: {
     fill: "bg-[#6366f1]",
     shadow: "shadow-[0_6px_0_#4f46e5]",
     soft: "text-[#6366f1]",
     ring: "ring-[#6366f1]/30",
-    track: "bg-[#6366f1]",
   },
   orange: {
     fill: "bg-[#fd860a]",
     shadow: "shadow-[0_6px_0_#c2410c]",
     soft: "text-[#ea580c]",
     ring: "ring-[#fd860a]/35",
-    track: "bg-[#fd860a]",
   },
   cyan: {
     fill: "bg-[#0d9488]",
     shadow: "shadow-[0_6px_0_#0f766e]",
     soft: "text-[#0d9488]",
     ring: "ring-[#0d9488]/30",
-    track: "bg-[#0d9488]",
   },
   rose: {
     fill: "bg-[#e11d48]",
     shadow: "shadow-[0_6px_0_#be123c]",
     soft: "text-[#e11d48]",
     ring: "ring-[#e11d48]/30",
-    track: "bg-[#e11d48]",
   },
 };
 
-/** Zigzag offsets that stay inside the path column (no horizontal page scroll). */
+/** Mild zigzag — stays inside column on narrow phones. */
 const OFFSETS = [
   "translate-x-0",
-  "-translate-x-12 sm:-translate-x-14",
-  "translate-x-12 sm:translate-x-14",
-  "-translate-x-9 sm:-translate-x-11",
+  "-translate-x-10 sm:-translate-x-12",
   "translate-x-10 sm:translate-x-12",
-  "-translate-x-12 sm:-translate-x-14",
-  "translate-x-9 sm:translate-x-11",
+  "-translate-x-8 sm:-translate-x-10",
+  "translate-x-8 sm:translate-x-10",
+  "-translate-x-10 sm:-translate-x-12",
+  "translate-x-8 sm:translate-x-10",
 ];
+
+type Pt = { x: number; y: number };
+
+function buildSmoothPath(points: Pt[]) {
+  if (points.length < 2) return "";
+  let d = `M ${points[0].x} ${points[0].y}`;
+  for (let i = 1; i < points.length; i++) {
+    const prev = points[i - 1];
+    const curr = points[i];
+    const midY = (prev.y + curr.y) / 2;
+    d += ` C ${prev.x} ${midY}, ${curr.x} ${midY}, ${curr.x} ${curr.y}`;
+  }
+  return d;
+}
 
 function PathIcon({ name }: { name: PathIconName }) {
   const common = {
@@ -182,9 +199,84 @@ export function LearningPath({
     nodes.findIndex((n) => n.state === "active")
   );
 
+  const rootRef = useRef<HTMLDivElement>(null);
+  const startRef = useRef<HTMLDivElement>(null);
+  const nodeRefs = useRef<(HTMLAnchorElement | null)[]>([]);
+  const [rail, setRail] = useState<{
+    d: string;
+    progressLen: number;
+    totalLen: number;
+    width: number;
+    height: number;
+  } | null>(null);
+  const pathFullRef = useRef<SVGPathElement>(null);
+
+  const measure = useCallback(() => {
+    const root = rootRef.current;
+    const start = startRef.current;
+    if (!root || !start) return;
+
+    const rr = root.getBoundingClientRect();
+    const sr = start.getBoundingClientRect();
+    const points: Pt[] = [
+      {
+        x: sr.left + sr.width / 2 - rr.left,
+        y: sr.bottom - rr.top - 2,
+      },
+    ];
+
+    for (let i = 0; i < nodes.length; i++) {
+      const el = nodeRefs.current[i];
+      if (!el) continue;
+      const er = el.getBoundingClientRect();
+      points.push({
+        x: er.left + er.width / 2 - rr.left,
+        y: er.top + er.height / 2 - rr.top,
+      });
+    }
+
+    if (points.length < 2) return;
+    const d = buildSmoothPath(points);
+    setRail({
+      d,
+      progressLen: 0,
+      totalLen: 0,
+      width: root.offsetWidth,
+      height: root.offsetHeight,
+    });
+  }, [nodes.length]);
+
+  useLayoutEffect(() => {
+    measure();
+  }, [measure, nodes, greeting]);
+
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
+    const ro = new ResizeObserver(() => measure());
+    ro.observe(root);
+    window.addEventListener("resize", measure);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", measure);
+    };
+  }, [measure]);
+
+  useLayoutEffect(() => {
+    const pathEl = pathFullRef.current;
+    if (!pathEl || !rail?.d) return;
+    const total = pathEl.getTotalLength();
+    // greeting → node0 → … ; progress through active node center (index+1 in points)
+    const ratios = nodes.map((_, i) => (i + 1) / Math.max(nodes.length, 1));
+    const t = ratios[activeIndex] ?? 1;
+    const progressLen = total * Math.min(1, Math.max(0.08, t));
+    setRail((prev) =>
+      prev ? { ...prev, totalLen: total, progressLen } : prev
+    );
+  }, [rail?.d, activeIndex, nodes.length]);
+
   return (
     <section className="relative min-w-0 overflow-x-clip">
-      {/* Hero unit */}
       <div className="relative overflow-hidden rounded-2xl border border-mimo-border bg-mimo-card p-5 shadow-sm sm:p-6">
         <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0 flex-1">
@@ -205,30 +297,58 @@ export function LearningPath({
         </div>
       </div>
 
-      {/* Path */}
-      <div className="relative mx-auto mt-10 max-w-sm overflow-x-clip px-2 pb-8 sm:max-w-md">
+      <div
+        ref={rootRef}
+        className="relative mx-auto mt-10 max-w-sm overflow-x-clip px-2 pb-8 sm:max-w-md"
+      >
         <div
           className="pointer-events-none absolute inset-x-0 -top-6 h-40 bg-[radial-gradient(ellipse_at_center,rgba(28,176,246,0.08),transparent_70%)]"
           aria-hidden
         />
 
-        {/* Track */}
-        <div
-          className="pointer-events-none absolute bottom-14 left-1/2 top-24 w-[4px] -translate-x-1/2 overflow-hidden rounded-full bg-mimo-border/70"
-          aria-hidden
-        >
-          <div
-            className="absolute inset-x-0 top-0 rounded-full bg-gradient-to-b from-[#1cb0f6] via-[#58cc02] to-[#58cc02]/40 transition-[height] duration-700"
-            style={{
-              height: `${Math.min(100, ((activeIndex + 0.35) / Math.max(nodes.length - 1, 1)) * 100)}%`,
-            }}
-          />
-        </div>
+        {rail?.d ? (
+          <svg
+            className="pointer-events-none absolute inset-0 -z-0 overflow-visible"
+            width={rail.width}
+            height={rail.height}
+            style={{ zIndex: 0 }}
+            aria-hidden
+          >
+            <path
+              ref={pathFullRef}
+              d={rail.d}
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={4}
+              strokeLinecap="round"
+              className="text-mimo-border/80"
+            />
+            <path
+              d={rail.d}
+              fill="none"
+              stroke="url(#mimo-path-grad)"
+              strokeWidth={4}
+              strokeLinecap="round"
+              strokeDasharray={rail.totalLen || 1}
+              strokeDashoffset={Math.max(0, (rail.totalLen || 0) - (rail.progressLen || 0))}
+              className="transition-[stroke-dashoffset] duration-700 ease-out"
+            />
+            <defs>
+              <linearGradient id="mimo-path-grad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#1cb0f6" />
+                <stop offset="55%" stopColor="#58cc02" />
+                <stop offset="100%" stopColor="#58cc02" />
+              </linearGradient>
+            </defs>
+          </svg>
+        ) : null}
 
-        {/* Greeting */}
-        <div className="relative mb-14 flex justify-center mimo-path-enter">
+        <div className="relative mb-14 flex justify-center mimo-path-enter" style={{ zIndex: 2 }}>
           <div className="relative max-w-[300px]">
-            <div className="rounded-[1.35rem] border border-mimo-border/80 bg-mimo-card/95 px-5 py-3.5 text-center shadow-[0_10px_40px_-18px_rgba(15,23,42,0.35)] backdrop-blur-sm">
+            <div
+              ref={startRef}
+              className="rounded-[1.35rem] border border-mimo-border/80 bg-mimo-card px-5 py-3.5 text-center shadow-[0_10px_40px_-18px_rgba(15,23,42,0.35)]"
+            >
               <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#fd860a]">
                 MIMO
               </p>
@@ -243,7 +363,7 @@ export function LearningPath({
           </div>
         </div>
 
-        <ol className="relative space-y-12">
+        <ol className="relative space-y-12" style={{ zIndex: 2 }}>
           {nodes.map((node, index) => {
             const tone = TONE[node.tone];
             const offset = OFFSETS[index % OFFSETS.length];
@@ -259,41 +379,46 @@ export function LearningPath({
               >
                 <div className={`flex flex-col items-center ${offset}`}>
                   {isActive && (
-                    <span className="mb-2.5 inline-flex items-center gap-1 rounded-full bg-[#58cc02] px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-[#14260a] shadow-[0_3px_0_#46a302]">
+                    <span className="relative z-[3] mb-2.5 inline-flex items-center gap-1 rounded-full bg-[#58cc02] px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-[#14260a] shadow-[0_3px_0_#46a302]">
                       <span className="h-1.5 w-1.5 rounded-full bg-[#14260a]/70" aria-hidden />
                       Başla
                     </span>
                   )}
 
-                  <Link
-                    href={node.href}
-                    aria-current={isActive ? "step" : undefined}
-                    aria-label={`${node.title}${isActive ? " — sıradaki" : isDone ? " — tamamlandı" : ""}`}
-                    className={[
-                      "group relative flex h-[4.6rem] w-[4.6rem] items-center justify-center rounded-full border-[3.5px] border-white transition duration-200",
-                      "hover:-translate-y-0.5 active:translate-y-1 active:shadow-none dark:border-mimo-bg",
-                      tone.fill,
-                      tone.shadow,
-                      isActive ? `ring-4 ${tone.ring} mimo-path-pulse` : "",
-                      isDone ? "opacity-95" : "",
-                      isUpcoming
-                        ? "opacity-40 grayscale-[40%] hover:opacity-70 hover:grayscale-0"
-                        : "",
-                    ].join(" ")}
-                  >
-                    {isDone ? (
-                      <CheckIcon />
-                    ) : node.icon ? (
-                      <PathIcon name={node.icon} />
-                    ) : (
-                      <span className="text-xl font-black text-white">{index + 1}</span>
-                    )}
-                  </Link>
+                  {/* Opaque disc masks the path under the node so the line never shows through. */}
+                  <div className="relative z-[3]">
+                    <span
+                      className="pointer-events-none absolute left-1/2 top-1/2 h-[5.35rem] w-[5.35rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-mimo-bg"
+                      aria-hidden
+                    />
+                    <Link
+                      ref={(el) => {
+                        nodeRefs.current[index] = el;
+                      }}
+                      href={node.href}
+                      aria-current={isActive ? "step" : undefined}
+                      aria-label={`${node.title}${isActive ? " — sıradaki" : isDone ? " — tamamlandı" : ""}`}
+                      className={[
+                        "group relative flex h-[4.6rem] w-[4.6rem] items-center justify-center rounded-full border-[3.5px] border-white transition duration-200",
+                        "hover:-translate-y-0.5 active:translate-y-1 active:shadow-none dark:border-mimo-bg",
+                        isUpcoming ? "bg-[#94a3b8] shadow-[0_6px_0_#64748b]" : `${tone.fill} ${tone.shadow}`,
+                        isActive ? `ring-4 ${tone.ring} mimo-path-pulse` : "",
+                      ].join(" ")}
+                    >
+                      {isDone ? (
+                        <CheckIcon />
+                      ) : node.icon ? (
+                        <PathIcon name={node.icon} />
+                      ) : (
+                        <span className="text-xl font-black text-white">{index + 1}</span>
+                      )}
+                    </Link>
+                  </div>
 
-                  <div className="mt-3 max-w-[8rem] text-center">
+                  <div className="relative z-[3] mt-3 max-w-[8rem] text-center">
                     <p
                       className={`text-[14px] font-black leading-tight tracking-tight ${
-                        isActive ? "text-mimo-title" : "text-mimo-fg/80"
+                        isActive ? "text-mimo-title" : isUpcoming ? "text-mimo-muted" : "text-mimo-fg/80"
                       }`}
                     >
                       {node.title}

@@ -404,6 +404,14 @@ export function Navbar() {
                 >
                   Sistem durumu
                 </Link>
+                <Link
+                  href="/about"
+                  role="menuitem"
+                  className="block border-b border-mimo-border px-4 py-3 text-sm font-extrabold text-[#fd860a] hover:bg-mimo-surface"
+                  onClick={() => detailsRef.current?.removeAttribute("open")}
+                >
+                  MIMO
+                </Link>
                 <button
                   type="button"
                   role="menuitem"
