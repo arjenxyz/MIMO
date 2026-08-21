@@ -113,9 +113,8 @@ export default function AboutMimoPage() {
           </p>
 
           <div className="mt-4 flex items-start gap-3.5">
-            {/* eslint-disable-next-line @next/next/no-img-element -- external GitHub avatar */}
-            <img
-              src="https://avatars.githubusercontent.com/arjenxyz?s=128"
+            <Image
+              src="/arjen-avatar.png"
               alt="Arjen"
               width={64}
               height={64}
