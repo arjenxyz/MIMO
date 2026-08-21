@@ -1,5 +1,5 @@
 import { writeFileSync } from "fs";
-import { GRAMMAR_CURRICULUM } from "../lib/grammarCurriculum.ts";
+import { GRAMMAR_CURRICULUM } from "../lib/grammarCurriculum";
 
 const esc = (s: string) => s.replace(/'/g, "''");
 const values = GRAMMAR_CURRICULUM.map(
