@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { DEMO_PROFILE, isDemoMode } from "@/lib/demo";
 import { createClient } from "@/lib/supabase/client";
@@ -92,7 +92,6 @@ function UserAvatar({
 
 export function Navbar() {
   const pathname = usePathname();
-  const router = useRouter();
   const detailsRef = useRef<HTMLDetailsElement>(null);
   const [demo, setDemo] = useState(detectDemo);
   const [profile, setProfile] = useState<Profile | null>(() =>
