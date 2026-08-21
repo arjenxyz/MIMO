@@ -1,11 +1,28 @@
 import { headers } from "next/headers";
 import { RealWordGame } from "@/app/components/RealWordGame";
-import { getLearnedWords } from "@/lib/db";
+import { getLearnedWords, getUserWords } from "@/lib/db";
 import { DEMO_DUE_WORDS, isDemoMode } from "@/lib/demo";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
+
+const DEMO_EXTRA = [
+  "friend",
+  "mother",
+  "father",
+  "water",
+  "school",
+  "please",
+  "because",
+  "beautiful",
+  "together",
+  "important",
+  "people",
+  "believe",
+  "receive",
+  "enough",
+];
 
 export default async function RealWordQuizPage() {
   const headerList = await headers();
@@ -15,7 +32,10 @@ export default async function RealWordQuizPage() {
   let seedWords: string[] = [];
 
   if (demo) {
-    seedWords = DEMO_DUE_WORDS.filter((row) => row.words).map((row) => row.words!.english);
+    seedWords = [
+      ...DEMO_DUE_WORDS.filter((row) => row.words).map((row) => row.words!.english),
+      ...DEMO_EXTRA,
+    ];
   } else {
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
       redirect("/login");
@@ -26,8 +46,15 @@ export default async function RealWordQuizPage() {
     } = await supabase.auth.getUser();
     if (!user) redirect("/login");
 
-    const learned = await getLearnedWords(supabase, user.id, 5);
-    seedWords = learned.filter((row) => row.words).map((row) => row.words!.english);
+    // Prefer actively learned words; fall back to full list.
+    const learned = await getLearnedWords(supabase, user.id, 8);
+    const fromLearned = learned.filter((row) => row.words).map((row) => row.words!.english);
+    if (fromLearned.length >= 6) {
+      seedWords = fromLearned;
+    } else {
+      const all = await getUserWords(supabase, user.id);
+      seedWords = all.filter((row) => row.words).map((row) => row.words!.english);
+    }
   }
 
   return <RealWordGame seedWords={seedWords} />;

@@ -109,10 +109,11 @@ export function RealWordGame({ seedWords }: { seedWords: string[] }) {
       <PracticeExamMain className="flex flex-col items-center justify-center px-4 py-10">
         <PracticeExamCard className="w-full max-w-md text-center">
           <PracticeExamEyebrow>Kelime doğrulama</PracticeExamEyebrow>
-          <h1 className="mt-2 text-2xl font-black text-mimo-title">Gerçek mi, uydurma mı?</h1>
+          <h1 className="mt-2 text-2xl font-black text-mimo-title">Yazım doğru mu?</h1>
           <p className="mt-3 text-sm font-semibold text-mimo-muted">
-            Ekranda İngilizce görünen bir kelime çıkar. Gerçek bir kelime mi, yoksa uydurma mı?
-            Her soru için {QUESTION_SECONDS} saniyen var.
+            Öğrendiğin kelimelerden biri çıkar — bazen doğru, bazen yanlış yazılmış
+            (friend → firiend gibi). Gerçek yazım mı, değil mi? Her soru için{" "}
+            {QUESTION_SECONDS} saniyen var.
           </p>
           <PracticeExamPrimaryButton className="mt-6 w-full" onClick={startRound}>
             Başla
@@ -212,7 +213,7 @@ export function RealWordGame({ seedWords }: { seedWords: string[] }) {
           className={`rounded-2xl border px-5 py-12 text-center shadow-sm transition-colors sm:px-8 ${feedbackTint}`}
         >
           <p className="text-lg font-black text-mimo-title sm:text-xl">
-            Bu gerçek bir İngilizce kelime mi?
+            Bu yazım doğru mu?
           </p>
           <p className="mt-6 text-4xl font-semibold tracking-tight text-mimo-fg sm:text-5xl">
             {current?.word}
@@ -226,11 +227,15 @@ export function RealWordGame({ seedWords }: { seedWords: string[] }) {
             >
               {feedback === "correct"
                 ? current?.isReal
-                  ? "Doğru — gerçek kelime."
-                  : "Doğru — uydurma kelime."
+                  ? "Doğru — yazım doğru."
+                  : `Doğru — yanlış yazılmış. Doğrusu: ${current?.sourceWord}`
                 : feedback === "timeout"
-                  ? `Süre bitti — ${current?.isReal ? "gerçek" : "uydurma"} kelimeydi.`
-                  : `Yanlış — ${current?.isReal ? "gerçek" : "uydurma"} kelimeydi.`}
+                  ? current?.isReal
+                    ? `Süre bitti — doğru yazımdı: ${current?.sourceWord}`
+                    : `Süre bitti — yanlış yazımdı. Doğrusu: ${current?.sourceWord}`
+                  : current?.isReal
+                    ? `Yanlış — yazım doğruydu: ${current?.sourceWord}`
+                    : `Yanlış — yanlış yazımdı. Doğrusu: ${current?.sourceWord}`}
             </p>
           )}
         </section>

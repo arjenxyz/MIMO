@@ -1,101 +1,218 @@
-import { isListedEnglishWord, sampleListedWords } from "@/lib/wordLevel";
-
 export type RealWordItem = {
   id: string;
+  /** Shown on screen — correct spelling or a misspelling. */
   word: string;
   isReal: boolean;
+  /** Learned word this question is based on. */
+  sourceWord: string;
 };
 
-const ONSETS = [
-  "b", "c", "d", "f", "g", "h", "j", "k", "l", "m", "n", "p", "r", "s", "t", "v", "w", "z",
-  "bl", "br", "cl", "cr", "dr", "fl", "fr", "gl", "gr", "pl", "pr", "sc", "sk", "sl", "sm",
-  "sn", "sp", "st", "sw", "tr", "tw", "ch", "sh", "th", "qu",
+const DEMO_FALLBACK = [
+  "friend",
+  "mother",
+  "father",
+  "water",
+  "school",
+  "please",
+  "because",
+  "beautiful",
+  "together",
+  "important",
+  "different",
+  "language",
+  "practice",
+  "remember",
+  "through",
+  "enough",
+  "although",
+  "receive",
+  "believe",
+  "people",
 ];
-const NUCLEI = ["a", "e", "i", "o", "u", "ai", "ea", "ee", "oa", "oo", "ou", "ie", "ue"];
-const CODAS = ["", "b", "d", "g", "k", "m", "n", "p", "t", "ck", "ll", "ss", "st", "nd", "nt", "mp", "ng"];
-const PREFIXES = ["re", "un", "in", "dis", "pre", "over", "mis", "non", "anti", "inter"];
-const ROOTS = [
-  "form", "ject", "duct", "spect", "scrib", "ceive", "tend", "tain", "volve", "clude",
-  "flect", "gress", "pose", "port", "press", "rupt", "sist", "tract", "vert", "lible",
-  "nable", "vable", "mable", "pable",
-];
-const SUFFIXES = [
-  "able", "ible", "tion", "sion", "ment", "ness", "ful", "less", "ous", "ive", "al",
-  "ity", "ence", "ance", "ure", "ize", "ate", "ish", "ary",
-];
 
-function pick<T>(arr: T[]): T {
-  return arr[Math.floor(Math.random() * arr.length)]!;
-}
-
-function syllable(): string {
-  return `${pick(ONSETS)}${pick(NUCLEI)}${pick(CODAS)}`;
-}
-
-/** Plausible English-looking nonce words (not in curated CEFR list). */
-export function makeFakeEnglishWord(blocked: Set<string>): string {
-  for (let attempt = 0; attempt < 40; attempt++) {
-    let word = "";
-    const mode = Math.random();
-    if (mode < 0.45) {
-      word = `${pick(PREFIXES)}${pick(ROOTS)}${pick(SUFFIXES)}`.replace(/(.)\1{2,}/g, "$1$1");
-    } else if (mode < 0.75) {
-      const n = Math.random() < 0.55 ? 2 : 3;
-      word = Array.from({ length: n }, syllable).join("");
-    } else {
-      word = `${syllable()}${pick(SUFFIXES)}`;
-    }
-
-    word = word.toLowerCase().replace(/[^a-z]/g, "");
-    if (word.length < 5 || word.length > 12) continue;
-    if (blocked.has(word) || isListedEnglishWord(word)) continue;
-    // Avoid accidental real dictionary hits on ultra-common short stems
-    if (/^(the|and|for|with|from|that|this|have|were|been)$/.test(word)) continue;
-    return word;
+function shuffle<T>(items: T[]): T[] {
+  const copy = [...items];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j]!, copy[i]!];
   }
-  return "alible";
+  return copy;
+}
+
+function normalizeWord(raw: string): string {
+  return raw.trim().toLowerCase().replace(/[^a-z'-]/g, "");
+}
+
+function swapAdjacent(word: string, i: number): string {
+  if (i < 0 || i >= word.length - 1) return word;
+  const chars = word.split("");
+  [chars[i], chars[i + 1]] = [chars[i + 1]!, chars[i]!];
+  return chars.join("");
+}
+
+function doubleLetter(word: string, i: number): string {
+  if (i < 0 || i >= word.length) return word;
+  return word.slice(0, i + 1) + word[i] + word.slice(i + 1);
+}
+
+function dropLetter(word: string, i: number): string {
+  if (word.length < 4 || i < 0 || i >= word.length) return word;
+  return word.slice(0, i) + word.slice(i + 1);
+}
+
+function replaceVowel(word: string, i: number): string {
+  const vowels = "aeiou";
+  const ch = word[i];
+  if (!ch || !vowels.includes(ch)) return word;
+  const alt = vowels.replace(ch, "");
+  const next = alt[Math.floor(Math.random() * alt.length)]!;
+  return word.slice(0, i) + next + word.slice(i + 1);
+}
+
+function insertLetter(word: string, i: number): string {
+  const extras = "aeiourlnst";
+  const ch = extras[Math.floor(Math.random() * extras.length)]!;
+  const at = Math.max(1, Math.min(i, word.length - 1));
+  return word.slice(0, at) + ch + word.slice(at);
+}
+
+function ieEiSwap(word: string): string | null {
+  if (word.includes("ie")) return word.replace("ie", "ei");
+  if (word.includes("ei")) return word.replace("ei", "ie");
+  return null;
+}
+
+/**
+ * Plausible misspelling of a learned word (e.g. friend → firiend).
+ * Never returns the original spelling; avoids colliding with known words.
+ */
+export function misspellLearnedWord(
+  word: string,
+  blocked: Set<string>
+): string | null {
+  const w = normalizeWord(word);
+  if (w.length < 4) return null;
+
+  const attempts: Array<() => string | null> = [
+    () => {
+      const i = 1 + Math.floor(Math.random() * (w.length - 2));
+      return swapAdjacent(w, i);
+    },
+    () => {
+      const i = Math.floor(Math.random() * w.length);
+      return doubleLetter(w, i);
+    },
+    () => {
+      const i = 1 + Math.floor(Math.random() * (w.length - 2));
+      return dropLetter(w, i);
+    },
+    () => {
+      const vowelIdx = Array.from(w)
+        .map((ch, i) => ("aeiou".includes(ch) ? i : -1))
+        .filter((i) => i > 0 && i < w.length - 1);
+      if (!vowelIdx.length) return null;
+      return replaceVowel(w, vowelIdx[Math.floor(Math.random() * vowelIdx.length)]!);
+    },
+    () => insertLetter(w, 1 + Math.floor(Math.random() * (w.length - 1))),
+    () => ieEiSwap(w),
+    // friend-style: insert vowel after first vowel cluster
+    () => {
+      const m = w.match(/^[bcdfghjklmnpqrstvwxyz]+[aeiou]/);
+      if (!m || m[0].length >= w.length) return null;
+      return w.slice(0, m[0].length) + "i" + w.slice(m[0].length);
+    },
+  ];
+
+  for (let n = 0; n < 24; n++) {
+    const fn = attempts[n % attempts.length]!;
+    const candidate = fn();
+    if (!candidate) continue;
+    const miss = candidate.toLowerCase().replace(/[^a-z'-]/g, "");
+    if (miss.length < 3 || miss.length > w.length + 2) continue;
+    if (miss === w) continue;
+    if (blocked.has(miss)) continue;
+    return miss;
+  }
+
+  // Deterministic last resort: swap middle pair
+  const mid = Math.max(1, Math.floor(w.length / 2) - 1);
+  const fallback = swapAdjacent(w, mid);
+  if (fallback !== w && !blocked.has(fallback)) return fallback;
+  return null;
 }
 
 export function buildRealWordRound(
   userWords: string[],
   questionCount = 12
 ): RealWordItem[] {
-  const blocked = new Set<string>();
-  const realPool: string[] = [];
+  const seen = new Set<string>();
+  const pool: string[] = [];
 
   for (const raw of userWords) {
-    const w = raw.trim().toLowerCase().replace(/[^a-z'-]/g, "");
-    if (!w || w.length < 3 || blocked.has(w)) continue;
-    blocked.add(w);
-    realPool.push(w);
+    const w = normalizeWord(raw);
+    if (!w || w.length < 3 || seen.has(w)) continue;
+    // Prefer spellable single tokens (skip long phrases)
+    if (w.includes(" ") || w.includes("-")) continue;
+    seen.add(w);
+    pool.push(w);
   }
 
-  for (const w of sampleListedWords(80)) {
-    if (blocked.has(w)) continue;
-    blocked.add(w);
-    realPool.push(w);
-  }
-
-  const items: RealWordItem[] = [];
-  const usedFake = new Set<string>();
-
-  for (let i = 0; i < questionCount; i++) {
-    const wantReal = Math.random() < 0.5 && realPool.length > 0;
-    if (wantReal) {
-      const word = realPool[i % realPool.length]!;
-      items.push({ id: `q-${i}-${word}`, word, isReal: true });
-    } else {
-      const fake = makeFakeEnglishWord(new Set([...Array.from(blocked), ...Array.from(usedFake)]));
-      usedFake.add(fake);
-      items.push({ id: `q-${i}-${fake}`, word: fake, isReal: false });
+  // Demo / thin lists: top up with familiar practice words only when needed
+  if (pool.length < 6) {
+    for (const w of DEMO_FALLBACK) {
+      if (seen.has(w)) continue;
+      seen.add(w);
+      pool.push(w);
+      if (pool.length >= 12) break;
     }
   }
 
-  // Shuffle questions
-  for (let i = items.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [items[i], items[j]] = [items[j]!, items[i]!];
+  if (!pool.length) {
+    return DEMO_FALLBACK.slice(0, questionCount).map((word, i) => ({
+      id: `q-${i}-${word}`,
+      word,
+      isReal: true,
+      sourceWord: word,
+    }));
   }
 
-  return items;
+  const blocked = new Set(pool);
+  const items: RealWordItem[] = [];
+  const order = shuffle(pool);
+
+  for (let i = 0; i < questionCount; i++) {
+    const source = order[i % order.length]!;
+    const wantReal = Math.random() < 0.5;
+
+    if (wantReal) {
+      items.push({
+        id: `q-${i}-real-${source}`,
+        word: source,
+        isReal: true,
+        sourceWord: source,
+      });
+      continue;
+    }
+
+    const miss = misspellLearnedWord(source, blocked);
+    if (miss) {
+      blocked.add(miss);
+      items.push({
+        id: `q-${i}-fake-${miss}`,
+        word: miss,
+        isReal: false,
+        sourceWord: source,
+      });
+    } else {
+      // Couldn't misspell (very short) — show correct form instead
+      items.push({
+        id: `q-${i}-real-${source}`,
+        word: source,
+        isReal: true,
+        sourceWord: source,
+      });
+    }
+  }
+
+  return shuffle(items);
 }

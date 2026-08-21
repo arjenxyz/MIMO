@@ -121,7 +121,7 @@ export default async function DashboardPage() {
     },
     {
       id: "word-check",
-      title: "Gerçek mi?",
+      title: "Yazım doğru mu?",
       href: "/quiz/word-check",
       tone: "rose",
       icon: "verify",
