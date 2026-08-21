@@ -3,7 +3,10 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ClozePassage, scoreCloze } from "@/app/components/det/ClozePassage";
-import { PracticeExamExitLink } from "@/app/components/PracticeExamChrome";
+import {
+  PracticeExamStickyBar,
+  PracticeExamStickySpacer,
+} from "@/app/components/PracticeExamChrome";
 import { extractGaps, formatTimer, parseClozePassage } from "@/lib/detCloze";
 import { DEMO_DET_READ_COMPLETE, isDemoMode } from "@/lib/demo";
 import { playFeedback } from "@/lib/feedbackSound";
@@ -330,8 +333,9 @@ export default function ReadCompletePage() {
 
   return (
     <main className="min-h-[100dvh] bg-mimo-bg text-mimo-fg">
-      <header className="fixed inset-x-0 top-0 z-40 border-b border-mimo-border/70 bg-mimo-bg/95 backdrop-blur-md supports-[padding:env(safe-area-inset-top)]:pt-[env(safe-area-inset-top)]">
-        <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 px-4 py-3">
+      <PracticeExamStickyBar
+        maxWidthClass="max-w-3xl"
+        left={
           <div className="flex items-center gap-2">
             <p
               className={`text-2xl font-black tabular-nums tracking-tight ${
@@ -350,11 +354,11 @@ export default function ReadCompletePage() {
               {paused ? "▶" : "❚❚"}
             </button>
           </div>
-          <PracticeExamExitLink href="/" />
-        </div>
-      </header>
+        }
+      />
+      <PracticeExamStickySpacer />
 
-      <div className="mx-auto max-w-3xl px-4 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[calc(4.25rem+env(safe-area-inset-top,0px))]">
+      <div className="mx-auto max-w-3xl px-4 pb-[max(2.5rem,env(safe-area-inset-bottom))]">
         <p className="mb-4 text-center text-sm font-bold text-mimo-fg sm:mb-5 sm:text-lg">
           Type the missing letters to complete the text below.
         </p>

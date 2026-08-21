@@ -3,11 +3,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   PracticeExamCard,
-  PracticeExamExitLink,
   PracticeExamEyebrow,
   PracticeExamGhostLink,
   PracticeExamMain,
   PracticeExamPrimaryButton,
+  PracticeExamStickyBar,
+  PracticeExamStickySpacer,
+  PracticeExamTimerLabel,
 } from "@/app/components/PracticeExamChrome";
 import { formatTimer } from "@/lib/detCloze";
 import { playFeedback } from "@/lib/feedbackSound";
@@ -158,32 +160,17 @@ export function RealWordGame({ seedWords }: { seedWords: string[] }) {
         : "border-mimo-border bg-mimo-card";
 
   return (
-    <PracticeExamMain className="px-4 pb-10 pt-5">
+    <PracticeExamMain className="px-4 pb-10">
+      <PracticeExamStickyBar
+        left={
+          <PracticeExamTimerLabel
+            time={formatTimer(secondsLeft)}
+            urgent={secondsLeft <= 2}
+          />
+        }
+      />
+      <PracticeExamStickySpacer />
       <div className="mx-auto w-full max-w-lg">
-        <div className="mb-5 flex items-center justify-between gap-3 border-b border-mimo-soft pb-3">
-          <div className="flex items-center gap-2 text-sm font-bold text-mimo-muted">
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.25"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden
-            >
-              <circle cx="12" cy="12" r="9" />
-              <path d="M12 7v5l3 2" />
-            </svg>
-            <span className="tabular-nums text-mimo-fg">
-              {formatTimer(secondsLeft)}
-            </span>
-            <span>bu soru için</span>
-          </div>
-          <PracticeExamExitLink href="/" />
-        </div>
-
         <div className="mb-4 flex items-center justify-between text-xs font-black uppercase tracking-wide text-mimo-muted">
           <span>
             {index + 1}/{QUESTION_COUNT}

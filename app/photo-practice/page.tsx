@@ -18,6 +18,7 @@ import { getRandomImage, stabilizePicsumUrl } from "@/lib/image-api";
 type Phase = "ready" | "running" | "evaluating" | "done";
 
 const WRITE_SECONDS = 60;
+const MAX_SKIPS = 3;
 
 const CEFR_COLOR: Record<string, string> = {
   A1: "bg-[#ffe8e8] text-[#b91c1c] border-[#fecaca]",
@@ -49,6 +50,7 @@ export default function PhotoPracticePage() {
   const sessionEvalStartedRef = useRef(false);
   const lastEvalAtRef = useRef(0);
   const [cooldownSec, setCooldownSec] = useState(0);
+  const [skipsLeft, setSkipsLeft] = useState(MAX_SKIPS);
 
   useEffect(() => {
     answerRef.current = answer;
@@ -136,6 +138,21 @@ export default function PhotoPracticePage() {
   }
 
   function resetWithNewImage() {
+    if (skipsLeft <= 0) return;
+    const next = getRandomImage(900, 600);
+    setPhase("ready");
+    setAnswer("");
+    setEvaluation(null);
+    setError("");
+    setSecondsLeft(WRITE_SECONDS);
+    setImageUrl(next);
+    lockedImageRef.current = next;
+    sessionEvalStartedRef.current = false;
+    evaluatingRef.current = false;
+    setSkipsLeft((n) => Math.max(0, n - 1));
+  }
+
+  function nextRoundWithNewImage() {
     const next = getRandomImage(900, 600);
     setPhase("ready");
     setAnswer("");
@@ -152,8 +169,9 @@ export default function PhotoPracticePage() {
 
   return (
     <PracticeExamMain>
-      <div className="mx-auto max-w-3xl px-4 pb-10 pt-5">
+      <div className="mx-auto max-w-3xl px-4 pb-10">
         <PracticeExamTopBar
+          maxWidthClass="max-w-3xl"
           left={
             showTimer ? (
               <p
@@ -220,10 +238,10 @@ export default function PhotoPracticePage() {
                   <button
                     type="button"
                     onClick={resetWithNewImage}
-                    disabled={!imageUrl}
+                    disabled={!imageUrl || skipsLeft <= 0}
                     className="w-full rounded-2xl border border-mimo-soft px-6 py-3 text-sm font-bold text-mimo-muted disabled:opacity-50 sm:w-auto"
                   >
-                    Geç
+                    {skipsLeft > 0 ? `Geç (${skipsLeft})` : "Geç hakkı bitti"}
                   </button>
                 </div>
               </div>
@@ -262,9 +280,10 @@ export default function PhotoPracticePage() {
                     <button
                       type="button"
                       onClick={resetWithNewImage}
-                      className="w-full rounded-2xl border border-mimo-soft px-6 py-3 text-sm font-bold text-mimo-muted sm:w-auto"
+                      disabled={skipsLeft <= 0}
+                      className="w-full rounded-2xl border border-mimo-soft px-6 py-3 text-sm font-bold text-mimo-muted disabled:opacity-50 sm:w-auto"
                     >
-                      Geç
+                      {skipsLeft > 0 ? `Geç (${skipsLeft})` : "Geç hakkı bitti"}
                     </button>
                   </div>
                 )}
@@ -356,7 +375,7 @@ export default function PhotoPracticePage() {
                 {error && <p className="text-center text-sm font-bold text-[#b91c1c]">{error}</p>}
 
                 <div className="flex flex-col gap-2 pt-1">
-                  <PracticeExamPrimaryButton onClick={resetWithNewImage} className="w-full">
+                  <PracticeExamPrimaryButton onClick={nextRoundWithNewImage} className="w-full">
                     Yeni Görsel
                   </PracticeExamPrimaryButton>
                   <PracticeExamGhostLink href="/">Ana sayfa</PracticeExamGhostLink>

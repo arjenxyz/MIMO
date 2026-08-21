@@ -3,11 +3,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   PracticeExamCard,
-  PracticeExamExitLink,
   PracticeExamEyebrow,
   PracticeExamGhostLink,
   PracticeExamMain,
   PracticeExamPrimaryButton,
+  PracticeExamStickyBar,
+  PracticeExamStickySpacer,
 } from "@/app/components/PracticeExamChrome";
 import { formatTimer } from "@/lib/detCloze";
 import { playFeedback } from "@/lib/feedbackSound";
@@ -404,35 +405,37 @@ export function MatchPairsGame({ words }: { words: MatchWord[] }) {
 
   return (
     <PracticeExamMain>
-      <div className="mx-auto flex min-h-screen max-w-lg flex-col px-4 pb-8 pt-4">
-        <div className="mb-4 flex items-center gap-3">
-          <PracticeExamExitLink href="/" />
-
-          <div className="relative min-w-0 flex-1 pt-3">
-            <div className="h-3 overflow-hidden rounded-full bg-[#e2e8f0]">
-              <div
-                className="h-full rounded-full bg-[#ff4b4b] transition-all duration-300"
-                style={{ width: `${Math.max(4, progressPct)}%` }}
-              />
+      <PracticeExamStickyBar
+        maxWidthClass="max-w-lg"
+        left={
+          <div className="flex min-w-0 flex-1 items-center gap-3 pr-2">
+            <div className="relative min-w-0 flex-1 pt-3">
+              <div className="h-3 overflow-hidden rounded-full bg-[#e2e8f0]">
+                <div
+                  className="h-full rounded-full bg-[#ff4b4b] transition-all duration-300"
+                  style={{ width: `${Math.max(4, progressPct)}%` }}
+                />
+              </div>
+              <div className="pointer-events-none absolute inset-x-0 top-0 flex justify-between text-[10px] font-black text-mimo-muted">
+                {MILESTONES.map((m) => (
+                  <span key={m} className="translate-y-[-2px]">
+                    {m}
+                  </span>
+                ))}
+              </div>
             </div>
-            <div className="pointer-events-none absolute inset-x-0 top-0 flex justify-between text-[10px] font-black text-mimo-muted">
-              {MILESTONES.map((m) => (
-                <span key={m} className="translate-y-[-2px]">
-                  {m}
-                </span>
-              ))}
-            </div>
+            <p
+              className={`shrink-0 text-lg font-black tabular-nums ${
+                secondsLeft <= 20 ? "text-[#ff4b4b]" : "text-mimo-title"
+              } ${shuffling ? "opacity-50" : ""}`}
+            >
+              {formatTimer(secondsLeft)}
+            </p>
           </div>
-
-          <p
-            className={`shrink-0 text-lg font-black tabular-nums ${
-              secondsLeft <= 20 ? "text-[#ff4b4b]" : "text-mimo-title"
-            } ${shuffling ? "opacity-50" : ""}`}
-          >
-            {formatTimer(secondsLeft)}
-          </p>
-        </div>
-
+        }
+      />
+      <PracticeExamStickySpacer />
+      <div className="mx-auto flex max-w-lg flex-col px-4 pb-8">
         <h1 className="text-center text-xl font-black text-mimo-fg sm:text-2xl">
           {shuffling ? "Karıştırılıyor…" : "Eşleşen çiftlere dokun"}
         </h1>
