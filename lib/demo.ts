@@ -7,21 +7,14 @@ import type {
   Story,
 } from "@/types";
 
-/** Local development: skip auth and use sample data. */
-export function isDemoMode(hostname?: string | null) {
-  if (process.env.NEXT_PUBLIC_DEMO_MODE === "true") return true;
-  if (process.env.NODE_ENV === "development") return true;
-  const host = (hostname || "").toLowerCase();
-  if (
-    host === "localhost" ||
-    host === "127.0.0.1" ||
-    host === "::1" ||
-    host === "[::1]" ||
-    host.endsWith(".local")
-  ) {
-    return true;
-  }
-  return false;
+/**
+ * Sample-data / skip-auth mode — opt-in only.
+ * Set NEXT_PUBLIC_DEMO_MODE=true for local sample data without login.
+ * Do NOT auto-enable on localhost/development: that makes every account look
+ * identical (same streak, path, words) and hides real Supabase progress.
+ */
+export function isDemoMode(_hostname?: string | null) {
+  return process.env.NEXT_PUBLIC_DEMO_MODE === "true";
 }
 
 export const DEMO_PROFILE: Profile = {

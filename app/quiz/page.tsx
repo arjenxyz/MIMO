@@ -141,9 +141,8 @@ export default function WordQuizPage() {
 
         if (!user) {
           if (!cancelled) {
-            setDemo(true);
-            setItems(DEMO_DUE_WORDS);
             setLoading(false);
+            router.replace("/login");
           }
           return;
         }
@@ -159,10 +158,14 @@ export default function WordQuizPage() {
           }
         }
         if (!cancelled) setItems(due);
-      } catch {
+      } catch (err) {
         if (!cancelled) {
-          setDemo(true);
-          setItems(DEMO_DUE_WORDS);
+          if (localDemo) {
+            setDemo(true);
+            setItems(DEMO_DUE_WORDS);
+          } else {
+            setError(err instanceof Error ? err.message : "Kelimeler yüklenemedi.");
+          }
         }
       } finally {
         if (!cancelled) setLoading(false);
