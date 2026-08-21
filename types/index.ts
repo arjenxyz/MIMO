@@ -1,6 +1,9 @@
 export interface Profile {
   id: string;
   username: string | null;
+  display_name?: string | null;
+  age?: number | null;
+  profile_completed_at?: string | null;
   daily_streak: number;
   last_active: string;
   total_lessons: number;

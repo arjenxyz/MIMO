@@ -54,7 +54,7 @@ export default async function DashboardPage() {
   }
 
   const hour = new Date().getHours();
-  const greeting = greetingFor(hour, profile.username);
+  const greeting = greetingFor(hour, profile.display_name || profile.username);
 
   let primaryHref = "/det/read-complete";
   let primaryLabel = "Başlat";

@@ -184,7 +184,7 @@ export function Navbar() {
     router.refresh();
   }
 
-  const displayName = profile.username || "Öğrenci";
+  const displayName = profile.display_name || profile.username || "Öğrenci";
 
   return (
     <>

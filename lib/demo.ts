@@ -26,7 +26,10 @@ export function isDemoMode(hostname?: string | null) {
 
 export const DEMO_PROFILE: Profile = {
   id: "00000000-0000-4000-8000-000000000001",
-  username: "Demo Öğrenci",
+  username: "demo_ogrenci",
+  display_name: "Demo Öğrenci",
+  age: 18,
+  profile_completed_at: new Date().toISOString(),
   daily_streak: 7,
   last_active: new Date().toISOString().slice(0, 10),
   total_lessons: 28,
