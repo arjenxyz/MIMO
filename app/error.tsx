@@ -1,9 +1,14 @@
 "use client";
 
 import { useEffect } from "react";
+import {
+  StatusPrimaryButton,
+  StatusScreen,
+  StatusSecondaryLink,
+} from "@/app/components/StatusScreen";
 import { reportClientError } from "@/lib/report-client-error";
 
-export default function GlobalError({
+export default function Error({
   error,
   reset,
 }: {
@@ -24,18 +29,13 @@ export default function GlobalError({
   }, [error]);
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-[#fff8f1] px-4 text-center">
-      <h1 className="text-3xl font-black text-[#1f2937]">Bir şeyler ters gitti</h1>
-      <p className="mt-2 max-w-md font-bold text-[#6b7280]">
-        {error.message || "Beklenmeyen bir sayfa hatası oluştu."}
-      </p>
-      <button
-        type="button"
-        onClick={reset}
-        className="mt-6 rounded-full bg-[#fd860a] px-6 py-3 text-sm font-black text-white shadow-[0_4px_0_#d66f08]"
-      >
-        Tekrar dene
-      </button>
-    </main>
+    <StatusScreen
+      code="!"
+      eyebrow="Bir aksilik oldu"
+      title="Bir şeyler ters gitti"
+      description="Beklenmeyen bir hata oluştu. Tekrar deneyebilir veya ana sayfaya dönebilirsin."
+      primary={<StatusPrimaryButton onClick={reset}>Tekrar dene</StatusPrimaryButton>}
+      secondary={<StatusSecondaryLink href="/">Ana sayfaya dön</StatusSecondaryLink>}
+    />
   );
 }
