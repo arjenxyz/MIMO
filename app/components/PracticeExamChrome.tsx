@@ -130,7 +130,7 @@ export function PracticeExamStickyBar({
       <div
         className={`mx-auto flex w-full items-center justify-between gap-3 px-4 py-3 ${maxWidthClass}`}
       >
-        <div className="min-w-0">{left}</div>
+        <div className="min-w-0 flex-1">{left}</div>
         <PracticeExamExitLink href={exitHref} label={exitLabel} onClick={onExitClick} />
       </div>
       {below}

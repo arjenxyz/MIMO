@@ -415,24 +415,32 @@ export function MatchPairsGame({ words }: { words: MatchWord[] }) {
       <PracticeExamStickyBar
         maxWidthClass="max-w-lg"
         left={
-          <div className="flex min-w-0 flex-1 items-center gap-3 pr-2">
-            <div className="relative min-w-0 flex-1 pt-3">
-              <div className="h-3 overflow-hidden rounded-full bg-[#e2e8f0]">
-                <div
-                  className="h-full rounded-full bg-[#ff4b4b] transition-all duration-300"
-                  style={{ width: `${Math.max(4, progressPct)}%` }}
-                />
-              </div>
-              <div className="pointer-events-none absolute inset-x-0 top-0 flex justify-between text-[10px] font-black text-mimo-muted">
+          <div className="flex w-full min-w-0 items-end gap-3 pr-1">
+            <div className="min-w-0 flex-1">
+              <div className="mb-1 flex items-center justify-between gap-2 text-[10px] font-black tabular-nums text-mimo-muted">
                 {MILESTONES.map((m) => (
-                  <span key={m} className="translate-y-[-2px]">
+                  <span
+                    key={m}
+                    className={matches >= m ? "text-[#ff4b4b]" : undefined}
+                  >
                     {m}
                   </span>
                 ))}
               </div>
+              <div className="h-2.5 overflow-hidden rounded-full bg-[#e2e8f0]">
+                <div
+                  className="h-full rounded-full bg-[#ff4b4b] transition-all duration-300"
+                  style={{ width: `${Math.max(4, progressPct)}%` }}
+                  role="progressbar"
+                  aria-valuenow={matches}
+                  aria-valuemin={0}
+                  aria-valuemax={MILESTONES[MILESTONES.length - 1]}
+                  aria-label={`${matches} eşleşme`}
+                />
+              </div>
             </div>
             <p
-              className={`shrink-0 text-lg font-black tabular-nums ${
+              className={`shrink-0 pb-px text-lg font-black tabular-nums leading-none ${
                 secondsLeft <= 20 ? "text-[#ff4b4b]" : "text-mimo-title"
               } ${shuffling ? "opacity-50" : ""}`}
             >
