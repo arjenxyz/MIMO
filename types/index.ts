@@ -1,8 +1,6 @@
 export interface Profile {
   id: string;
   username: string | null;
-  xp: number;
-  level: number;
   daily_streak: number;
   last_active: string;
   total_lessons: number;

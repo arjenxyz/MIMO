@@ -12,7 +12,7 @@ import type {
   Story,
   Word,
 } from "@/types";
-import { calculateSM2, calculateXP, checkLevelUp } from "@/lib/srs";
+import { calculateSM2 } from "@/lib/srs";
 import {
   englishKeysMatch,
   englishLookupVariants,
@@ -70,34 +70,6 @@ export async function syncDailyStreak(
 
   if (error) throw error;
   return data as Profile;
-}
-
-export async function updateProfileXP(
-  supabase: SupabaseClient,
-  profile: Profile,
-  gainedXP: number
-): Promise<{ profile: Profile; leveledUp: boolean; previousLevel: number }> {
-  const previousLevel = profile.level;
-  const newXP = profile.xp + gainedXP;
-  const newLevel = checkLevelUp(newXP);
-
-  const { data, error } = await supabase
-    .from("profiles")
-    .update({
-      xp: newXP,
-      level: newLevel,
-      total_lessons: profile.total_lessons + 1,
-    })
-    .eq("id", profile.id)
-    .select("*")
-    .single();
-
-  if (error) throw error;
-  return {
-    profile: data as Profile,
-    leveledUp: newLevel > previousLevel,
-    previousLevel,
-  };
 }
 
 export async function getDueWords(
@@ -526,18 +498,12 @@ export async function claimDailyQuestBonus(
   supabase: SupabaseClient,
   profile: Profile,
   quests: DailyQuests
-): Promise<{ profile: Profile; claimed: boolean; leveledUp: boolean } | null> {
+): Promise<{ profile: Profile; claimed: boolean } | null> {
   if (!quests.allComplete || quests.bonusClaimed) return null;
-
-  const previousLevel = profile.level;
-  const newXP = profile.xp + 50;
-  const newLevel = checkLevelUp(newXP);
 
   const { data, error } = await supabase
     .from("profiles")
     .update({
-      xp: newXP,
-      level: newLevel,
       daily_quest_bonus_date: todayISO(),
     })
     .eq("id", profile.id)
@@ -548,18 +514,13 @@ export async function claimDailyQuestBonus(
   return {
     profile: data as Profile,
     claimed: true,
-    leveledUp: newLevel > previousLevel,
   };
 }
 
-export async function getStoriesForLevel(
-  supabase: SupabaseClient,
-  level: number
-): Promise<Story[]> {
+export async function getStories(supabase: SupabaseClient): Promise<Story[]> {
   const { data, error } = await supabase
     .from("stories")
     .select("*")
-    .lte("level", Math.max(1, Math.min(level, 10)))
     .order("level", { ascending: true })
     .order("id", { ascending: true });
 
@@ -707,13 +668,3 @@ export async function recordSoundAnswer(
   if (error) throw error;
   return { mastery: data.mastery as number };
 }
-
-export async function awardSoundSessionXp(
-  supabase: SupabaseClient,
-  profile: Profile,
-  amount = 10
-): Promise<{ profile: Profile; leveledUp: boolean; previousLevel: number }> {
-  return updateProfileXP(supabase, profile, amount);
-}
-
-export { calculateXP };

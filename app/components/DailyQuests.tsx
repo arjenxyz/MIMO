@@ -9,7 +9,6 @@ const ITEMS = [
     key: "words" as const,
     title: "5 kelime tekrar et",
     href: "/quiz",
-    xp: "+10 XP",
     accent: "#1cb0f6",
     icon: "📘",
   },
@@ -17,7 +16,6 @@ const ITEMS = [
     key: "grammar" as const,
     title: "3 gramer sorusu çöz",
     href: "/quiz/grammar",
-    xp: "+15 XP",
     accent: "#ce82ff",
     icon: "🧩",
   },
@@ -25,7 +23,6 @@ const ITEMS = [
     key: "stories" as const,
     title: "1 hikaye oku",
     href: "/reading",
-    xp: "+20 XP",
     accent: "#ff9600",
     icon: "📖",
   },
@@ -33,7 +30,6 @@ const ITEMS = [
     key: "sounds" as const,
     title: "1 ses oturumu yap",
     href: "/sounds",
-    xp: "+10 XP",
     accent: "#00cd9c",
     icon: "🎧",
   },
@@ -73,7 +69,7 @@ export function DailyQuests({
           <div>
             <h2 className="text-lg font-black text-white">Günlük Görevler</h2>
             <p className="text-xs font-bold text-duo-muted">
-              {completedCount}/{ITEMS.length} tamamlandı · hepsi +50 XP
+              {completedCount}/{ITEMS.length} tamamlandı
             </p>
           </div>
           {quests.allComplete ? (
@@ -96,7 +92,7 @@ export function DailyQuests({
 
       {showBonus && (
         <div className="mx-4 mt-4 rounded-2xl border border-[#58cc02]/30 bg-[#58cc02]/10 px-4 py-3 text-center text-sm font-extrabold text-[#58cc02]">
-          Günlük görevler tamam! +50 XP bonus
+          Günlük görevler tamam!
         </div>
       )}
 
@@ -118,18 +114,13 @@ export function DailyQuests({
                   {done ? "✓" : item.icon}
                 </span>
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-center justify-between gap-2">
-                    <p
-                      className={`truncate text-sm font-extrabold ${
-                        done ? "text-duo-muted line-through" : "text-white"
-                      }`}
-                    >
-                      {item.title}
-                    </p>
-                    <span className="shrink-0 text-[10px] font-black uppercase tracking-wide text-[#ffc800]">
-                      {item.xp}
-                    </span>
-                  </div>
+                  <p
+                    className={`truncate text-sm font-extrabold ${
+                      done ? "text-duo-muted line-through" : "text-white"
+                    }`}
+                  >
+                    {item.title}
+                  </p>
                   <div className="mt-1.5 flex items-center gap-2">
                     <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-duo-border">
                       <div

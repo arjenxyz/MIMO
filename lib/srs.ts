@@ -1,5 +1,5 @@
 import { addDays, format } from "date-fns";
-import type { ModuleType, Quality, SM2Result } from "@/types";
+import type { Quality, SM2Result } from "@/types";
 
 /**
  * SM-2 spaced repetition adapted for quality 0–3
@@ -45,20 +45,6 @@ export function calculateSM2(
     interval: nextInterval,
     nextReviewDate,
   };
-}
-
-export function calculateXP(quality: number, moduleType: ModuleType): number {
-  if (moduleType === "story") return 20;
-  if (quality <= 1) return 1;
-  return 10;
-}
-
-export function checkLevelUp(currentXP: number): number {
-  return Math.floor(currentXP / 100) + 1;
-}
-
-export function xpInCurrentLevel(currentXP: number): number {
-  return currentXP % 100;
 }
 
 export function normalizeAnswer(value: string): string {

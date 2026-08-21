@@ -33,7 +33,6 @@ export function SoundListenQuiz() {
   const [checked, setChecked] = useState(false);
   const [correctCount, setCorrectCount] = useState(0);
   const [done, setDone] = useState(false);
-  const [xpAwarded, setXpAwarded] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -84,13 +83,11 @@ export function SoundListenQuiz() {
 
   async function goNext() {
     if (index + 1 >= questions.length) {
-      const res = await fetch("/api/sounds/progress", {
+      await fetch("/api/sounds/progress", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ completeSession: true }),
       });
-      const data = await res.json();
-      setXpAwarded(data.xpAwarded ?? 10);
       setDone(true);
       window.dispatchEvent(new Event("profile-updated"));
       return;
@@ -143,7 +140,7 @@ export function SoundListenQuiz() {
             <PracticeExamEyebrow>Listen and Select</PracticeExamEyebrow>
             <h1 className="mt-3 text-2xl font-black">Well done!</h1>
             <p className="mt-2 text-sm font-semibold text-mimo-muted">
-              {correctCount}/{questions.length} doğru · +{xpAwarded} XP
+              {correctCount}/{questions.length} doğru
             </p>
             <div className="mt-6 flex flex-col gap-2">
               <PracticeExamGhostLink href="/sounds">Seslere dön</PracticeExamGhostLink>

@@ -10,13 +10,15 @@ create extension if not exists "pgcrypto";
 create table if not exists public.profiles (
   id uuid primary key references auth.users (id) on delete cascade,
   username text,
-  xp integer not null default 0,
-  level integer not null default 1,
   daily_streak integer not null default 0,
   last_active date not null default current_date,
   total_lessons integer not null default 0,
   daily_quest_bonus_date date
 );
+
+-- Remove legacy XP / profile-level columns if an older schema still has them.
+alter table public.profiles drop column if exists xp;
+alter table public.profiles drop column if exists level;
 
 create table if not exists public.words (
   id bigserial primary key,

@@ -8,7 +8,7 @@ const TIPS = [
   "Minimal çiftler (ship/sheep) kulağını keskinleştirir.",
   "Sesleri dinlerken gözlerini kapatmayı dene.",
   "Yanlış cevap da öğrenmedir — tekrar et, kalıcı olur.",
-  "MIMO’da düzenli seri, seviye atlamayı hızlandırır.",
+  "MIMO’da düzenli seri, öğrenmeyi hızlandırır.",
   "Telaffuz için yüksek sesle tekrar etmek işe yarar.",
 ];
 

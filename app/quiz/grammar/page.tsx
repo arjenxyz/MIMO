@@ -2,7 +2,6 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { LevelUpModal } from "@/app/components/LevelUpModal";
 import {
   PracticeExamCard,
   PracticeExamEyebrow,
@@ -15,12 +14,10 @@ import { QualityButtons } from "@/app/components/QualityButtons";
 import {
   assignNewGrammar,
   getDueGrammar,
-  getProfile,
   updateGrammarProgress,
-  updateProfileXP,
 } from "@/lib/db";
 import { DEMO_DUE_GRAMMAR, isDemoMode } from "@/lib/demo";
-import { answersMatch, calculateXP } from "@/lib/srs";
+import { answersMatch } from "@/lib/srs";
 import { createClient } from "@/lib/supabase/client";
 import type { DueGrammarItem, Quality } from "@/types";
 
@@ -34,7 +31,6 @@ export default function GrammarQuizPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const [levelUp, setLevelUp] = useState<number | null>(null);
   const [finished, setFinished] = useState(false);
   const [demo, setDemo] = useState(false);
 
@@ -98,15 +94,7 @@ export default function GrammarQuizPage() {
         } = await supabase.auth.getUser();
         if (!user) return;
         await updateGrammarProgress(supabase, current, quality, correct);
-        const profile = await getProfile(supabase, user.id);
-        if (profile) {
-          const xp = calculateXP(quality, "grammar");
-          const result = await updateProfileXP(supabase, profile, xp);
-          window.dispatchEvent(new Event("profile-updated"));
-          if (result.leveledUp) {
-            setLevelUp(result.profile.level);
-          }
-        }
+        window.dispatchEvent(new Event("profile-updated"));
       }
       const nextIndex = index + 1;
       if (nextIndex >= items.length) {
@@ -232,7 +220,6 @@ export default function GrammarQuizPage() {
         </PracticeExamCard>
       </div>
 
-      {levelUp !== null && <LevelUpModal level={levelUp} onClose={() => setLevelUp(null)} />}
     </PracticeExamMain>
   );
 }

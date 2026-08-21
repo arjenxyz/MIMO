@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { LevelUpModal } from "@/app/components/LevelUpModal";
 import {
   PracticeExamCard,
   PracticeExamEyebrow,
@@ -16,12 +15,9 @@ import { WordImage } from "@/app/components/WordImage";
 import {
   assignNewWords,
   getDueWords,
-  getProfile,
-  updateProfileXP,
   updateWordProgress,
 } from "@/lib/db";
 import { DEMO_DUE_WORDS, isDemoMode } from "@/lib/demo";
-import { calculateXP } from "@/lib/srs";
 import { playWordAudio } from "@/lib/speak";
 import { createClient } from "@/lib/supabase/client";
 import type { DueWordItem, Quality } from "@/types";
@@ -108,7 +104,6 @@ export default function WordQuizPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const [levelUp, setLevelUp] = useState<number | null>(null);
   const [finished, setFinished] = useState(false);
   const [demo, setDemo] = useState(false);
   const spokenForId = useRef<number | null>(null);
@@ -200,13 +195,7 @@ export default function WordQuizPage() {
         } = await supabase.auth.getUser();
         if (!user) return;
         await updateWordProgress(supabase, current, quality, correct);
-        const profile = await getProfile(supabase, user.id);
-        if (profile) {
-          const xp = calculateXP(quality, "word");
-          const result = await updateProfileXP(supabase, profile, xp);
-          window.dispatchEvent(new Event("profile-updated"));
-          if (result.leveledUp) setLevelUp(result.profile.level);
-        }
+        window.dispatchEvent(new Event("profile-updated"));
       }
       const nextIndex = index + 1;
       if (nextIndex >= items.length) {
@@ -383,7 +372,6 @@ export default function WordQuizPage() {
         </div>
       )}
 
-      {levelUp !== null && <LevelUpModal level={levelUp} onClose={() => setLevelUp(null)} />}
     </PracticeExamMain>
   );
 }

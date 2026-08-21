@@ -14,7 +14,7 @@ const nunito = Nunito({
 const APP_NAME = "MIMO";
 const APP_TITLE = "MIMO — İngilizce Öğren";
 const APP_DESCRIPTION =
-  "Spaced repetition ile her gün seviye atlayan oyunlaştırılmış İngilizce platformu.";
+  "Spaced repetition ile her gün pratik yapan İngilizce öğrenme platformu.";
 
 export const metadata: Metadata = {
   applicationName: APP_NAME,

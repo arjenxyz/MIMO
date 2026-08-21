@@ -3,10 +3,9 @@
 import { FormEvent, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ContinueButton } from "@/app/components/ContinueButton";
-import { LevelUpModal } from "@/app/components/LevelUpModal";
-import { getProfile, saveStoryResult, updateProfileXP } from "@/lib/db";
+import { saveStoryResult } from "@/lib/db";
 import { DEMO_STORIES, isDemoMode } from "@/lib/demo";
-import { answersMatch, calculateXP } from "@/lib/srs";
+import { answersMatch } from "@/lib/srs";
 import { createClient } from "@/lib/supabase/client";
 import type { Story } from "@/types";
 
@@ -19,7 +18,6 @@ export default function StoryDetailPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const [levelUp, setLevelUp] = useState<number | null>(null);
   const [demo, setDemo] = useState(false);
 
   useEffect(() => {
@@ -70,15 +68,7 @@ export default function StoryDetailPage() {
           return;
         }
         await saveStoryResult(supabase, user.id, story.id, result);
-        const profile = await getProfile(supabase, user.id);
-        if (profile) {
-          const xp = calculateXP(3, "story");
-          const updated = await updateProfileXP(supabase, profile, xp);
-          window.dispatchEvent(new Event("profile-updated"));
-          if (updated.leveledUp) {
-            setLevelUp(updated.profile.level);
-          }
-        }
+        window.dispatchEvent(new Event("profile-updated"));
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Sonuç kaydedilemedi.");
@@ -98,46 +88,44 @@ export default function StoryDetailPage() {
   if (!story) {
     return (
       <main className="mx-auto max-w-lg px-4 py-10 text-center">
-        <h1 className="text-2xl font-black">Hikaye bulunamadı.</h1>
+        <h1 className="text-2xl font-black">Hikaye bulunamadı</h1>
         <div className="mt-6">
-          <ContinueButton href="/reading">Geri Dön</ContinueButton>
+          <ContinueButton href="/reading">Okumaya dön</ContinueButton>
         </div>
       </main>
     );
   }
 
-  const questions = [story.question1, story.question2, story.question3];
   const expected = [story.answer1, story.answer2, story.answer3];
 
   return (
-    <main className="mx-auto min-h-screen max-w-3xl px-4 py-6 pb-28 lg:pb-6">
-      <p className="text-sm font-black uppercase text-duo-orange">Level {story.level}</p>
+    <main className="mx-auto max-w-2xl px-4 py-6 pb-28 lg:pb-6">
+      <p className="text-sm font-black uppercase text-duo-orange">Seviye {story.level}</p>
       <h1 className="mt-1 text-3xl font-black">{story.title}</h1>
-      <article className="mt-5 whitespace-pre-wrap rounded-3xl border-2 border-duo-border bg-duo-card p-6 text-lg leading-8 font-semibold">
+      <p className="mt-4 whitespace-pre-wrap text-base font-semibold leading-relaxed text-duo-muted">
         {story.content}
-      </article>
+      </p>
 
-      <form onSubmit={onSubmit} className="mt-6 space-y-4 rounded-3xl border-2 border-duo-border bg-duo-card p-6">
-        <h2 className="text-xl font-black">3 soruyu cevapla</h2>
-        {questions.map((question, i) => (
-          <label key={question} className="block">
-            <span className="font-extrabold">
-              {i + 1}. {question}
-            </span>
+      <form onSubmit={onSubmit} className="mt-8 space-y-4">
+        {[story.question1, story.question2, story.question3].map((q, i) => (
+          <label key={q} className="block">
+            <span className="text-sm font-extrabold text-white">{q}</span>
             <input
               value={answers[i]}
+              onChange={(e) => {
+                const next = [...answers];
+                next[i] = e.target.value;
+                setAnswers(next);
+              }}
               disabled={score !== null}
-              onChange={(e) =>
-                setAnswers((prev) => {
-                  const next = [...prev];
-                  next[i] = e.target.value;
-                  return next;
-                })
-              }
-              className="mt-2 w-full rounded-2xl border-2 border-duo-border bg-duo-bg px-4 py-3 font-bold outline-none focus:border-duo-orange"
+              className="mt-2 w-full rounded-2xl border-2 border-duo-border bg-duo-card px-4 py-3 font-bold outline-none focus:border-duo-orange"
             />
             {score !== null && (
-              <p className={`mt-1 text-sm font-bold ${answersMatch(answers[i], expected[i]) ? "text-duo-green" : "text-red-400"}`}>
+              <p
+                className={`mt-1 text-sm font-bold ${
+                  answersMatch(answers[i], expected[i]) ? "text-duo-green" : "text-red-400"
+                }`}
+              >
                 Doğru cevap: {expected[i]}
               </p>
             )}
@@ -145,21 +133,23 @@ export default function StoryDetailPage() {
         ))}
 
         {score === null ? (
-          <ContinueButton type="submit" disabled={saving || answers.some((value) => !value.trim())} variant="orange">
+          <ContinueButton
+            type="submit"
+            disabled={saving || answers.some((value) => !value.trim())}
+            variant="orange"
+          >
             {saving ? "Kaydediliyor..." : "Cevapları Kontrol Et"}
           </ContinueButton>
         ) : (
           <div className="space-y-4">
             <p className="rounded-2xl bg-duo-orange/15 px-4 py-3 text-center font-black text-duo-orange">
-              Skor: {score}/3 · +20 XP kazandın
+              Skor: {score}/3
             </p>
             <ContinueButton href="/">Ana Sayfaya Dön</ContinueButton>
           </div>
         )}
         {error && <p className="text-sm font-bold text-red-400">{error}</p>}
       </form>
-
-      {levelUp !== null && <LevelUpModal level={levelUp} onClose={() => setLevelUp(null)} />}
     </main>
   );
 }

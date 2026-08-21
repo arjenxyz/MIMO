@@ -12,7 +12,7 @@ const STEPS = [
   },
   {
     title: "Hadi başlayalım!",
-    subtitle: "Her gün pratik yap, kesinlikle seviye atla.",
+    subtitle: "Her gün pratik yap, kelimeleri kalıcı hale getir.",
   },
   {
     title: "Hazırsan",

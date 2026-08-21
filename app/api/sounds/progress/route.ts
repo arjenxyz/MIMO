@@ -1,9 +1,5 @@
 import { NextResponse } from "next/server";
-import {
-  awardSoundSessionXp,
-  getProfile,
-  recordSoundAnswer,
-} from "@/lib/db";
+import { recordSoundAnswer } from "@/lib/db";
 import { createClient } from "@/lib/supabase/server";
 
 export async function POST(request: Request) {
@@ -29,23 +25,10 @@ export async function POST(request: Request) {
       mastery = result.mastery;
     }
 
-    let xpAwarded = 0;
-    let leveledUp = false;
-    let profile = await getProfile(supabase, user.id);
-
-    if (body.completeSession && profile) {
-      const award = await awardSoundSessionXp(supabase, profile, 10);
-      profile = award.profile;
-      xpAwarded = 10;
-      leveledUp = award.leveledUp;
-    }
-
     return NextResponse.json({
       ok: true,
       mastery,
-      xpAwarded,
-      leveledUp,
-      profile,
+      sessionComplete: Boolean(body.completeSession),
     });
   } catch (error) {
     return NextResponse.json(

@@ -4,7 +4,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "MIMO — İngilizce Öğren",
     short_name: "MIMO",
-    description: "Spaced repetition ile her gün seviye atlayan oyunlaştırılmış İngilizce platformu.",
+    description: "Spaced repetition ile her gün pratik yapan İngilizce öğrenme platformu.",
     start_url: "/",
     display: "standalone",
     orientation: "portrait",
