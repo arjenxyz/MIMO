@@ -90,9 +90,9 @@ export default function StatusPage() {
             Keep-alive nabız
           </h1>
           <p className="mt-3 text-sm font-semibold leading-relaxed text-mimo-muted">
-            Günlük cron, kimse siteye girmese bile Supabase projesine hafif bir istek atarak
-            ücretsiz planın uykuya geçmesini engeller. Endpoint{" "}
-            <span className="font-black text-mimo-fg">CRON_SECRET</span> ile korunur.
+            cron-job.org üzerinden günlük istek, kimse siteye girmese bile Supabase
+            projesine hafif bir ping atarak ücretsiz planın uykuya geçmesini engeller.
+            Endpoint <span className="font-black text-mimo-fg">CRON_SECRET</span> ile korunur.
           </p>
 
           <div
@@ -134,11 +134,19 @@ export default function StatusPage() {
 
           <ul className="mt-6 space-y-2 text-left text-sm font-semibold text-mimo-muted">
             <li className="rounded-xl bg-mimo-surface px-3 py-2">
-              Cron: <span className="text-mimo-fg">her gün 05:00 UTC</span> →{" "}
-              <code className="text-xs text-[#1cb0f6]">/api/cron/keepalive</code>
+              Servis: <span className="text-mimo-fg">cron-job.org</span> · günde 1 kez
             </li>
             <li className="rounded-xl bg-mimo-surface px-3 py-2">
-              Auth: <code className="text-xs text-[#1cb0f6]">Authorization: Bearer CRON_SECRET</code>
+              URL:{" "}
+              <code className="break-all text-xs text-[#1cb0f6]">
+                https://SENIN-DOMAIN/api/cron/keepalive
+              </code>
+            </li>
+            <li className="rounded-xl bg-mimo-surface px-3 py-2">
+              Header:{" "}
+              <code className="break-all text-xs text-[#1cb0f6]">
+                Authorization: Bearer CRON_SECRET
+              </code>
             </li>
             <li className="rounded-xl bg-mimo-surface px-3 py-2">
               SQL: <code className="text-xs text-[#1cb0f6]">schema-keepalive.sql</code>

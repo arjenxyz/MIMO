@@ -16,9 +16,9 @@ function isAuthorized(request: NextRequest) {
 }
 
 /**
- * Vercel Cron keep-alive — pings Supabase so the free project stays awake.
+ * External cron keep-alive (e.g. cron-job.org) — pings Supabase so the free project stays awake.
  * Auth: Authorization: Bearer <CRON_SECRET>
- * Schedule: vercel.json → daily 05:00 UTC
+ * Suggested schedule: once daily (e.g. 08:00 Europe/Istanbul)
  */
 export async function GET(request: NextRequest) {
   if (!isAuthorized(request)) return unauthorized();
