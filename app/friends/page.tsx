@@ -31,23 +31,25 @@ export default async function FriendsPage() {
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(253,134,10,0.16),_transparent_52%),radial-gradient(ellipse_at_bottom,_rgba(124,58,237,0.08),_transparent_48%)]"
       />
 
-      <div className="relative z-10 mx-auto flex w-full max-w-md flex-1 flex-col px-4 pb-10 pt-10">
-        <div className="text-center">
+      <div className="relative z-10 mx-auto flex w-full max-w-md flex-1 flex-col px-4 pb-10 pt-5">
+        <div className="flex items-center gap-3">
           <Image
             src="/mimo-avatar.png"
-            alt="MIMO"
-            width={88}
-            height={88}
-            className="mx-auto h-20 w-20 rounded-full object-cover ring-4 ring-[#fd860a]/30"
+            alt=""
+            width={44}
+            height={44}
+            className="h-11 w-11 shrink-0 rounded-full object-cover ring-2 ring-[#fd860a]/35"
             priority
           />
-          <h1 className="mt-4 text-3xl font-black tracking-tight text-mimo-title">Arkadaşlar</h1>
-          <p className="mt-1.5 text-sm font-semibold text-mimo-muted">
-            Ekle, onayla, birlikte ilerle.
-          </p>
+          <div className="min-w-0 text-left">
+            <h1 className="text-lg font-black tracking-tight text-mimo-title">Arkadaşlar</h1>
+            <p className="text-xs font-semibold text-mimo-muted">
+              Ekle, onayla, birlikte ilerle.
+            </p>
+          </div>
         </div>
 
-        <section className="mt-8 rounded-3xl border border-mimo-border bg-mimo-card px-4 py-4 shadow-[0_8px_0_rgba(15,23,42,0.06)] dark:shadow-[0_8px_0_rgba(0,0,0,0.35)]">
+        <section className="mt-5 rounded-3xl border border-mimo-border bg-mimo-card px-4 py-4 shadow-[0_8px_0_rgba(15,23,42,0.06)] dark:shadow-[0_8px_0_rgba(0,0,0,0.35)]">
           <FriendsPanel demo={demo} />
         </section>
 
