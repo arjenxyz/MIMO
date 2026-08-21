@@ -347,15 +347,22 @@ export function MatchPairsGame({ words }: { words: MatchWord[] }) {
 
   if (phase === "ready") {
     return (
-      <PracticeExamMain>
-        <div className="mx-auto max-w-lg px-4 py-8">
+      <PracticeExamMain className="flex min-h-[100dvh] flex-col">
+        <div className="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center px-4 py-8">
           <PracticeExamCard className="text-center">
             <PracticeExamEyebrow>Hızlı Eşleştir</PracticeExamEyebrow>
-            <h1 className="mt-3 text-2xl font-black text-mimo-title">Eşleşen çiftlere dokun</h1>
-            <p className="mt-2 text-sm font-semibold text-mimo-muted">
-              Sol İngilizce, sağ Türkçe. Her 30 saniyede tahta karışır — süre durur, kombon kalır.
+            <h1 className="mt-4 text-2xl font-black tracking-tight text-mimo-title sm:text-3xl">
+              Eşleşen çiftlere dokun
+            </h1>
+            <p className="mx-auto mt-3 max-w-sm text-sm font-semibold leading-relaxed text-mimo-muted">
+              Solda İngilizce, sağda Türkçe. Doğru çifti seç.
             </p>
-            <p className="mt-3 text-xs font-bold text-mimo-muted">Havuz: {pool.length} kelime</p>
+            <p className="mt-2 text-sm font-semibold leading-relaxed text-mimo-muted">
+              Her 30 saniyede tahta karışır; süre durur, komboun kalır.
+            </p>
+            <p className="mt-5 text-xs font-bold uppercase tracking-[0.12em] text-mimo-muted">
+              Havuz · {pool.length} kelime
+            </p>
             <div className="mt-6 flex flex-col items-center gap-2">
               <PracticeExamPrimaryButton variant="green" onClick={startGame}>
                 Başlat
@@ -478,11 +485,6 @@ export function MatchPairsGame({ words }: { words: MatchWord[] }) {
             </div>
           )}
         </div>
-
-        <p className="mt-4 text-center text-xs font-semibold text-mimo-muted">
-          {matches} eşleşme · hedef {MILESTONES.join(" / ")}
-          {!shuffling && ` · karışmaya ${shuffleIn}s`}
-        </p>
       </div>
     </PracticeExamMain>
   );
