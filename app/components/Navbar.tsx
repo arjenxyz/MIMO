@@ -293,6 +293,14 @@ export function Navbar() {
                 >
                   Kelime ekle
                 </Link>
+                <Link
+                  href="/status"
+                  role="menuitem"
+                  className="block border-b border-mimo-border px-4 py-3 text-sm font-extrabold text-mimo-fg hover:bg-mimo-surface"
+                  onClick={() => detailsRef.current?.removeAttribute("open")}
+                >
+                  Sistem durumu
+                </Link>
                 <button
                   type="button"
                   role="menuitem"
