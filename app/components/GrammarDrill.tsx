@@ -62,13 +62,29 @@ export function GrammarDrill({ topic }: { topic: GrammarTopicDetail }) {
         <PracticeExamStickyBar
           maxWidthClass="max-w-lg"
           left={<p className="text-sm font-extrabold text-mimo-title">{topic.title}</p>}
+          exitHref="/grammar"
+          exitLabel="Konular"
         />
         <PracticeExamStickySpacer />
-        <div className="mx-auto max-w-lg">
+        <div className="mx-auto max-w-lg space-y-3">
           <PracticeExamCard>
-            <p className="text-center text-sm font-bold text-mimo-muted">Bu konuda henüz soru yok.</p>
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#ce82ff]">Kural özeti</p>
+            <p className="mt-2 text-sm font-semibold leading-relaxed text-mimo-fg">{topic.summary}</p>
+            {topic.tip_tr && (
+              <p className="mt-3 rounded-xl bg-mimo-surface px-3 py-2 text-sm font-bold text-mimo-title">
+                {topic.tip_tr}
+              </p>
+            )}
+            {topic.example && (
+              <p className="mt-3 text-sm font-semibold italic text-mimo-muted">Örnek: {topic.example}</p>
+            )}
+          </PracticeExamCard>
+          <PracticeExamCard>
+            <p className="text-center text-sm font-bold text-mimo-muted">
+              Bu konuda alıştırma soruları yakında eklenecek.
+            </p>
             <div className="mt-4">
-              <PracticeExamGhostLink href="/grammar">Konulara dön</PracticeExamGhostLink>
+              <PracticeExamGhostLink href="/grammar">Tüm konulara dön</PracticeExamGhostLink>
             </div>
           </PracticeExamCard>
         </div>
