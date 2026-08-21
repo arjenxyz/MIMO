@@ -432,24 +432,22 @@ export function AddWordForm({ demo = false }: { demo?: boolean }) {
               )}
 
               {!alreadyOwned && (
-                <div className="flex gap-2">
-                  <div className="min-w-0 flex-1 overflow-hidden rounded-xl border border-mimo-soft bg-mimo-surface">
-                    <WordImage
-                      english={lookup.english}
-                      imageUrl={lookup.image_url}
-                      className="h-36 w-full object-cover"
-                    />
-                  </div>
+                <div className="relative overflow-hidden rounded-xl border border-mimo-soft bg-mimo-surface">
+                  <WordImage
+                    english={lookup.english}
+                    imageUrl={lookup.image_url}
+                    className="h-36 w-full object-cover"
+                  />
                   <button
                     type="button"
                     onClick={() => void swapImage()}
                     disabled={swapping}
-                    className="flex w-[4.75rem] shrink-0 flex-col items-center justify-center gap-1.5 rounded-xl border border-mimo-soft bg-mimo-surface px-1.5 text-center text-[11px] font-extrabold leading-tight text-[#0369a1] transition hover:border-[#1cb0f6] hover:bg-[#e8f6fe] disabled:opacity-50"
+                    className="absolute bottom-2.5 right-2.5 z-10 inline-flex items-center gap-1.5 rounded-full bg-black/50 px-3 py-1.5 text-[11px] font-extrabold text-white backdrop-blur-sm transition hover:bg-black/65 disabled:opacity-50"
                     aria-label={swapping ? "Yeni görsel aranıyor" : "Görseli değiştir"}
                   >
                     <svg
-                      width="20"
-                      height="20"
+                      width="14"
+                      height="14"
                       viewBox="0 0 24 24"
                       fill="none"
                       aria-hidden
