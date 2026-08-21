@@ -4,6 +4,7 @@ import "./globals.css";
 import { Navbar } from "@/app/components/Navbar";
 import { FeedbackSoundBoot } from "@/app/components/FeedbackSoundBoot";
 import { ThemeProvider } from "@/app/components/ThemeProvider";
+import { UnregisterDevServiceWorker } from "@/app/components/UnregisterDevServiceWorker";
 import { THEME_BOOT_SCRIPT } from "@/lib/theme";
 
 const nunito = Nunito({
@@ -66,6 +67,7 @@ export default function RootLayout({
         className={`${nunito.variable} ${nunito.className} bg-mimo-bg text-mimo-fg antialiased`}
       >
         <ThemeProvider>
+          <UnregisterDevServiceWorker />
           <FeedbackSoundBoot />
           <Navbar />
           {children}

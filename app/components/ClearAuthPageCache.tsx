@@ -19,7 +19,7 @@ export function ClearAuthPageCache() {
         );
         if ("serviceWorker" in navigator) {
           const regs = await navigator.serviceWorker.getRegistrations();
-          await Promise.all(regs.map((reg) => reg.update()));
+          await Promise.all(regs.map((reg) => reg.unregister()));
         }
       } catch {
         // ignore
