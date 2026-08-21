@@ -10,6 +10,7 @@ import {
   PracticeExamPrimaryButton,
 } from "@/app/components/PracticeExamChrome";
 import { formatTimer } from "@/lib/detCloze";
+import { playFeedback } from "@/lib/feedbackSound";
 import {
   buildListenTypeRound,
   isDictationCorrect,
@@ -109,6 +110,7 @@ export function ListenTypeGame({ seedWords }: { seedWords: SeedWord[] }) {
     if (secondsLeft <= 0) {
       // auto-submit empty / current
       const correct = current ? isDictationCorrect(answer, current.text) : false;
+      playFeedback(correct);
       if (correct) setScore((s) => s + 1);
       setLastCorrect(correct);
       setPhase("feedback");
@@ -129,6 +131,7 @@ export function ListenTypeGame({ seedWords }: { seedWords: SeedWord[] }) {
     if (!current || phase !== "answering" || !answer.trim()) return;
     stopAudio();
     const correct = isDictationCorrect(answer, current.text);
+    playFeedback(correct);
     if (correct) setScore((s) => s + 1);
     setLastCorrect(correct);
     setPhase("feedback");

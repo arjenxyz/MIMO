@@ -18,6 +18,7 @@ import {
   updateWordProgress,
 } from "@/lib/db";
 import { DEMO_DUE_WORDS, isDemoMode } from "@/lib/demo";
+import { playFeedback } from "@/lib/feedbackSound";
 import { playWordAudio } from "@/lib/speak";
 import { createClient } from "@/lib/supabase/client";
 import type { DueWordItem, Quality } from "@/types";
@@ -180,6 +181,7 @@ export default function WordQuizPage() {
     setSelected(option);
     setCorrect(ok);
     setChecked(true);
+    playFeedback(ok);
   }
 
   async function continueNext() {

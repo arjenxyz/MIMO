@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { ContinueButton } from "@/app/components/ContinueButton";
 import { saveStoryResult } from "@/lib/db";
 import { DEMO_STORIES, isDemoMode } from "@/lib/demo";
+import { playFeedback } from "@/lib/feedbackSound";
 import { answersMatch } from "@/lib/srs";
 import { createClient } from "@/lib/supabase/client";
 import type { Story } from "@/types";
@@ -55,6 +56,7 @@ export default function StoryDetailPage() {
       (answersMatch(answers[1], story.answer2) ? 1 : 0) +
       (answersMatch(answers[2], story.answer3) ? 1 : 0);
     setScore(result);
+    playFeedback(result === 3);
     setSaving(true);
     setError("");
     try {

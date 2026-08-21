@@ -6,6 +6,11 @@ import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTheme } from "@/app/components/ThemeProvider";
 import { DEMO_PROFILE, isDemoMode } from "@/lib/demo";
+import {
+  isFeedbackSoundMuted,
+  playCorrect,
+  setFeedbackSoundMuted,
+} from "@/lib/feedbackSound";
 import { createClient } from "@/lib/supabase/client";
 import type { Profile } from "@/types";
 
@@ -102,6 +107,11 @@ export function Navbar() {
   );
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [ready, setReady] = useState(() => detectDemo());
+  const [sfxMuted, setSfxMuted] = useState(false);
+
+  useEffect(() => {
+    setSfxMuted(isFeedbackSoundMuted());
+  }, []);
 
   const loadProfile = useCallback(async () => {
     const localDemo = detectDemo();
@@ -257,6 +267,22 @@ export function Navbar() {
                   <span>{theme === "dark" ? "Açık mod" : "Koyu mod"}</span>
                   <span className="text-base" aria-hidden>
                     {theme === "dark" ? "☀️" : "🌙"}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => {
+                    const next = !sfxMuted;
+                    setFeedbackSoundMuted(next);
+                    setSfxMuted(next);
+                    if (!next) playCorrect();
+                  }}
+                  className="flex w-full items-center justify-between border-b border-mimo-border px-4 py-3 text-left text-sm font-extrabold text-mimo-fg hover:bg-mimo-surface"
+                >
+                  <span>{sfxMuted ? "Ses efektleri kapalı" : "Ses efektleri açık"}</span>
+                  <span className="text-base" aria-hidden>
+                    {sfxMuted ? "🔇" : "🔊"}
                   </span>
                 </button>
                 <Link

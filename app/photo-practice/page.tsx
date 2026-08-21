@@ -12,6 +12,7 @@ import {
   PracticeExamTopBar,
 } from "@/app/components/PracticeExamChrome";
 import { formatTimer } from "@/lib/detCloze";
+import { playFeedback } from "@/lib/feedbackSound";
 import { getRandomImage, stabilizePicsumUrl } from "@/lib/image-api";
 
 type Phase = "ready" | "running" | "evaluating" | "done";
@@ -99,7 +100,9 @@ export default function PhotoPracticePage() {
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Değerlendirme başarısız");
-        setEvaluation(data.evaluation as PhotoEvaluation);
+        const evaluation = data.evaluation as PhotoEvaluation;
+        setEvaluation(evaluation);
+        playFeedback(isB2OrAbove(evaluation.cefr_level));
         setPhase("done");
       } catch (e) {
         sessionEvalStartedRef.current = false;

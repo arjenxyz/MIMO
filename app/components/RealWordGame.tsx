@@ -10,6 +10,7 @@ import {
   PracticeExamPrimaryButton,
 } from "@/app/components/PracticeExamChrome";
 import { formatTimer } from "@/lib/detCloze";
+import { playFeedback } from "@/lib/feedbackSound";
 import { buildRealWordRound, type RealWordItem } from "@/lib/realWordQuiz";
 
 const QUESTION_SECONDS = 5;
@@ -73,6 +74,7 @@ export function RealWordGame({ seedWords }: { seedWords: string[] }) {
 
       const timedOut = answer === null;
       const correct = !timedOut && answer === current.isReal;
+      playFeedback(correct);
 
       if (correct) {
         setScore((s) => s + 1);

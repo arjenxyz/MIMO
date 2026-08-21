@@ -17,6 +17,7 @@ import {
   updateGrammarProgress,
 } from "@/lib/db";
 import { DEMO_DUE_GRAMMAR, isDemoMode } from "@/lib/demo";
+import { playFeedback } from "@/lib/feedbackSound";
 import { answersMatch } from "@/lib/srs";
 import { createClient } from "@/lib/supabase/client";
 import type { DueGrammarItem, Quality } from "@/types";
@@ -78,8 +79,10 @@ export default function GrammarQuizPage() {
   function check(event: FormEvent) {
     event.preventDefault();
     if (!rule) return;
-    setCorrect(answersMatch(answer, rule.correct_answer));
+    const ok = answersMatch(answer, rule.correct_answer);
+    setCorrect(ok);
     setChecked(true);
+    playFeedback(ok);
   }
 
   async function rate(quality: Quality) {

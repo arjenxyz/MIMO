@@ -10,6 +10,7 @@ import {
   PracticeExamPrimaryButton,
 } from "@/app/components/PracticeExamChrome";
 import { formatTimer } from "@/lib/detCloze";
+import { playFeedback } from "@/lib/feedbackSound";
 
 export type MatchWord = {
   id: number;
@@ -238,6 +239,7 @@ export function MatchPairsGame({ words }: { words: MatchWord[] }) {
     setLocked(true);
 
     if (a.wordId === b.wordId && a.side !== b.side) {
+      playFeedback(true);
       setFlash({ [a.uid]: "ok", [b.uid]: "ok" });
       const nextCombo = combo + 1;
       setCombo(nextCombo);
@@ -276,6 +278,7 @@ export function MatchPairsGame({ words }: { words: MatchWord[] }) {
         setLocked(false);
       }, 320);
     } else {
+      playFeedback(false);
       setFlash({ [a.uid]: "bad", [b.uid]: "bad" });
       setCombo(0);
       setMisses((n) => n + 1);

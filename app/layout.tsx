@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Nunito } from "next/font/google";
 import "./globals.css";
 import { Navbar } from "@/app/components/Navbar";
+import { FeedbackSoundBoot } from "@/app/components/FeedbackSoundBoot";
 import { ThemeProvider } from "@/app/components/ThemeProvider";
 import { THEME_BOOT_SCRIPT } from "@/lib/theme";
 
@@ -65,6 +66,7 @@ export default function RootLayout({
         className={`${nunito.variable} ${nunito.className} bg-mimo-bg text-mimo-fg antialiased`}
       >
         <ThemeProvider>
+          <FeedbackSoundBoot />
           <Navbar />
           {children}
         </ThemeProvider>

@@ -11,6 +11,7 @@ import {
   PracticeExamTopBar,
 } from "@/app/components/PracticeExamChrome";
 import { LoadingScreen } from "@/app/components/LoadingScreen";
+import { playFeedback } from "@/lib/feedbackSound";
 import type { SoundSessionQuestion } from "@/types";
 
 function speak(word: string) {
@@ -73,6 +74,7 @@ export function SoundListenQuiz() {
     const isCorrect = selected === current.correct;
     setChecked(true);
     if (isCorrect) setCorrectCount((c) => c + 1);
+    playFeedback(isCorrect);
 
     await fetch("/api/sounds/progress", {
       method: "POST",

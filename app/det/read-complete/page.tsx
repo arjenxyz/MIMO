@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ClozePassage, scoreCloze } from "@/app/components/det/ClozePassage";
 import { extractGaps, formatTimer, parseClozePassage } from "@/lib/detCloze";
 import { DEMO_DET_READ_COMPLETE, isDemoMode } from "@/lib/demo";
+import { playFeedback } from "@/lib/feedbackSound";
 import type { DETExercise } from "@/types";
 
 const PASSAGE_SECONDS = 3 * 60;
@@ -202,6 +203,7 @@ export default function ReadCompletePage() {
       const score = scoreCloze(gaps, values);
       setCorrectCount((n) => n + score.correct);
       setWrongCount((n) => n + score.wrong);
+      playFeedback(score.wrong === 0 && score.total > 0);
 
       // AI-generated rows use negative ids — no FK in det_exercises.
       if (!demo && userId && !isSyntheticId(current.id)) {
