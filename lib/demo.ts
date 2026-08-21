@@ -13,7 +13,8 @@ import type {
  * Do NOT auto-enable on localhost/development: that makes every account look
  * identical (same streak, path, words) and hides real Supabase progress.
  */
-export function isDemoMode(_hostname?: string | null) {
+export function isDemoMode(hostname?: string | null) {
+  void hostname;
   return process.env.NEXT_PUBLIC_DEMO_MODE === "true";
 }
 
