@@ -1,35 +1,22 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { extractGaps, parseClozePassage } from "@/lib/detCloze";
+import {
+  buildClozePrompt,
+  clozeDifficulty,
+  pickLevelTopics,
+  sessionLevels,
+  type ClozeCefr,
+} from "@/lib/detClozeCurriculum";
 import type { DETExercise } from "@/types";
-
-const TOPICS = [
-  "Science",
-  "Technology",
-  "History",
-  "Education",
-  "Health",
-  "Environment",
-  "Art",
-  "Business",
-  "Psychology",
-  "Politics",
-  "Space exploration",
-  "Urban design",
-  "Climate policy",
-  "Public health",
-  "Digital media",
-  "Marine biology",
-  "Economics",
-  "Archaeology",
-] as const;
 
 export type GeneratedCloze = {
   title: string;
   question: string;
   answer: string;
+  cefr: ClozeCefr;
 };
 
-function extractJsonArray(text: string): GeneratedCloze[] {
+function extractJsonArray(text: string, fallbackCefr: ClozeCefr): GeneratedCloze[] {
   const cleaned = text
     .replace(/^```json\s*/i, "")
     .replace(/^```\s*/i, "")
@@ -48,20 +35,49 @@ function extractJsonArray(text: string): GeneratedCloze[] {
   return parsed
     .map((row) => {
       if (!row || typeof row !== "object") return null;
-      const obj = row as { title?: unknown; question?: unknown; answer?: unknown };
+      const obj = row as {
+        title?: unknown;
+        question?: unknown;
+        answer?: unknown;
+        cefr?: unknown;
+      };
       const q = obj.question;
       const a = obj.answer;
       const title = typeof obj.title === "string" ? obj.title.trim() : "";
       if (typeof q !== "string" || typeof a !== "string") return null;
       if (!q.includes("[[") || !q.includes("]]")) return null;
-      return { title: title || "Read and Complete", question: q.trim(), answer: a.trim() };
+      const rawCefr = typeof obj.cefr === "string" ? obj.cefr.toUpperCase() : "";
+      const cefr: ClozeCefr =
+        rawCefr === "A1" || rawCefr === "A2" || rawCefr === "B1" || rawCefr === "B2"
+          ? rawCefr
+          : fallbackCefr;
+      return {
+        title: title || "Read and Complete",
+        question: q.trim(),
+        answer: a.trim(),
+        cefr,
+      };
     })
     .filter((row): row is GeneratedCloze => Boolean(row));
 }
 
+function gapBounds(cefr: ClozeCefr): { min: number; max: number } {
+  switch (cefr) {
+    case "A1":
+      return { min: 3, max: 5 };
+    case "A2":
+      return { min: 4, max: 6 };
+    case "B1":
+      return { min: 5, max: 7 };
+    case "B2":
+      return { min: 5, max: 8 };
+  }
+}
+
 function validateCloze(item: GeneratedCloze): GeneratedCloze | null {
   const gaps = extractGaps(parseClozePassage(item.question, item.answer));
-  if (gaps.length < 4 || gaps.length > 10) return null;
+  const { min, max } = gapBounds(item.cefr);
+  if (gaps.length < min || gaps.length > max) return null;
 
   for (const gap of gaps) {
     if (gap.answer.length < 2) return null;
@@ -73,18 +89,31 @@ function validateCloze(item: GeneratedCloze): GeneratedCloze | null {
     title: item.title,
     question: item.question,
     answer: gaps.map((g) => g.answer).join("|"),
+    cefr: item.cefr,
   };
 }
 
-function pickTopics(count: number, avoid: string[]) {
-  const avoidSet = new Set(avoid.map((t) => t.toLowerCase()));
-  const pool = TOPICS.filter((t) => !avoidSet.has(t.toLowerCase()));
-  const source = pool.length >= count ? [...pool] : [...TOPICS];
-  for (let i = source.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [source[i], source[j]] = [source[j], source[i]];
-  }
-  return source.slice(0, count);
+async function generateOneLevel(
+  model: ReturnType<GoogleGenerativeAI["getGenerativeModel"]>,
+  cefr: ClozeCefr,
+  avoidTopics: string[]
+): Promise<GeneratedCloze | null> {
+  const topics = pickLevelTopics(cefr, 2, avoidTopics);
+  const prompt = buildClozePrompt({
+    cefr,
+    count: 1,
+    topics,
+    avoidTopics,
+  });
+
+  const result = await model.generateContent(prompt);
+  const text = result.response.text();
+  const raw = extractJsonArray(text, cefr);
+  const valid = raw
+    .map((row) => validateCloze({ ...row, cefr }))
+    .filter((row): row is GeneratedCloze => Boolean(row));
+
+  return valid[0] ?? null;
 }
 
 export async function generateClozeSession(opts: {
@@ -97,58 +126,55 @@ export async function generateClozeSession(opts: {
   }
 
   const count = Math.min(5, Math.max(3, opts.count ?? 4));
-  const topics = pickTopics(Math.min(3, count), opts.avoidTopics ?? []);
-  const topicLine = topics.join(", ");
-  const avoidLine =
-    opts.avoidTopics && opts.avoidTopics.length > 0
-      ? `Do NOT reuse these recent themes: ${opts.avoidTopics.slice(0, 8).join(", ")}.`
-      : "";
+  const levels = sessionLevels(count);
+  const avoid = opts.avoidTopics ?? [];
 
   const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({ model: "gemini-3.6-flash" });
 
-  const prompt = `Generate ${count} unique C1-C2 English "Read and Complete" PASSAGES in Duolingo English Test style.
-Themes to use (mix freely, invent fresh angles): ${topicLine}.
-${avoidLine}
-Each passage must be DIFFERENT — new titles, new vocabulary, new facts. No duplicates.
+  const valid: GeneratedCloze[] = [];
+  const usedTitles: string[] = [...avoid];
 
-Each passage must:
-- Have a short academic title
-- Be 2-4 sentences long
-- Contain 5 to 8 incomplete words marked exactly like this: [[fullword:shownCount]]
-  Example: [[send:2]] shows "se" + boxes for remaining letters
-  Example: [[constraints:5]] shows "constr" + 5 boxes
-- shownCount must be an integer >= 1 and less than the word length
-- Prefer academic vocabulary suitable for DET 120+
+  for (const cefr of levels) {
+    try {
+      const item = await generateOneLevel(model, cefr, usedTitles);
+      if (item) {
+        valid.push(item);
+        usedTitles.push(item.title);
+      }
+    } catch {
+      // try next level
+    }
+  }
 
-Return ONLY a valid JSON array of objects:
-- "title": string
-- "question": full passage including [[word:n]] markers
-- "answer": pipe-separated full words in order, e.g. "send|to|data"
-
-Only return valid JSON, no markdown fences, no other text.`;
-
-  const result = await model.generateContent(prompt);
-  const text = result.response.text();
-  const raw = extractJsonArray(text);
-
-  const valid = raw
-    .map(validateCloze)
-    .filter((row): row is GeneratedCloze => Boolean(row))
-    .slice(0, count);
+  // If some levels failed, top up with B1 (still within A1–B2)
+  while (valid.length < Math.min(3, count)) {
+    try {
+      const item = await generateOneLevel(model, "B1", usedTitles);
+      if (!item) break;
+      valid.push(item);
+      usedTitles.push(item.title);
+    } catch {
+      break;
+    }
+  }
 
   if (valid.length === 0) {
     throw new Error("Geçerli pasaj üretilemedi");
   }
 
+  // Keep easy → hard order by CEFR
+  const order: Record<ClozeCefr, number> = { A1: 0, A2: 1, B1: 2, B2: 3 };
+  valid.sort((a, b) => order[a.cefr] - order[b.cefr]);
+
   const stamp = Date.now();
-  return valid.map((item, i) => ({
+  return valid.slice(0, count).map((item, i) => ({
     id: -(stamp + i),
     question_type_id: 1,
     question_text: item.question,
     correct_answer: item.answer,
-    difficulty: 4,
-    topic: item.title,
+    difficulty: clozeDifficulty(item.cefr),
+    topic: `[${item.cefr}] ${item.title}`,
     created_at: new Date().toISOString().slice(0, 10),
   }));
 }

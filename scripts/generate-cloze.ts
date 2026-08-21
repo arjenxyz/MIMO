@@ -1,5 +1,6 @@
 /**
  * Generate DET Read and Complete cloze questions via Gemini and insert into Supabase.
+ * Produces A1 → B2 passages (easy to hard) with level-appropriate grammar.
  *
  * Requires in .env.local:
  *   GEMINI_API_KEY
@@ -7,34 +8,49 @@
  *   SUPABASE_SERVICE_ROLE_KEY
  *
  * Run: npm run generate-cloze
+ * Optional: npm run generate-cloze -- --level=A2 --per-level=2
  */
 
 import { config } from "dotenv";
 import { resolve } from "path";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { createClient } from "@supabase/supabase-js";
+import {
+  buildClozePrompt,
+  CLOZE_CEFR_ORDER,
+  CLOZE_LEVELS,
+  clozeDifficulty,
+  pickLevelTopics,
+  type ClozeCefr,
+} from "../lib/detClozeCurriculum";
 
 config({ path: resolve(process.cwd(), ".env.local") });
 
-const TOPICS = [
-  "Science",
-  "Technology",
-  "History",
-  "Education",
-  "Health",
-  "Environment",
-  "Art",
-  "Business",
-  "Psychology",
-  "Politics",
-] as const;
-
-type ClozeItem = { title: string; question: string; answer: string };
+type ClozeItem = { title: string; question: string; answer: string; cefr: ClozeCefr };
 
 function requireEnv(name: string) {
   const value = process.env[name];
   if (!value) throw new Error(`Missing env: ${name}`);
   return value;
+}
+
+function parseArgs() {
+  const args = process.argv.slice(2);
+  let levelFilter: ClozeCefr | null = null;
+  let perLevel = 3;
+
+  for (const arg of args) {
+    if (arg.startsWith("--level=")) {
+      const v = arg.slice("--level=".length).toUpperCase();
+      if (v === "A1" || v === "A2" || v === "B1" || v === "B2") levelFilter = v;
+    }
+    if (arg.startsWith("--per-level=")) {
+      const n = Number(arg.slice("--per-level=".length));
+      if (Number.isFinite(n)) perLevel = Math.min(6, Math.max(1, Math.round(n)));
+    }
+  }
+
+  return { levelFilter, perLevel };
 }
 
 function extractJsonArray(text: string): ClozeItem[] {
@@ -56,48 +72,49 @@ function extractJsonArray(text: string): ClozeItem[] {
   return parsed
     .map((row) => {
       if (!row || typeof row !== "object") return null;
-      const obj = row as { title?: unknown; question?: unknown; answer?: unknown };
+      const obj = row as {
+        title?: unknown;
+        question?: unknown;
+        answer?: unknown;
+        cefr?: unknown;
+      };
       const q = obj.question;
       const a = obj.answer;
       const title = typeof obj.title === "string" ? obj.title.trim() : "";
       if (typeof q !== "string" || typeof a !== "string") return null;
       if (!q.includes("[[") || !q.includes("]]")) return null;
-      return { title: title || "Read and Complete", question: q.trim(), answer: a.trim() };
+      const rawCefr = typeof obj.cefr === "string" ? obj.cefr.toUpperCase() : "";
+      const cefr: ClozeCefr =
+        rawCefr === "A1" || rawCefr === "A2" || rawCefr === "B1" || rawCefr === "B2"
+          ? rawCefr
+          : "B1";
+      return {
+        title: title || "Read and Complete",
+        question: q.trim(),
+        answer: a.trim(),
+        cefr,
+      };
     })
     .filter((row): row is ClozeItem => Boolean(row));
 }
 
-async function generateForTopic(model: ReturnType<GoogleGenerativeAI["getGenerativeModel"]>, topic: string) {
-  const prompt = `Generate 3 C1-C2 level English "Read and Complete" PASSAGES about ${topic}, in Duolingo English Test style.
-
-Each passage must:
-- Have a short academic title
-- Be 2-4 sentences long
-- Contain 5 to 8 incomplete words marked exactly like this: [[fullword:shownCount]]
-  Example: [[send:2]] renders as "se" + 3 letter boxes (for n,d)
-  Example: [[constraints:5]] renders as "constr" + 5 letter boxes
-- shownCount must be an integer >= 1 and less than the word length
-- Prefer academic vocabulary suitable for DET 120+
-
-Return ONLY valid JSON array of objects with:
-- "title": string
-- "question": the full passage string including [[word:n]] markers
-- "answer": pipe-separated full words in order, e.g. "send|to|data"
-
-Example object:
-{"title":"European Space Agency's Mission to Mars","question":"The agency plans to [[send:2]] a rover [[to:1]] Mars.","answer":"send|to"}
-
-Only return valid JSON, no other text.`;
-
+async function generateForLevel(
+  model: ReturnType<GoogleGenerativeAI["getGenerativeModel"]>,
+  cefr: ClozeCefr,
+  count: number
+) {
+  const topics = pickLevelTopics(cefr, Math.min(3, count + 1));
+  const prompt = buildClozePrompt({ cefr, count, topics });
   const result = await model.generateContent(prompt);
   const text = result.response.text();
-  return extractJsonArray(text);
+  return extractJsonArray(text).map((item) => ({ ...item, cefr }));
 }
 
 async function main() {
   const geminiKey = requireEnv("GEMINI_API_KEY");
   const supabaseUrl = requireEnv("NEXT_PUBLIC_SUPABASE_URL");
   const serviceKey = requireEnv("SUPABASE_SERVICE_ROLE_KEY");
+  const { levelFilter, perLevel } = parseArgs();
 
   const genAI = new GoogleGenerativeAI(geminiKey);
   const model = genAI.getGenerativeModel({ model: "gemini-3.6-flash" });
@@ -116,15 +133,22 @@ async function main() {
 
   const typeId = typeRow.id as number;
   let inserted = 0;
-  let failedTopics = 0;
+  let failedBatches = 0;
 
-  for (const topic of TOPICS) {
+  const levels = levelFilter ? [levelFilter] : CLOZE_CEFR_ORDER;
+
+  console.log(
+    `Generating cloze for levels: ${levels.join(" → ")} (${perLevel} each, easy → hard)\n`
+  );
+
+  for (const cefr of levels) {
+    const spec = CLOZE_LEVELS[cefr];
     try {
-      console.log(`Generating: ${topic}…`);
-      const items = await generateForTopic(model, topic);
+      console.log(`${cefr} (difficulty ${spec.difficulty}) — grammar: ${spec.grammarFocus[0]}…`);
+      const items = await generateForLevel(model, cefr, perLevel);
       if (items.length === 0) {
-        console.warn(`  No items for ${topic}`);
-        failedTopics += 1;
+        console.warn(`  No items for ${cefr}`);
+        failedBatches += 1;
         continue;
       }
 
@@ -132,22 +156,22 @@ async function main() {
         question_type_id: typeId,
         question_text: item.question,
         correct_answer: item.answer,
-        difficulty: Math.random() < 0.5 ? 4 : 5,
-        topic: item.title,
+        difficulty: clozeDifficulty(cefr),
+        topic: `[${cefr}] ${item.title}`,
       }));
 
       const { error } = await supabase.from("det_exercises").insert(rows);
       if (error) throw error;
 
       inserted += rows.length;
-      console.log(`  +${rows.length} (${topic})`);
+      console.log(`  +${rows.length} passages`);
     } catch (error) {
-      failedTopics += 1;
-      console.error(`  Failed ${topic}:`, error instanceof Error ? error.message : error);
+      failedBatches += 1;
+      console.error(`  Failed ${cefr}:`, error instanceof Error ? error.message : error);
     }
   }
 
-  console.log(`\nDone. Inserted ${inserted} questions. Failed topics: ${failedTopics}.`);
+  console.log(`\nDone. Inserted ${inserted} questions. Failed batches: ${failedBatches}.`);
 }
 
 main().catch((error) => {
