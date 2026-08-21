@@ -48,11 +48,14 @@ function shuffle<T>(items: T[]) {
 }
 
 /** Independent column shuffles; avoid same-word same-row when possible. */
-function deepShuffleBoard(board: Board): Board {
-  const en = shuffle(board.en);
-  let tr = shuffle(board.tr);
+function deepShuffleBoard(board: Board, remintUids = false): Board {
+  const mint = (tiles: Tile[]) =>
+    remintUids ? tiles.map((t) => ({ ...t, uid: nextUid() })) : [...tiles];
 
-  for (let attempt = 0; attempt < 12; attempt++) {
+  let en = shuffle(mint(board.en));
+  let tr = shuffle(mint(board.tr));
+
+  for (let attempt = 0; attempt < 16; attempt++) {
     const aligned = en.some((tile, i) => tile.wordId === tr[i]?.wordId);
     if (!aligned) break;
     tr = shuffle(tr);
@@ -61,13 +64,29 @@ function deepShuffleBoard(board: Board): Board {
   // Extra derange pass: swap any remaining aligned rows.
   for (let i = 0; i < tr.length; i++) {
     if (en[i]?.wordId !== tr[i]?.wordId) continue;
-    const swapWith = tr.findIndex((t, j) => j !== i && t.wordId !== en[i].wordId && en[j]?.wordId !== tr[i].wordId);
+    const swapWith = tr.findIndex(
+      (t, j) => j !== i && t.wordId !== en[i]?.wordId && en[j]?.wordId !== tr[i]?.wordId
+    );
     if (swapWith >= 0) {
-      [tr[i], tr[swapWith]] = [tr[swapWith], tr[i]];
+      [tr[i], tr[swapWith]] = [tr[swapWith]!, tr[i]!];
     }
   }
 
   return { en, tr };
+}
+
+/**
+ * Ensure the board actually moved — if shuffle left everything looking
+ * identical, force another derangement with fresh React keys.
+ */
+function ensureMovedBoard(prev: Board): Board {
+  let next = deepShuffleBoard(prev, true);
+  const sameEn = prev.en.every((t, i) => t.wordId === next.en[i]?.wordId);
+  const sameTr = prev.tr.every((t, i) => t.wordId === next.tr[i]?.wordId);
+  if (sameEn && sameTr && prev.en.length > 1) {
+    next = deepShuffleBoard(next, true);
+  }
+  return next;
 }
 
 function primaryTurkish(turkish: string) {
@@ -146,13 +165,13 @@ export function MatchPairsGame({ words }: { words: MatchWord[] }) {
 
     for (let step = 0; step < SHUFFLE_STEPS; step++) {
       const id = window.setTimeout(() => {
-        setBoard((prev) => deepShuffleBoard(prev));
+        setBoard((prev) => ensureMovedBoard(prev));
       }, step * stepMs);
       shuffleTimersRef.current.push(id);
     }
 
     const doneId = window.setTimeout(() => {
-      setBoard((prev) => deepShuffleBoard(prev));
+      setBoard((prev) => ensureMovedBoard(prev));
       setShuffleIn(SHUFFLE_EVERY_SEC);
       setLocked(false);
       setPhase("running");
@@ -248,26 +267,27 @@ export function MatchPairsGame({ words }: { words: MatchWord[] }) {
           const trIdx = prev.tr.findIndex((t) => t.uid === a.uid || t.uid === b.uid);
           if (enIdx < 0 || trIdx < 0) return prev;
 
-          const onBoard = new Set(prev.en.map((t) => t.wordId));
-          onBoard.delete(prev.en[enIdx].wordId);
+          const matchedId = prev.en[enIdx]!.wordId;
+          const remainingEn = prev.en.filter((_, i) => i !== enIdx);
+          const remainingTr = prev.tr.filter((_, i) => i !== trIdx);
 
+          const onBoard = new Set(remainingEn.map((t) => t.wordId));
           const replacement = pickFreshWords(pool, onBoard, 1)[0];
           if (!replacement) {
             boardWordIdsRef.current = onBoard;
-            return {
-              en: prev.en.filter((_, i) => i !== enIdx),
-              tr: prev.tr.filter((_, i) => i !== trIdx),
-            };
+            return ensureMovedBoard({ en: remainingEn, tr: remainingTr });
           }
 
           onBoard.add(replacement.id);
           boardWordIdsRef.current = onBoard;
 
-          const nextEn = [...prev.en];
-          const nextTr = [...prev.tr];
-          nextEn[enIdx] = makeEnTile(replacement);
-          nextTr[trIdx] = makeTrTile(replacement);
-          return { en: nextEn, tr: nextTr };
+          // Drop the matched pair, insert the new word, then reshuffle both
+          // columns so EN/TR never land on the same row (that made it trivial).
+          void matchedId;
+          return ensureMovedBoard({
+            en: [...remainingEn, makeEnTile(replacement)],
+            tr: [...remainingTr, makeTrTile(replacement)],
+          });
         });
         setFlash({});
         setSelected([]);
