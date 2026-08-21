@@ -11,6 +11,7 @@ export async function POST(request: NextRequest) {
     const body = (await request.json().catch(() => null)) as {
       slug?: unknown;
       count?: unknown;
+      forceAi?: unknown;
     } | null;
 
     const slug = typeof body?.slug === "string" ? body.slug.trim() : "";
@@ -23,9 +24,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Konu bulunamadı" }, { status: 404 });
     }
 
+    const forceAi = body?.forceAi === true;
+
     const clientKey = clientKeyFromRequest(request);
     const burst = consumeRateLimit(`grammar-gen:${clientKey}:${slug}`, {
-      max: 3,
+      max: forceAi ? 2 : 8,
       windowMs: 20_000,
     });
     if (!burst.ok) {
@@ -35,15 +38,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const hourly = consumeRateLimit(`grammar-gen-hour:${clientKey}`, {
-      max: 60,
-      windowMs: 60 * 60 * 1000,
-    });
-    if (!hourly.ok) {
-      return NextResponse.json(
-        { error: `Saatlik limit. ${hourly.retryAfterSec} sn sonra tekrar dene.` },
-        { status: 429 }
-      );
+    if (forceAi) {
+      const hourly = consumeRateLimit(`grammar-gen-ai-hour:${clientKey}`, {
+        max: 20,
+        windowMs: 60 * 60 * 1000,
+      });
+      if (!hourly.ok) {
+        return NextResponse.json(
+          { error: `AI saatlik limit. ${hourly.retryAfterSec} sn sonra tekrar dene.` },
+          { status: 429 }
+        );
+      }
     }
 
     const count =
@@ -51,7 +56,9 @@ export async function POST(request: NextRequest) {
         ? Math.min(12, Math.max(6, Math.round(body.count)))
         : 10;
 
-    const { items, source } = await generateGrammarQuestionsForTopic(topic, count);
+    const { items, source } = await generateGrammarQuestionsForTopic(topic, count, {
+      forceAi,
+    });
 
     return NextResponse.json({
       slug: topic.slug,

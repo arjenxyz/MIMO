@@ -1,6 +1,4 @@
 import Link from "next/link";
-import { headers } from "next/headers";
-import { listGrammarTopics } from "@/lib/db";
 import {
   CEFR_SECTION_TITLE,
   difficultyLabel,
@@ -8,8 +6,6 @@ import {
   type CefrBand,
   type GrammarTopic,
 } from "@/lib/grammarTopics";
-import { isDemoMode } from "@/lib/demo";
-import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
@@ -25,34 +21,8 @@ function groupByDifficulty(topics: GrammarTopic[]) {
   return map;
 }
 
-export default async function GrammarCatalogPage() {
-  const headerList = await headers();
-  const host = headerList.get("host")?.split(":")[0] ?? null;
-  const demo = isDemoMode(host);
-
-  let topics = getDemoGrammarTopics();
-
-  if (!demo && process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    try {
-      const supabase = await createClient();
-      const live = await listGrammarTopics(supabase);
-      // Prefer the full local syllabus; merge live item counts when present.
-      if (live.length > 0) {
-        const countBySlug = new Map(live.map((t) => [t.slug, t.item_count ?? 0]));
-        topics = topics.map((t) => ({
-          ...t,
-          item_count: countBySlug.get(t.slug) ?? t.item_count ?? 0,
-        }));
-        const known = new Set(topics.map((t) => t.slug));
-        for (const extra of live) {
-          if (!known.has(extra.slug)) topics.push(extra);
-        }
-      }
-    } catch {
-      // keep demo pack
-    }
-  }
-
+export default function GrammarCatalogPage() {
+  const topics = getDemoGrammarTopics();
   const grouped = groupByDifficulty(topics);
   const total = topics.length;
 
@@ -63,7 +33,7 @@ export default async function GrammarCatalogPage() {
           <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#ce82ff]">Gramer</p>
           <h1 className="mt-1 text-2xl font-black text-mimo-title">Tüm konular</h1>
           <p className="mt-1 text-sm font-semibold text-mimo-muted">
-            A1–C1 İngilizce dil bilgisi — {total} konu. Her konuda yalnızca o kurala özel sorular üretilir.
+            A1–C1 — {total} konu. Sorular kod/API ile gelir; veritabanı gerekmez.
           </p>
         </div>
         <Link
@@ -87,31 +57,29 @@ export default async function GrammarCatalogPage() {
                 <span className="text-xs font-bold text-mimo-muted">{list.length} konu</span>
               </div>
               <ul className="space-y-2.5">
-                {list.map((topic) => {
-                  return (
-                    <li key={topic.slug}>
-                      <Link
-                        href={`/grammar/${topic.slug}`}
-                        className="block rounded-2xl border border-mimo-border bg-mimo-card px-4 py-3.5 shadow-sm transition hover:border-[#ce82ff]/50 hover:bg-mimo-surface"
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0">
-                            <h3 className="text-[15px] font-black leading-snug text-mimo-title">{topic.title}</h3>
-                            <p className="mt-1 line-clamp-2 text-sm font-semibold text-mimo-muted">
-                              {topic.tip_tr || topic.summary}
-                            </p>
-                          </div>
-                          <span className="shrink-0 rounded-full bg-mimo-surface px-2.5 py-1 text-[11px] font-black text-mimo-muted">
-                            {difficultyLabel(topic.difficulty)}
-                          </span>
+                {list.map((topic) => (
+                  <li key={topic.slug}>
+                    <Link
+                      href={`/grammar/${topic.slug}`}
+                      className="block rounded-2xl border border-mimo-border bg-mimo-card px-4 py-3.5 shadow-sm transition hover:border-[#ce82ff]/50 hover:bg-mimo-surface"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <h3 className="text-[15px] font-black leading-snug text-mimo-title">{topic.title}</h3>
+                          <p className="mt-1 line-clamp-2 text-sm font-semibold text-mimo-muted">
+                            {topic.tip_tr || topic.summary}
+                          </p>
                         </div>
-                        <p className="mt-2.5 text-xs font-bold uppercase tracking-wide text-[#ce82ff]">
-                          Alıştırma · Başla →
-                        </p>
-                      </Link>
-                    </li>
-                  );
-                })}
+                        <span className="shrink-0 rounded-full bg-mimo-surface px-2.5 py-1 text-[11px] font-black text-mimo-muted">
+                          {difficultyLabel(topic.difficulty)}
+                        </span>
+                      </div>
+                      <p className="mt-2.5 text-xs font-bold uppercase tracking-wide text-[#ce82ff]">
+                        Alıştırma · Başla →
+                      </p>
+                    </Link>
+                  </li>
+                ))}
               </ul>
             </section>
           );

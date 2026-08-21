@@ -73,7 +73,7 @@ export function GrammarDrill({ topic }: { topic: GrammarTopicDetail }) {
   const [finished, setFinished] = useState(false);
 
   const loadQuestions = useCallback(
-    async (force = false) => {
+    async (forceAi = false) => {
       setLoading(true);
       setError(null);
       setFinished(false);
@@ -83,10 +83,17 @@ export function GrammarDrill({ topic }: { topic: GrammarTopicDetail }) {
       setCorrect(false);
       setCorrectCount(0);
 
-      if (!force) {
+      if (!forceAi) {
         const cached = readCache(topic.slug);
         if (cached?.length) {
           setItems(cached);
+          setLoading(false);
+          return;
+        }
+        // Hazır paket varsa API'ye bile gitme
+        if (topic.items.length > 0) {
+          setItems(topic.items);
+          writeCache(topic.slug, topic.items);
           setLoading(false);
           return;
         }
@@ -102,7 +109,11 @@ export function GrammarDrill({ topic }: { topic: GrammarTopicDetail }) {
         const res = await fetch("/api/grammar/generate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ slug: topic.slug, count: 10 }),
+          body: JSON.stringify({
+            slug: topic.slug,
+            count: 10,
+            forceAi,
+          }),
         });
         const data = (await res.json()) as { items?: ApiItem[]; error?: string };
         if (!res.ok) {
@@ -115,7 +126,6 @@ export function GrammarDrill({ topic }: { topic: GrammarTopicDetail }) {
         writeCache(topic.slug, mapped);
         setItems(mapped);
       } catch (err) {
-        // Local seed pack as last resort (topic-scoped only)
         if (topic.items.length > 0) {
           setItems(topic.items);
           setError(null);
@@ -276,7 +286,7 @@ export function GrammarDrill({ topic }: { topic: GrammarTopicDetail }) {
                 onClick={() => void loadQuestions(true)}
                 className="w-full"
               >
-                Yeni sorular üret
+                AI ile yeni sorular
               </PracticeExamPrimaryButton>
               <PracticeExamGhostLink href="/grammar">Konulara dön</PracticeExamGhostLink>
             </div>
@@ -371,7 +381,7 @@ export function GrammarDrill({ topic }: { topic: GrammarTopicDetail }) {
             onClick={() => void loadQuestions(true)}
             className="underline-offset-2 hover:underline"
           >
-            Yeni sorular
+            AI ile yeni sorular
           </button>
           {" · "}
           <Link href="/grammar" className="underline-offset-2 hover:underline">

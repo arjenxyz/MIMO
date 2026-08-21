@@ -5,6 +5,7 @@ import {
   generateLocalGrammarFallback,
   type GeneratedGrammarItem,
 } from "@/lib/grammarFallback";
+import { getSeedGrammarItems } from "@/lib/grammarTopics";
 
 export type { GeneratedGrammarItem };
 
@@ -77,15 +78,39 @@ Return ONLY a JSON array (no markdown) of objects:
 [{"question":"... ___ ...","correct_answer":"...","explanation":"...","example":"...","difficulty":${topic.difficulty}}]`;
 }
 
+function localPack(topic: CurriculumTopic, count: number): GeneratedGrammarItem[] {
+  const seed = getSeedGrammarItems(topic.slug);
+  if (seed.length >= 4) {
+    return seed.slice(0, Math.max(count, seed.length)).map((item) => ({
+      question: item.question,
+      correct_answer: item.correct_answer,
+      explanation: item.explanation || "",
+      example: item.example || "",
+      difficulty: item.difficulty,
+    }));
+  }
+  return generateLocalGrammarFallback(topic, count);
+}
+
+/**
+ * Default: free local/seed packs only (no Gemini).
+ * Gemini only when forceAi=true ("Yeni sorular üret").
+ */
 export async function generateGrammarQuestionsForTopic(
   topic: CurriculumTopic,
-  count = 10
+  count = 10,
+  opts?: { forceAi?: boolean }
 ): Promise<{ items: GeneratedGrammarItem[]; source: "gemini" | "local" }> {
   const n = Math.min(12, Math.max(6, count));
-  const apiKey = process.env.GEMINI_API_KEY;
+  const forceAi = opts?.forceAi === true;
 
+  if (!forceAi) {
+    return { items: localPack(topic, n), source: "local" };
+  }
+
+  const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
-    return { items: generateLocalGrammarFallback(topic, n), source: "local" };
+    return { items: localPack(topic, n), source: "local" };
   }
 
   try {
@@ -105,6 +130,6 @@ export async function generateGrammarQuestionsForTopic(
 
     return { items, source: "gemini" };
   } catch {
-    return { items: generateLocalGrammarFallback(topic, n), source: "local" };
+    return { items: localPack(topic, n), source: "local" };
   }
 }

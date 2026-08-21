@@ -113,6 +113,24 @@ const DRILL_ITEMS: Record<string, SeedItem[]> = {
   ],
 };
 
+export function getSeedGrammarItems(slug: string): GeneratedGrammarItemLike[] {
+  return (DRILL_ITEMS[slug] ?? []).map((item) => ({
+    question: item.question,
+    correct_answer: item.correct_answer,
+    explanation: item.explanation ?? "",
+    example: item.example ?? "",
+    difficulty: item.difficulty,
+  }));
+}
+
+type GeneratedGrammarItemLike = {
+  question: string;
+  correct_answer: string;
+  explanation: string;
+  example: string;
+  difficulty: number;
+};
+
 /** Offline / demo catalog: full syllabus with drill counts where available. */
 export function getDemoGrammarTopics(): GrammarTopic[] {
   return GRAMMAR_CURRICULUM.map((topic, i) => ({
