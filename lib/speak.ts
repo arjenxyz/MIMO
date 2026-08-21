@@ -132,7 +132,7 @@ function loadVoices(): Promise<void> {
  * Prefer remote English audio. Never use the OS default voice — on Turkish
  * Windows that produces Turkish-accented (or fully Turkish) speech even with lang=en-US.
  */
-export async function speak(text: string, _rate = 0.9) {
+export async function speak(text: string, rate = 0.9) {
   if (typeof window === "undefined") return;
   const trimmed = text.trim();
   if (!trimmed) return;
@@ -151,7 +151,7 @@ export async function speak(text: string, _rate = 0.9) {
   const utterance = new SpeechSynthesisUtterance(trimmed);
   utterance.voice = voice;
   utterance.lang = "en-US";
-  utterance.rate = 0.92;
+  utterance.rate = rate;
   window.setTimeout(() => window.speechSynthesis?.speak(utterance), 40);
 }
 
