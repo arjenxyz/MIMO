@@ -442,7 +442,7 @@ export function AddWordForm({ demo = false }: { demo?: boolean }) {
                     type="button"
                     onClick={() => void swapImage()}
                     disabled={swapping}
-                    className="absolute bottom-2.5 right-2.5 z-10 inline-flex items-center gap-1.5 rounded-full bg-black/50 px-3 py-1.5 text-[11px] font-extrabold text-white backdrop-blur-sm transition hover:bg-black/65 disabled:opacity-50"
+                    className="absolute top-2.5 right-2.5 z-10 inline-flex items-center gap-1.5 rounded-full bg-black/50 px-3 py-1.5 text-[11px] font-extrabold text-white backdrop-blur-sm transition hover:bg-black/65 disabled:opacity-50"
                     aria-label={swapping ? "Yeni görsel aranıyor" : "Görseli değiştir"}
                   >
                     <svg
