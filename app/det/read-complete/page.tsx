@@ -191,7 +191,6 @@ export default function ReadCompletePage() {
     setAwaitingStart(false);
     startSession(pickSession(DEMO_DET_READ_COMPLETE), {
       demo: true,
-      message: "Yedek pasajlarla başladın (AI kullanılmadı).",
     });
   }, [startSession]);
 
