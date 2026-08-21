@@ -4,11 +4,11 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   PracticeExamCard,
+  PracticeExamExitLink,
   PracticeExamEyebrow,
   PracticeExamGhostLink,
   PracticeExamMain,
   PracticeExamPrimaryButton,
-  PracticeExamTopBar,
 } from "@/app/components/PracticeExamChrome";
 import { WordImage } from "@/app/components/WordImage";
 import { WordUploaderAttribution } from "@/app/components/WordUploaderAttribution";
@@ -309,13 +309,12 @@ export default function WordQuizPage() {
           checked ? "pb-36" : "pb-10"
         }`}
       >
-        <PracticeExamTopBar
-          left={
-            <p className="text-sm font-bold text-mimo-muted">
-              Kelime {Math.min(index + 1, items.length)} / {items.length}
-            </p>
-          }
-        />
+        <div className="mb-5 flex items-center justify-between gap-3">
+          <p className="rounded-full bg-mimo-surface px-3 py-1.5 text-xs font-extrabold tabular-nums text-mimo-muted ring-1 ring-mimo-border">
+            Kelime {Math.min(index + 1, items.length)} / {items.length}
+          </p>
+          <PracticeExamExitLink href="/" />
+        </div>
 
         <p className="mb-4 text-center text-base font-bold text-mimo-fg sm:text-lg">
           Choose the correct Turkish meaning.

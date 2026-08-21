@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useState, type ReactNode } from "react";
+import { DEMO_FRIENDS } from "@/lib/demo";
 import type { FriendProfile, FriendshipRow } from "@/types";
 
 type Tab = "friends" | "requests" | "add";
@@ -55,9 +56,9 @@ export function FriendsPanel({ demo }: { demo: boolean }) {
 
   const load = useCallback(async () => {
     if (demo) {
-      setFriends([]);
-      setIncoming([]);
-      setOutgoing([]);
+      setFriends(DEMO_FRIENDS.friends.map((r) => ({ ...r })));
+      setIncoming(DEMO_FRIENDS.incoming.map((r) => ({ ...r })));
+      setOutgoing(DEMO_FRIENDS.outgoing.map((r) => ({ ...r })));
       setLoading(false);
       setError("");
       return;
@@ -100,10 +101,6 @@ export function FriendsPanel({ demo }: { demo: boolean }) {
 
   async function onSearch(e: FormEvent) {
     e.preventDefault();
-    if (demo) {
-      setNotice("Demo modunda arkadaş araması kapalı. Canlıda giriş yap.");
-      return;
-    }
     const q = query.trim();
     if (q.length < 2) {
       setError("En az 2 karakter yaz.");
@@ -113,6 +110,20 @@ export function FriendsPanel({ demo }: { demo: boolean }) {
     setError("");
     setNotice("");
     try {
+      if (demo) {
+        const known = new Set([
+          ...friends.map((r) => r.other?.id),
+          ...incoming.map((r) => r.other?.id),
+          ...outgoing.map((r) => r.other?.id),
+        ]);
+        const hits = DEMO_FRIENDS.searchPool.filter(
+          (p) =>
+            !known.has(p.id) && p.username.toLowerCase().includes(q.toLowerCase())
+        );
+        setResults(hits);
+        setNotice(hits.length === 0 ? "Eşleşen kullanıcı bulunamadı." : "");
+        return;
+      }
       const res = await fetch(`/api/friends?q=${encodeURIComponent(q)}`);
       const data = (await res.json()) as { results?: FriendProfile[]; error?: string };
       if (!res.ok) throw new Error(data.error || "Arama başarısız");
@@ -128,11 +139,35 @@ export function FriendsPanel({ demo }: { demo: boolean }) {
   }
 
   async function requestFriend(id: string) {
-    if (demo) return;
     setBusyId(id);
     setError("");
     setNotice("");
     try {
+      if (demo) {
+        const person =
+          results.find((p) => p.id === id) ??
+          DEMO_FRIENDS.searchPool.find((p) => p.id === id);
+        if (person) {
+          setOutgoing((prev) => [
+            {
+              id: Date.now(),
+              requester_id: "demo-me",
+              addressee_id: person.id,
+              status: "pending",
+              created_at: new Date().toISOString(),
+              requester: null,
+              addressee: person,
+              other: person,
+              direction: "outgoing",
+            },
+            ...prev,
+          ]);
+        }
+        setResults((prev) => prev.filter((p) => p.id !== id));
+        setNotice("İstek gönderildi. (Demo)");
+        setTab("requests");
+        return;
+      }
       await postAction({ action: "request", addresseeId: id });
       setNotice("İstek gönderildi.");
       setResults((prev) => prev.filter((p) => p.id !== id));
@@ -149,6 +184,15 @@ export function FriendsPanel({ demo }: { demo: boolean }) {
     setBusyId(id);
     setError("");
     try {
+      if (demo) {
+        const row = incoming.find((r) => r.id === id);
+        setIncoming((prev) => prev.filter((r) => r.id !== id));
+        if (action === "accept" && row) {
+          setFriends((prev) => [{ ...row, status: "accepted" }, ...prev]);
+          setTab("friends");
+        }
+        return;
+      }
       await postAction({ action, friendshipId: id });
       await load();
       if (action === "accept") setTab("friends");
@@ -163,6 +207,11 @@ export function FriendsPanel({ demo }: { demo: boolean }) {
     setBusyId(id);
     setError("");
     try {
+      if (demo) {
+        if (kind === "remove") setFriends((prev) => prev.filter((r) => r.id !== id));
+        else setOutgoing((prev) => prev.filter((r) => r.id !== id));
+        return;
+      }
       await postAction({ action: kind, friendshipId: id });
       await load();
     } catch (err) {
@@ -184,6 +233,11 @@ export function FriendsPanel({ demo }: { demo: boolean }) {
 
   return (
     <div className="space-y-4">
+      {demo ? (
+        <p className="rounded-xl border border-[#fde68a] bg-[#fffbeb] px-3 py-2 text-center text-xs font-extrabold text-[#a16207]">
+          Demo — örnek arkadaş listesi (Berk / Selin ara)
+        </p>
+      ) : null}
       <div
         role="tablist"
         aria-label="Arkadaş sekmeleri"

@@ -3,6 +3,8 @@ import type {
   DETExercise,
   DueGrammarItem,
   DueWordItem,
+  FriendshipRow,
+  FriendProfile,
   Profile,
   Story,
 } from "@/types";
@@ -292,3 +294,84 @@ export const DEMO_DET_READ_COMPLETE: DETExercise[] = [
     created_at: today(),
   },
 ];
+
+const DEMO_ME = DEMO_PROFILE.id;
+
+function demoFriend(
+  id: number,
+  other: FriendProfile,
+  opts: {
+    status: "accepted" | "pending";
+    direction: "incoming" | "outgoing";
+  }
+): FriendshipRow {
+  const otherIsRequester = opts.direction === "incoming";
+  const requester: FriendProfile = otherIsRequester
+    ? other
+    : { id: DEMO_ME, username: DEMO_PROFILE.username || "demo", daily_streak: DEMO_PROFILE.daily_streak };
+  const addressee: FriendProfile = otherIsRequester
+    ? { id: DEMO_ME, username: DEMO_PROFILE.username || "demo", daily_streak: DEMO_PROFILE.daily_streak }
+    : other;
+
+  return {
+    id,
+    requester_id: requester.id,
+    addressee_id: addressee.id,
+    status: opts.status,
+    created_at: new Date().toISOString(),
+    requester,
+    addressee,
+    other,
+    direction: opts.direction,
+  };
+}
+
+/** Sample social graph for local demo / Friends panel. */
+export const DEMO_FRIENDS: {
+  friends: FriendshipRow[];
+  incoming: FriendshipRow[];
+  outgoing: FriendshipRow[];
+  searchPool: FriendProfile[];
+} = {
+  friends: [
+    demoFriend(
+      1,
+      { id: "demo-friend-ayse", username: "Ayşe", daily_streak: 12 },
+      { status: "accepted", direction: "outgoing" }
+    ),
+    demoFriend(
+      2,
+      { id: "demo-friend-mert", username: "Mert", daily_streak: 5 },
+      { status: "accepted", direction: "incoming" }
+    ),
+    demoFriend(
+      3,
+      { id: "demo-friend-zeynep", username: "Zeynep", daily_streak: 21 },
+      { status: "accepted", direction: "outgoing" }
+    ),
+  ],
+  incoming: [
+    demoFriend(
+      4,
+      { id: "demo-friend-can", username: "Can", daily_streak: 3 },
+      { status: "pending", direction: "incoming" }
+    ),
+    demoFriend(
+      5,
+      { id: "demo-friend-elif", username: "Elif", daily_streak: 9 },
+      { status: "pending", direction: "incoming" }
+    ),
+  ],
+  outgoing: [
+    demoFriend(
+      6,
+      { id: "demo-friend-deniz", username: "Deniz", daily_streak: 2 },
+      { status: "pending", direction: "outgoing" }
+    ),
+  ],
+  searchPool: [
+    { id: "demo-search-berk", username: "Berk", daily_streak: 4 },
+    { id: "demo-search-selin", username: "Selin", daily_streak: 15 },
+    { id: "demo-search-emre", username: "Emre", daily_streak: 1 },
+  ],
+};

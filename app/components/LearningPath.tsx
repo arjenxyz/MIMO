@@ -181,48 +181,24 @@ export function LearningPath({
     0,
     nodes.findIndex((n) => n.state === "active")
   );
-  const doneCount = nodes.filter((n) => n.state === "done").length;
-  const progressPct =
-    nodes.length <= 1 ? 100 : Math.round((doneCount / (nodes.length - 1)) * 100);
 
   return (
     <section className="relative min-w-0 overflow-x-clip">
       {/* Hero unit */}
-      <div className="relative overflow-hidden rounded-[1.75rem] border border-mimo-border/80 bg-mimo-card">
-        <div
-          className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-[#1cb0f6]/10 blur-2xl"
-          aria-hidden
-        />
-        <div
-          className="pointer-events-none absolute -bottom-24 -left-10 h-48 w-48 rounded-full bg-[#fd860a]/10 blur-2xl"
-          aria-hidden
-        />
-        <div className="relative flex flex-col gap-5 p-5 sm:flex-row sm:items-end sm:justify-between sm:p-6">
+      <div className="relative overflow-hidden rounded-2xl border border-mimo-border bg-mimo-card p-5 shadow-sm sm:p-6">
+        <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <p className="text-[11px] font-black uppercase tracking-[0.18em] text-[#1cb0f6]">
-                Bugünün yolu
-              </p>
-              <span className="rounded-full bg-mimo-surface px-2.5 py-0.5 text-[10px] font-extrabold tabular-nums text-mimo-muted ring-1 ring-mimo-border">
-                {doneCount}/{nodes.length} tamam
-              </span>
-            </div>
-            <h1 className="mt-2 text-[1.65rem] font-black tracking-tight text-mimo-title sm:text-3xl">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#1cb0f6]">
+              Bugünün yolu
+            </p>
+            <h1 className="mt-1 text-2xl font-black tracking-tight text-mimo-title sm:text-3xl">
               {unitTitle}
             </h1>
-            <p className="mt-1.5 max-w-md text-sm font-semibold leading-relaxed text-mimo-muted">
-              {unitHint}
-            </p>
-            <div className="mt-4 h-1.5 max-w-xs overflow-hidden rounded-full bg-mimo-surface ring-1 ring-mimo-border/60">
-              <div
-                className="h-full rounded-full bg-gradient-to-r from-[#1cb0f6] to-[#58cc02] transition-[width] duration-500"
-                style={{ width: `${Math.max(8, progressPct)}%` }}
-              />
-            </div>
+            <p className="mt-1.5 max-w-md text-sm font-semibold text-mimo-muted">{unitHint}</p>
           </div>
           <Link
             href={primaryHref}
-            className="inline-flex shrink-0 items-center justify-center rounded-2xl bg-[#58cc02] px-8 py-3.5 text-sm font-black uppercase tracking-wide text-[#14260a] shadow-[0_4px_0_#46a302] transition hover:brightness-[1.03] active:translate-y-1 active:shadow-none"
+            className="inline-flex shrink-0 items-center justify-center rounded-2xl bg-[#58cc02] px-8 py-3.5 text-sm font-black uppercase tracking-wide text-[#14260a] shadow-[0_3px_0_#46a302] transition active:translate-y-0.5 active:shadow-none"
           >
             {primaryLabel}
           </Link>
