@@ -340,27 +340,6 @@ export function AddWordForm({ demo = false }: { demo?: boolean }) {
             </div>
 
             <div className="space-y-3">
-              {!alreadyOwned && (
-                <>
-                  <div className="overflow-hidden rounded-xl border border-mimo-soft bg-mimo-surface">
-                    <WordImage
-                      english={lookup.english}
-                      imageUrl={lookup.image_url}
-                      className="h-40 w-full object-cover"
-                    />
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => void swapImage()}
-                    disabled={swapping}
-                    className="w-full rounded-xl border border-mimo-soft bg-mimo-surface px-4 py-2.5 text-sm font-bold text-[#0369a1] transition hover:border-[#1cb0f6] hover:bg-[#e8f6fe] disabled:opacity-50"
-                  >
-                    {swapping ? "Yeni görsel aranıyor…" : "Görseli değiştir"}
-                  </button>
-                </>
-              )}
-
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
@@ -385,6 +364,69 @@ export function AddWordForm({ demo = false }: { demo?: boolean }) {
                   🔊
                 </button>
               </div>
+
+              {!alreadyOwned && (
+                <fieldset className="space-y-2 rounded-xl border border-[#ce82ff]/35 bg-[#faf5ff] p-3 dark:bg-[#1e1033]">
+                  <legend className="px-1 text-[10px] font-black uppercase tracking-wide text-[#7c3aed]">
+                    Kayıt türü
+                  </legend>
+                  <label className="flex cursor-pointer items-start gap-2.5 rounded-xl border border-mimo-border bg-mimo-card px-3 py-2.5">
+                    <input
+                      type="radio"
+                      name="shareMode"
+                      checked={shareMode === "private"}
+                      onChange={() => setShareMode("private")}
+                      className="mt-1"
+                    />
+                    <span>
+                      <span className="block text-sm font-extrabold text-mimo-title">
+                        Yalnızca kendim için
+                      </span>
+                      <span className="mt-0.5 block text-xs font-semibold text-mimo-muted">
+                        Başka hesaplara yüklenmez.
+                      </span>
+                    </span>
+                  </label>
+                  <label className="flex cursor-pointer items-start gap-2.5 rounded-xl border border-mimo-border bg-mimo-card px-3 py-2.5">
+                    <input
+                      type="radio"
+                      name="shareMode"
+                      checked={shareMode === "global"}
+                      onChange={() => setShareMode("global")}
+                      className="mt-1"
+                    />
+                    <span>
+                      <span className="block text-sm font-extrabold text-mimo-title">
+                        Global kelime sistemine yükle
+                      </span>
+                      <span className="mt-0.5 block text-xs font-semibold text-mimo-muted">
+                        Topluluk havuzuna eklenir.
+                      </span>
+                    </span>
+                  </label>
+                </fieldset>
+              )}
+
+              {!alreadyOwned && (
+                <>
+                  <div className="overflow-hidden rounded-xl border border-mimo-soft bg-mimo-surface">
+                    <WordImage
+                      english={lookup.english}
+                      imageUrl={lookup.image_url}
+                      className="h-36 w-full object-cover"
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => void swapImage()}
+                    disabled={swapping}
+                    className="w-full rounded-xl border border-mimo-soft bg-mimo-surface px-4 py-2.5 text-sm font-bold text-[#0369a1] transition hover:border-[#1cb0f6] hover:bg-[#e8f6fe] disabled:opacity-50"
+                  >
+                    {swapping ? "Yeni görsel aranıyor…" : "Görseli değiştir"}
+                  </button>
+                </>
+              )}
 
               {modalError && (
                 <p
@@ -418,46 +460,6 @@ export function AddWordForm({ demo = false }: { demo?: boolean }) {
                       “{lookup.example_sentence}”
                     </p>
                   )}
-
-                  <fieldset className="space-y-2">
-                    <legend className="text-[10px] font-black uppercase tracking-wide text-mimo-muted">
-                      Kayıt türü
-                    </legend>
-                    <label className="flex cursor-pointer items-start gap-2.5 rounded-xl border border-mimo-border bg-mimo-surface px-3 py-2.5">
-                      <input
-                        type="radio"
-                        name="shareMode"
-                        checked={shareMode === "private"}
-                        onChange={() => setShareMode("private")}
-                        className="mt-1"
-                      />
-                      <span>
-                        <span className="block text-sm font-extrabold text-mimo-title">
-                          Yalnızca kendim için
-                        </span>
-                        <span className="mt-0.5 block text-xs font-semibold text-mimo-muted">
-                          Başka hesaplara yüklenmez; sadece senin listende kalır.
-                        </span>
-                      </span>
-                    </label>
-                    <label className="flex cursor-pointer items-start gap-2.5 rounded-xl border border-mimo-border bg-mimo-surface px-3 py-2.5">
-                      <input
-                        type="radio"
-                        name="shareMode"
-                        checked={shareMode === "global"}
-                        onChange={() => setShareMode("global")}
-                        className="mt-1"
-                      />
-                      <span>
-                        <span className="block text-sm font-extrabold text-mimo-title">
-                          Global kelime sistemine yükle
-                        </span>
-                        <span className="mt-0.5 block text-xs font-semibold text-mimo-muted">
-                          Topluluk havuzuna eklenir; isteyenler kendi listesine alabilir.
-                        </span>
-                      </span>
-                    </label>
-                  </fieldset>
 
                   <button
                     type="button"

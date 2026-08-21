@@ -53,10 +53,11 @@ export function MyWordsList({
   const router = useRouter();
   const [rows, setRows] = useState(words);
   const [showGlobal, setShowGlobal] = useState(true);
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingRow, setEditingRow] = useState<DueWordItem | null>(null);
   const [draft, setDraft] = useState<EditDraft>({ english: "", turkish: "", phonetic: "" });
   const [busyId, setBusyId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [modalError, setModalError] = useState<string | null>(null);
 
   useEffect(() => {
     setRows(words);
@@ -73,6 +74,20 @@ export function MyWordsList({
     };
   }, []);
 
+  useEffect(() => {
+    if (!editingRow) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") cancelEdit();
+    };
+    document.addEventListener("keydown", onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [editingRow]);
+
   const items = useMemo(() => {
     return rows.filter((row) => {
       const word = row.words;
@@ -88,25 +103,27 @@ export function MyWordsList({
 
   function startEdit(row: DueWordItem) {
     const word = row.words!;
-    setEditingId(row.id);
+    setEditingRow(row);
     setDraft({
       english: word.english,
       turkish: word.turkish,
       phonetic: word.phonetic ?? "",
     });
     setError(null);
+    setModalError(null);
   }
 
   function cancelEdit() {
-    setEditingId(null);
-    setError(null);
+    setEditingRow(null);
+    setModalError(null);
   }
 
-  async function saveEdit(event: FormEvent, row: DueWordItem) {
+  async function saveEdit(event: FormEvent) {
     event.preventDefault();
-    if (!row.words) return;
+    const row = editingRow;
+    if (!row?.words) return;
     setBusyId(row.id);
-    setError(null);
+    setModalError(null);
 
     const nextWord: Word = {
       ...row.words,
@@ -119,7 +136,7 @@ export function MyWordsList({
       setRows((prev) =>
         prev.map((r) => (r.id === row.id ? { ...r, words: nextWord } : r))
       );
-      setEditingId(null);
+      setEditingRow(null);
       setBusyId(null);
       return;
     }
@@ -145,10 +162,10 @@ export function MyWordsList({
           r.id === row.id ? { ...r, words: data.word ?? nextWord } : r
         )
       );
-      setEditingId(null);
+      setEditingRow(null);
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Güncellenemedi");
+      setModalError(err instanceof Error ? err.message : "Güncellenemedi");
     } finally {
       setBusyId(null);
     }
@@ -165,7 +182,7 @@ export function MyWordsList({
     if (demo) {
       setRows((prev) => prev.filter((r) => r.id !== row.id));
       setBusyId(null);
-      if (editingId === row.id) setEditingId(null);
+      if (editingRow?.id === row.id) setEditingRow(null);
       return;
     }
 
@@ -179,7 +196,7 @@ export function MyWordsList({
       if (!res.ok) throw new Error(data.error || "Silinemedi");
 
       setRows((prev) => prev.filter((r) => r.id !== row.id));
-      if (editingId === row.id) setEditingId(null);
+      if (editingRow?.id === row.id) setEditingRow(null);
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Silinemedi");
@@ -187,6 +204,8 @@ export function MyWordsList({
       setBusyId(null);
     }
   }
+
+  const editingBusy = editingRow ? busyId === editingRow.id : false;
 
   return (
     <section className="rounded-2xl border border-mimo-border bg-mimo-card px-5 py-6 shadow-sm sm:px-8 sm:py-8">
@@ -218,135 +237,186 @@ export function MyWordsList({
           {items.map((row) => {
             const word = row.words!;
             const busy = busyId === row.id;
-            const editing = editingId === row.id;
             const isPrivate = word.is_global === false;
 
             return (
               <li key={row.id} className="py-3.5 first:pt-1 last:pb-0">
-                {editing ? (
-                  <form onSubmit={(e) => void saveEdit(e, row)} className="space-y-2.5">
-                    <input
-                      value={draft.english}
-                      onChange={(e) => setDraft((d) => ({ ...d, english: e.target.value }))}
-                      disabled={busy}
-                      aria-label="İngilizce"
-                      className="w-full rounded-xl border border-mimo-soft bg-mimo-surface px-3 py-2 text-sm font-bold text-mimo-fg outline-none focus:border-[#1cb0f6]"
-                    />
-                    <input
-                      value={draft.turkish}
-                      onChange={(e) => setDraft((d) => ({ ...d, turkish: e.target.value }))}
-                      disabled={busy}
-                      aria-label="Türkçe"
-                      className="w-full rounded-xl border border-mimo-soft bg-mimo-surface px-3 py-2 text-sm font-semibold text-mimo-fg outline-none focus:border-[#1cb0f6]"
-                    />
-                    <input
-                      value={draft.phonetic}
-                      onChange={(e) => setDraft((d) => ({ ...d, phonetic: e.target.value }))}
-                      disabled={busy}
-                      placeholder="Fonetik (opsiyonel)"
-                      aria-label="Fonetik"
-                      className="w-full rounded-xl border border-mimo-soft bg-mimo-surface px-3 py-2 text-xs font-bold text-mimo-muted outline-none focus:border-[#1cb0f6]"
-                    />
-                    <div className="flex gap-2">
-                      <button
-                        type="submit"
-                        disabled={busy || !draft.english.trim() || !draft.turkish.trim()}
-                        className="flex-1 rounded-xl bg-[#58cc02] px-3 py-2 text-sm font-extrabold text-white shadow-[0_3px_0_#46a302] disabled:opacity-50"
-                      >
-                        {busy ? "Kaydediliyor…" : "Kaydet"}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={cancelEdit}
-                        disabled={busy}
-                        className="rounded-xl border border-mimo-border bg-mimo-surface px-3 py-2 text-sm font-extrabold text-mimo-muted"
-                      >
-                        Vazgeç
-                      </button>
-                    </div>
-                  </form>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className="truncate text-base font-black text-mimo-fg">{word.english}</p>
-                        {isPrivate && (
-                          <span className="rounded-md bg-mimo-surface px-1.5 py-0.5 text-[10px] font-black uppercase tracking-wide text-mimo-muted">
-                            Özel
-                          </span>
-                        )}
-                      </div>
-                      <p className="mt-0.5 truncate text-sm font-semibold text-mimo-muted">
-                        {word.turkish}
-                      </p>
-                      {word.phonetic && (
-                        <p className="mt-0.5 truncate text-xs font-bold text-mimo-muted">
-                          {word.phonetic}
-                        </p>
+                <div className="flex items-center gap-2">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="truncate text-base font-black text-mimo-fg">{word.english}</p>
+                      {isPrivate && (
+                        <span className="rounded-md bg-mimo-surface px-1.5 py-0.5 text-[10px] font-black uppercase tracking-wide text-mimo-muted">
+                          Özel
+                        </span>
                       )}
-                      <UploaderBadge word={word} />
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => playWordAudio(word.english, word.audio_url)}
-                      aria-label={`${word.english} sesini dinle`}
-                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-mimo-soft bg-mimo-surface text-[#1cb0f6] transition hover:border-[#1cb0f6] hover:bg-[#e8f6fe]"
-                    >
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
-                        <path
-                          d="M11 5 6 9H2v6h4l5 4V5z"
-                          stroke="currentColor"
-                          strokeWidth="2.2"
-                          strokeLinejoin="round"
-                        />
-                        <path
-                          d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"
-                          stroke="currentColor"
-                          strokeWidth="2.2"
-                          strokeLinecap="round"
-                        />
-                      </svg>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => startEdit(row)}
-                      disabled={busy}
-                      aria-label={`${word.english} düzenle`}
-                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-mimo-soft bg-mimo-surface text-mimo-muted transition hover:border-[#7c3aed] hover:text-[#7c3aed]"
-                    >
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
-                        <path
-                          d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"
-                          stroke="currentColor"
-                          strokeWidth="2.2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => void removeWord(row)}
-                      disabled={busy}
-                      aria-label={`${word.english} sil`}
-                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-mimo-soft bg-mimo-surface text-[#e11d48] transition hover:border-[#e11d48] hover:bg-[#ffe8e8]"
-                    >
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
-                        <path
-                          d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"
-                          stroke="currentColor"
-                          strokeWidth="2.2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                    </button>
+                    <p className="mt-0.5 truncate text-sm font-semibold text-mimo-muted">
+                      {word.turkish}
+                    </p>
+                    {word.phonetic && (
+                      <p className="mt-0.5 truncate text-xs font-bold text-mimo-muted">
+                        {word.phonetic}
+                      </p>
+                    )}
+                    <UploaderBadge word={word} />
                   </div>
-                )}
+                  <button
+                    type="button"
+                    onClick={() => playWordAudio(word.english, word.audio_url)}
+                    aria-label={`${word.english} sesini dinle`}
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-mimo-soft bg-mimo-surface text-[#1cb0f6] transition hover:border-[#1cb0f6] hover:bg-[#e8f6fe]"
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
+                      <path
+                        d="M11 5 6 9H2v6h4l5 4V5z"
+                        stroke="currentColor"
+                        strokeWidth="2.2"
+                        strokeLinejoin="round"
+                      />
+                      <path
+                        d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"
+                        stroke="currentColor"
+                        strokeWidth="2.2"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => startEdit(row)}
+                    disabled={busy}
+                    aria-label={`${word.english} düzenle`}
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-mimo-soft bg-mimo-surface text-mimo-muted transition hover:border-[#7c3aed] hover:text-[#7c3aed]"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
+                      <path
+                        d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"
+                        stroke="currentColor"
+                        strokeWidth="2.2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void removeWord(row)}
+                    disabled={busy}
+                    aria-label={`${word.english} sil`}
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-mimo-soft bg-mimo-surface text-[#e11d48] transition hover:border-[#e11d48] hover:bg-[#ffe8e8]"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
+                      <path
+                        d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"
+                        stroke="currentColor"
+                        strokeWidth="2.2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </button>
+                </div>
               </li>
             );
           })}
         </ul>
+      )}
+
+      {editingRow?.words && (
+        <div
+          className="fixed inset-0 z-[300] flex items-center justify-center bg-black/45 p-4"
+          role="presentation"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) cancelEdit();
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="edit-word-title"
+            className="w-full max-w-md rounded-2xl border border-mimo-border bg-mimo-card p-5 shadow-xl sm:p-6"
+          >
+            <div className="mb-4 flex items-start justify-between gap-3">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#7c3aed]">
+                  Kelimeyi düzenle
+                </p>
+                <h3 id="edit-word-title" className="mt-1 text-lg font-black text-mimo-title">
+                  {editingRow.words.english}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={cancelEdit}
+                className="rounded-full px-2.5 py-1 text-sm font-bold text-mimo-muted hover:bg-mimo-surface hover:text-mimo-fg"
+                aria-label="Kapat"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={(e) => void saveEdit(e)} className="space-y-3">
+              <label className="block">
+                <span className="text-[10px] font-black uppercase tracking-wide text-mimo-muted">
+                  İngilizce
+                </span>
+                <input
+                  value={draft.english}
+                  onChange={(e) => setDraft((d) => ({ ...d, english: e.target.value }))}
+                  disabled={editingBusy}
+                  autoFocus
+                  className="mt-1 w-full rounded-xl border border-mimo-soft bg-mimo-surface px-3 py-2.5 text-sm font-bold text-mimo-fg outline-none focus:border-[#1cb0f6]"
+                />
+              </label>
+              <label className="block">
+                <span className="text-[10px] font-black uppercase tracking-wide text-mimo-muted">
+                  Türkçe
+                </span>
+                <input
+                  value={draft.turkish}
+                  onChange={(e) => setDraft((d) => ({ ...d, turkish: e.target.value }))}
+                  disabled={editingBusy}
+                  className="mt-1 w-full rounded-xl border border-mimo-soft bg-mimo-surface px-3 py-2.5 text-sm font-semibold text-mimo-fg outline-none focus:border-[#1cb0f6]"
+                />
+              </label>
+              <label className="block">
+                <span className="text-[10px] font-black uppercase tracking-wide text-mimo-muted">
+                  Fonetik (opsiyonel)
+                </span>
+                <input
+                  value={draft.phonetic}
+                  onChange={(e) => setDraft((d) => ({ ...d, phonetic: e.target.value }))}
+                  disabled={editingBusy}
+                  placeholder="/frend/"
+                  className="mt-1 w-full rounded-xl border border-mimo-soft bg-mimo-surface px-3 py-2.5 text-sm font-bold text-mimo-muted outline-none focus:border-[#1cb0f6]"
+                />
+              </label>
+
+              {modalError && (
+                <p className="text-sm font-bold text-[#b91c1c]">{modalError}</p>
+              )}
+
+              <div className="flex gap-2 pt-1">
+                <button
+                  type="submit"
+                  disabled={editingBusy || !draft.english.trim() || !draft.turkish.trim()}
+                  className="flex-1 rounded-2xl bg-[#58cc02] py-3 text-sm font-black text-[#14260a] shadow-[0_3px_0_#46a302] disabled:opacity-50"
+                >
+                  {editingBusy ? "Kaydediliyor…" : "Kaydet"}
+                </button>
+                <button
+                  type="button"
+                  onClick={cancelEdit}
+                  disabled={editingBusy}
+                  className="rounded-2xl border border-mimo-border bg-mimo-surface px-4 py-3 text-sm font-extrabold text-mimo-muted"
+                >
+                  Vazgeç
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </section>
   );
