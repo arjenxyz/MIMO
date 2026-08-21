@@ -74,17 +74,17 @@ export async function GET(request: NextRequest) {
     const latencyMs = Date.now() - started;
     const message = error instanceof Error ? error.message : "Keep-alive failed";
 
-    await supabase
-      .from("system_heartbeat")
-      .upsert({
+    try {
+      await supabase.from("system_heartbeat").upsert({
         id: 1,
         last_ping_at: new Date().toISOString(),
         last_ok: false,
         latency_ms: latencyMs,
         source: "cron",
-      })
-      .then(() => undefined)
-      .catch(() => undefined);
+      });
+    } catch {
+      // ignore secondary write failure
+    }
 
     return NextResponse.json(
       { ok: false, error: message, latencyMs, at: new Date().toISOString() },
