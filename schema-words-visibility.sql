@@ -32,5 +32,5 @@ drop policy if exists "Authenticated users can update words" on public.words;
 create policy "Authenticated users can update words"
   on public.words for update
   to authenticated
-  using (created_by is null or created_by = auth.uid() or is_global = true)
-  with check (true);
+  using (created_by is null or created_by = auth.uid())
+  with check (created_by is null or created_by = auth.uid());

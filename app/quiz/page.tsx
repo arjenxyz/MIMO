@@ -125,7 +125,7 @@ export default function WordQuizPage() {
           return;
         }
 
-        const [{ createClient }, { assignNewWords, getDueWords }] = await Promise.all([
+        const [{ createClient }, { assignNewWords, getDueWords, getUserWords }] = await Promise.all([
           import("@/lib/supabase/client"),
           import("@/lib/db"),
         ]);
@@ -150,8 +150,13 @@ export default function WordQuizPage() {
 
         let due = await getDueWords(supabase, user.id);
         if (due.length === 0) {
-          await assignNewWords(supabase, user.id, 5);
-          due = await getDueWords(supabase, user.id);
+          // Only seed when the list is empty — don't keep pulling pool words
+          // just because nothing is due today.
+          const owned = await getUserWords(supabase, user.id);
+          if (owned.length === 0) {
+            await assignNewWords(supabase, user.id, 5);
+            due = await getDueWords(supabase, user.id);
+          }
         }
         if (!cancelled) setItems(due);
       } catch {

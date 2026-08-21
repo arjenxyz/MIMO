@@ -153,12 +153,32 @@ export async function assignNewWords(
   if (existingError) throw existingError;
   const usedIds = new Set((existing ?? []).map((row) => row.word_id));
 
-  const { data: pool, error: poolError } = await supabase
-    .from("words")
-    .select("id")
-    .order("id", { ascending: true });
+  // Only system/seed words (no created_by). Never auto-assign community uploads —
+  // those still carry another user's name and look like "wrong account" data.
+  let pool: { id: number }[] | null = null;
+  {
+    const seeded = await supabase
+      .from("words")
+      .select("id")
+      .is("created_by", null)
+      .order("id", { ascending: true });
 
-  if (poolError) throw poolError;
+    if (seeded.error) {
+      const msg = seeded.error.message || "";
+      if (/created_by/i.test(msg) || seeded.error.code === "PGRST204") {
+        const fallback = await supabase
+          .from("words")
+          .select("id")
+          .order("id", { ascending: true });
+        if (fallback.error) throw fallback.error;
+        pool = fallback.data;
+      } else {
+        throw seeded.error;
+      }
+    } else {
+      pool = seeded.data;
+    }
+  }
 
   const available = (pool ?? []).filter((word) => !usedIds.has(word.id));
   const shuffled = [...available].sort(() => Math.random() - 0.5).slice(0, count);
