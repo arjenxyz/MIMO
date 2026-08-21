@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import type { Word } from "@/types";
+import { createClient } from "@/lib/supabase/client";
+import type { FriendshipRow, Word } from "@/types";
 
 export type UploaderProfile = {
   id: string;
@@ -10,6 +11,15 @@ export type UploaderProfile = {
   avatarUrl: string | null;
   sampleWord: string;
 };
+
+type FriendRelation =
+  | { kind: "loading" }
+  | { kind: "self" }
+  | { kind: "none" }
+  | { kind: "friend" }
+  | { kind: "outgoing"; friendshipId: number }
+  | { kind: "incoming"; friendshipId: number }
+  | { kind: "guest" };
 
 export function profileFromWord(word: Word): UploaderProfile | null {
   if (!word.is_global || !word.created_by) return null;
@@ -87,6 +97,25 @@ export function UploaderBadge({
   );
 }
 
+function relationForUser(
+  targetId: string,
+  viewerId: string,
+  lists: {
+    friends: FriendshipRow[];
+    incoming: FriendshipRow[];
+    outgoing: FriendshipRow[];
+  }
+): FriendRelation {
+  if (targetId === viewerId) return { kind: "self" };
+  const friend = lists.friends.find((r) => r.other?.id === targetId);
+  if (friend) return { kind: "friend" };
+  const outgoing = lists.outgoing.find((r) => r.other?.id === targetId);
+  if (outgoing) return { kind: "outgoing", friendshipId: outgoing.id };
+  const incoming = lists.incoming.find((r) => r.other?.id === targetId);
+  if (incoming) return { kind: "incoming", friendshipId: incoming.id };
+  return { kind: "none" };
+}
+
 export function UploaderProfileCard({
   profile,
   onClose,
@@ -95,6 +124,9 @@ export function UploaderProfileCard({
   onClose: () => void;
 }) {
   const [mounted, setMounted] = useState(false);
+  const [relation, setRelation] = useState<FriendRelation>({ kind: "loading" });
+  const [busy, setBusy] = useState(false);
+  const [friendError, setFriendError] = useState("");
 
   useEffect(() => {
     setMounted(true);
@@ -109,6 +141,90 @@ export function UploaderProfileCard({
       document.body.style.overflow = prev;
     };
   }, [onClose]);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadRelation() {
+      setRelation({ kind: "loading" });
+      setFriendError("");
+      try {
+        const supabase = createClient();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (!user) {
+          if (!cancelled) setRelation({ kind: "guest" });
+          return;
+        }
+        if (user.id === profile.id) {
+          if (!cancelled) setRelation({ kind: "self" });
+          return;
+        }
+        const res = await fetch("/api/friends");
+        const data = (await res.json()) as {
+          friends?: FriendshipRow[];
+          incoming?: FriendshipRow[];
+          outgoing?: FriendshipRow[];
+          error?: string;
+        };
+        if (!res.ok) throw new Error(data.error || "Arkadaş durumu alınamadı");
+        if (!cancelled) {
+          setRelation(
+            relationForUser(profile.id, user.id, {
+              friends: data.friends ?? [],
+              incoming: data.incoming ?? [],
+              outgoing: data.outgoing ?? [],
+            })
+          );
+        }
+      } catch (e) {
+        if (!cancelled) {
+          setFriendError(e instanceof Error ? e.message : "Arkadaş durumu alınamadı");
+          setRelation({ kind: "none" });
+        }
+      }
+    }
+    void loadRelation();
+    return () => {
+      cancelled = true;
+    };
+  }, [profile.id]);
+
+  async function postFriend(body: Record<string, unknown>) {
+    const res = await fetch("/api/friends", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const data = (await res.json()) as { error?: string };
+    if (!res.ok) throw new Error(data.error || "İşlem başarısız");
+  }
+
+  async function sendRequest() {
+    setBusy(true);
+    setFriendError("");
+    try {
+      await postFriend({ action: "request", addresseeId: profile.id });
+      setRelation({ kind: "outgoing", friendshipId: -1 });
+    } catch (e) {
+      setFriendError(e instanceof Error ? e.message : "İstek gönderilemedi");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function acceptIncoming(friendshipId: number) {
+    setBusy(true);
+    setFriendError("");
+    try {
+      await postFriend({ action: "accept", friendshipId });
+      setRelation({ kind: "friend" });
+    } catch (e) {
+      setFriendError(e instanceof Error ? e.message : "Onaylanamadı");
+    } finally {
+      setBusy(false);
+    }
+  }
 
   if (!mounted) return null;
 
@@ -151,13 +267,53 @@ export function UploaderProfileCard({
           <span className="font-black text-[#7c3aed]">{profile.sampleWord}</span> kelimesini
           global sisteme yükledi.
         </p>
-        <button
-          type="button"
-          onClick={onClose}
-          className="mt-5 w-full rounded-2xl border border-mimo-border bg-mimo-surface py-3 text-sm font-extrabold text-mimo-fg"
-        >
-          Kapat
-        </button>
+
+        {friendError ? (
+          <p className="mt-3 text-xs font-bold text-[#b91c1c]">{friendError}</p>
+        ) : null}
+
+        <div className="mt-5 space-y-2">
+          {relation.kind === "none" || relation.kind === "guest" ? (
+            <button
+              type="button"
+              disabled={busy || relation.kind === "guest"}
+              onClick={() => void sendRequest()}
+              className="w-full rounded-2xl bg-[#fd860a] py-3 text-sm font-black text-[#2a1600] shadow-[0_3px_0_#c2410c] disabled:opacity-50"
+            >
+              {relation.kind === "guest" ? "Giriş yaparak ekle" : busy ? "Gönderiliyor…" : "Arkadaş Ekle"}
+            </button>
+          ) : null}
+          {relation.kind === "incoming" ? (
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => void acceptIncoming(relation.friendshipId)}
+              className="w-full rounded-2xl bg-[#58cc02] py-3 text-sm font-black text-[#14260a] disabled:opacity-50"
+            >
+              {busy ? "Onaylanıyor…" : "İsteği Onayla"}
+            </button>
+          ) : null}
+          {relation.kind === "outgoing" ? (
+            <p className="rounded-2xl border border-mimo-border bg-mimo-surface py-3 text-sm font-extrabold text-mimo-muted">
+              İstek gönderildi
+            </p>
+          ) : null}
+          {relation.kind === "friend" ? (
+            <p className="rounded-2xl border border-mimo-border bg-mimo-surface py-3 text-sm font-extrabold text-[#15803d]">
+              Arkadaşsınız
+            </p>
+          ) : null}
+          {relation.kind === "loading" ? (
+            <p className="py-2 text-sm font-bold text-mimo-muted">…</p>
+          ) : null}
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-full rounded-2xl border border-mimo-border bg-mimo-surface py-3 text-sm font-extrabold text-mimo-fg"
+          >
+            Kapat
+          </button>
+        </div>
       </div>
     </div>,
     document.body
