@@ -96,6 +96,7 @@ export function AddWordForm({ demo = false }: { demo?: boolean }) {
   const [imagePool, setImagePool] = useState<string[]>([]);
   const [imageIndex, setImageIndex] = useState(0);
   const [triedUrls, setTriedUrls] = useState<string[]>([]);
+  const [imageLoading, setImageLoading] = useState(false);
 
   function closeModal() {
     setModalOpen(false);
@@ -135,6 +136,25 @@ export function AddWordForm({ demo = false }: { demo?: boolean }) {
     return pool;
   }
 
+  async function loadImagesForLookup(english: string, seedUrl?: string | null) {
+    setImageLoading(true);
+    try {
+      const pool = await fetchImagePool(english);
+      const nextPool =
+        pool.length > 0 ? pool : seedUrl ? [seedUrl] : [];
+      setImagePool(nextPool);
+      setImageIndex(0);
+      setTriedUrls(nextPool.slice(0, 1));
+      setLookup((prev) =>
+        prev ? { ...prev, image_url: nextPool[0] ?? prev.image_url ?? null } : prev
+      );
+    } catch {
+      // Görsel opsiyonel — anlam geldiyse modal açık kalır.
+    } finally {
+      setImageLoading(false);
+    }
+  }
+
   async function onLookup(event: FormEvent) {
     event.preventDefault();
     setError("");
@@ -151,13 +171,10 @@ export function AddWordForm({ demo = false }: { demo?: boolean }) {
     try {
       if (demo) {
         const result = await demoLookupEnglish(query);
-        const pool = await fetchImagePool(result.english);
-        setImagePool(pool);
-        setImageIndex(0);
-        setTriedUrls(pool.slice(0, 1));
-        setLookup({ ...result, image_url: pool[0] ?? null });
+        setLookup({ ...result, image_url: null });
         setTurkish(result.turkish);
         setModalOpen(true);
+        void loadImagesForLookup(result.english);
         return;
       }
 
@@ -190,14 +207,10 @@ export function AddWordForm({ demo = false }: { demo?: boolean }) {
         return;
       }
 
-      const pool = await fetchImagePool(result.english);
-      const nextPool = pool.length > 0 ? pool : result.image_url ? [result.image_url] : [];
-      setImagePool(nextPool);
-      setImageIndex(0);
-      setTriedUrls(nextPool.slice(0, 1));
-      setLookup({ ...result, image_url: nextPool[0] ?? null });
+      setLookup({ ...result, image_url: result.image_url ?? null });
       setTurkish(result.turkish);
       setModalOpen(true);
+      void loadImagesForLookup(result.english, result.image_url);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Bulunamadı");
     } finally {
@@ -451,6 +464,11 @@ export function AddWordForm({ demo = false }: { demo?: boolean }) {
                     imageUrl={lookup.image_url}
                     className="h-36 w-full object-cover"
                   />
+                  {imageLoading && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/20 text-xs font-bold text-white">
+                      Görsel aranıyor…
+                    </div>
+                  )}
                   <button
                     type="button"
                     onClick={() => void swapImage()}

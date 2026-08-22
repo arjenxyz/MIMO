@@ -1,5 +1,4 @@
-import { findWordImageUrl } from "@/lib/wordImage";
-import { detectWordLevel, type CefrLevel } from "@/lib/wordLevel";
+import { detectWordLevelSync, type CefrLevel } from "@/lib/wordLevel";
 
 export type WordLookupResult = {
   english: string;
@@ -94,20 +93,34 @@ export async function lookupEnglishWord(raw: string): Promise<WordLookupResult |
     return { error: "Sadece harf içeren kelimeler destekleniyor." };
   }
 
-  const dict = await fetchDictionary(word);
+  // Dictionary + translation in parallel; skip slow Gemini/image on the lookup path.
+  const [dict, turkish] = await Promise.all([fetchDictionary(word), translateToTurkish(word)]);
   const english = dict?.english || word;
-  const [turkish, image_url, level] = await Promise.all([
-    translateToTurkish(english),
-    findWordImageUrl(english),
-    detectWordLevel(english),
-  ]);
 
   if (!turkish) {
+    const retryTurkish = english !== word ? await translateToTurkish(english) : null;
+    if (!retryTurkish) {
+      return {
+        error:
+          "Türkçe anlam bulunamadı. Kelimeyi kontrol et veya biraz sonra tekrar dene.",
+      };
+    }
+    const level = detectWordLevelSync(english);
     return {
-      error:
-        "Türkçe anlam bulunamadı. Kelimeyi kontrol et veya biraz sonra tekrar dene.",
+      english,
+      turkish: retryTurkish,
+      example_sentence: dict?.example_sentence ?? null,
+      phonetic: dict?.phonetic ?? null,
+      audio_url: dict?.audio_url ?? null,
+      image_url: null,
+      cefr: level.cefr,
+      difficulty: level.difficulty,
+      level_source: level.source,
+      source: dict ? "dictionary+mymemory" : "mymemory",
     };
   }
+
+  const level = detectWordLevelSync(english);
 
   return {
     english,
@@ -115,7 +128,7 @@ export async function lookupEnglishWord(raw: string): Promise<WordLookupResult |
     example_sentence: dict?.example_sentence ?? null,
     phonetic: dict?.phonetic ?? null,
     audio_url: dict?.audio_url ?? null,
-    image_url,
+    image_url: null,
     cefr: level.cefr,
     difficulty: level.difficulty,
     level_source: level.source,

@@ -208,10 +208,57 @@ export async function findExistingUserWord(
 
   const variants = englishLookupVariants(englishRaw);
 
+  async function resolveFromWords(words: Word[]): Promise<{ word: Word; alreadyOwned: boolean } | null> {
+    const visible = words.filter(
+      (w) => w.is_global !== false || !w.created_by || w.created_by === userId
+    );
+    const matched = visible.filter((w) => englishKeysMatch(w.english, englishRaw));
+    if (matched.length === 0) return null;
+
+    const best =
+      matched.find((w) => normalizeEnglishKey(w.english) === key) ?? matched[0]!;
+    const ids = matched.map((w) => w.id);
+
+    const { data: links, error: linkError } = await supabase
+      .from("user_words")
+      .select("word_id")
+      .eq("user_id", userId)
+      .in("word_id", ids);
+
+    if (linkError) throw linkError;
+
+    const ownedIds = new Set((links ?? []).map((row) => row.word_id));
+    return { word: best, alreadyOwned: ownedIds.has(best.id) };
+  }
+
+  const { data: poolHits, error: poolError } = await supabase
+    .from("words")
+    .select("*")
+    .in("english", variants);
+
+  if (poolError) throw poolError;
+
+  const fromVariants = await resolveFromWords((poolHits ?? []) as Word[]);
+  if (fromVariants) return fromVariants;
+
+  const { data: looseHits, error: looseError } = await supabase
+    .from("words")
+    .select("*")
+    .ilike("english", `%${key.replace(/\s+/g, "%")}%`)
+    .limit(24);
+
+  if (looseError) throw looseError;
+
+  const fromLoose = await resolveFromWords((looseHits ?? []) as Word[]);
+  if (fromLoose) return fromLoose;
+
+  // Last resort: only fetch this user's words that loosely match (not the full list).
   const { data: ownedRows, error: ownedError } = await supabase
     .from("user_words")
     .select("id, words(*)")
-    .eq("user_id", userId);
+    .eq("user_id", userId)
+    .filter("words.english", "ilike", `%${key.replace(/\s+/g, "%")}%`)
+    .limit(24);
 
   if (ownedError) throw ownedError;
 
@@ -221,42 +268,6 @@ export async function findExistingUserWord(
     if (!w?.english) continue;
     if (englishKeysMatch(w.english, englishRaw)) {
       return { word: w, alreadyOwned: true };
-    }
-  }
-
-  // Exact / variant hit in global pool (not yet on user's list).
-  const { data: poolHits, error: poolError } = await supabase
-    .from("words")
-    .select("*")
-    .in("english", variants);
-
-  if (poolError) throw poolError;
-
-  if (poolHits && poolHits.length > 0) {
-    const visible = (poolHits as Word[]).filter(
-      (w) => w.is_global !== false || !w.created_by || w.created_by === userId
-    );
-    if (visible.length > 0) {
-      const best =
-        visible.find((w) => normalizeEnglishKey(w.english) === key) ?? visible[0];
-      return { word: best, alreadyOwned: false };
-    }
-  }
-
-  // Broader scan for spaced / punctuated mismatches not covered by variants.
-  const { data: looseHits, error: looseError } = await supabase
-    .from("words")
-    .select("*")
-    .ilike("english", `%${key.replace(/\s+/g, "%")}%`)
-    .limit(40);
-
-  if (looseError) throw looseError;
-
-  for (const hit of looseHits ?? []) {
-    const w = hit as Word;
-    if (w.is_global === false && w.created_by && w.created_by !== userId) continue;
-    if (englishKeysMatch(hit.english, englishRaw)) {
-      return { word: w, alreadyOwned: false };
     }
   }
 

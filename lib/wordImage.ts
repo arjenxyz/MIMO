@@ -6,7 +6,7 @@
  */
 
 const UA = { "User-Agent": "MIMO-LanguageApp/1.0 (english-vocabulary-learning)" };
-const FETCH_MS = 8_000;
+const FETCH_MS = 4_500;
 
 /** Concrete / teachable instance-of (P31) — real Wikidata IDs (+ new fruit class). */
 const ALLOW_P31 = new Set([
