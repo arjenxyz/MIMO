@@ -53,7 +53,7 @@ function playRemoteUrl(url: string): Promise<void> {
     const cleanup = () => {
       window.clearTimeout(timer);
       audio.removeEventListener("canplay", onReady);
-      audio.removeEventListener("loadeddata", onReady);
+      audio.removeEventListener("canplaythrough", onReady);
       audio.removeEventListener("ended", onEnded);
       audio.removeEventListener("error", onError);
     };
@@ -62,8 +62,14 @@ function playRemoteUrl(url: string): Promise<void> {
       if (settled) return;
       settled = true;
       cleanup();
-      if (err) reject(err);
-      else resolve();
+      if (err) {
+        try {
+          audio.pause();
+        } catch {
+          // ignore
+        }
+        reject(err);
+      } else resolve();
     };
 
     const onEnded = () => {
@@ -71,48 +77,39 @@ function playRemoteUrl(url: string): Promise<void> {
         finish();
         return;
       }
-      const duration = Number.isFinite(audio.duration) ? audio.duration : audio.currentTime;
-      if (duration > 0 && duration < 0.12) {
-        finish(new Error("audio too short"));
-        return;
-      }
       finish();
     };
 
     const onReady = () => {
       if (settled || started || generation !== playGeneration) return;
-      const duration = Number.isFinite(audio.duration) ? audio.duration : 0;
-      if (duration > 0 && duration < 0.12) {
-        finish(new Error("audio too short"));
-        return;
-      }
       started = true;
       audio
         .play()
-        .catch((e) => finish(e instanceof Error ? e : new Error("play failed")));
+        .catch((e) => {
+          const blocked = e instanceof DOMException && e.name === "NotAllowedError";
+          finish(new Error(blocked ? "autoplay blocked" : "play failed"));
+        });
     };
 
     const onError = () => finish(new Error("audio error"));
 
     const timer = window.setTimeout(() => {
-      if (generation !== playGeneration) {
-        finish();
-        return;
-      }
-      if (!audio.paused && audio.currentTime > 0.2) {
+      if (generation !== playGeneration || started) {
         finish();
         return;
       }
       finish(new Error("audio timeout"));
-    }, 1600);
+    }, 8000);
 
     audio.addEventListener("canplay", onReady);
-    audio.addEventListener("loadeddata", onReady);
+    audio.addEventListener("canplaythrough", onReady);
     audio.addEventListener("ended", onEnded);
     audio.addEventListener("error", onError);
-    if (!audio.src) audio.src = url;
-    if (audio.readyState >= 2) onReady();
-    else audio.load();
+
+    const current = audio.currentSrc || audio.src;
+    if (!current) audio.src = url;
+    // Do not call load() — that aborts a prefetch already in flight.
+    if (audio.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) onReady();
   });
 }
 
@@ -135,13 +132,13 @@ function englishRemoteUrls(text: string): string[] {
 }
 
 async function speakViaEnglishRemote(text: string): Promise<boolean> {
-  const urls = englishRemoteUrls(text).slice(0, 2);
+  const urls = englishRemoteUrls(text);
   for (const url of urls) {
     try {
       await playRemoteUrl(url);
       return true;
-    } catch {
-      // try next source
+    } catch (err) {
+      if (err instanceof Error && err.message === "autoplay blocked") return false;
     }
   }
   return false;
@@ -214,16 +211,12 @@ function speakViaSpeechSynthesis(text: string, rate: number): Promise<boolean> {
     }
 
     const voice = pickEnglishVoice();
-    if (!voice) {
-      resolve(false);
-      return;
-    }
 
     window.speechSynthesis.cancel();
 
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.voice = voice;
-    utterance.lang = voice.lang?.startsWith("en") ? voice.lang : "en-US";
+    if (voice) utterance.voice = voice;
+    utterance.lang = voice?.lang?.startsWith("en") ? voice.lang : "en-US";
     utterance.rate = Math.min(1, Math.max(0.75, rate));
     utterance.pitch = 1;
     utterance.onend = () => resolve(true);
