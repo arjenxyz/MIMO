@@ -14,7 +14,7 @@ import { WordImage } from "@/app/components/WordImage";
 import { WordUploaderAttribution } from "@/app/components/WordUploaderAttribution";
 import { DEMO_DUE_WORDS, isDemoMode } from "@/lib/demo";
 import { playFeedback } from "@/lib/feedbackSound";
-import { playWordAudio } from "@/lib/speak";
+import { playWordAudio, primeWordAudio } from "@/lib/speak";
 import type { DueWordItem, Quality } from "@/types";
 
 const DISTRACTOR_POOL = [
@@ -190,11 +190,19 @@ export default function WordQuizPage() {
   }, [word, items]);
 
   useEffect(() => {
+    const next = items[index + 1]?.words;
+    if (!next?.english) return;
+    primeWordAudio(next.english, next.audio_url);
+    void fetch(`/api/word-image?q=${encodeURIComponent(next.english)}`);
+  }, [items, index]);
+
+  useEffect(() => {
     if (!word || spokenForId.current === word.id) return;
     spokenForId.current = word.id;
+    primeWordAudio(word.english, word.audio_url);
     const t = window.setTimeout(() => {
       playWordAudio(word.english, word.audio_url);
-    }, 350);
+    }, 80);
     return () => window.clearTimeout(t);
   }, [word]);
 

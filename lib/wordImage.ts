@@ -6,7 +6,10 @@
  */
 
 const UA = { "User-Agent": "MIMO-LanguageApp/1.0 (english-vocabulary-learning)" };
-const FETCH_MS = 4_500;
+const FETCH_MS = 2_200;
+
+const imageCache = new Map<string, { urls: string[]; at: number }>();
+const IMAGE_CACHE_MS = 1000 * 60 * 60 * 12;
 
 /** Concrete / teachable instance-of (P31) — real Wikidata IDs (+ new fruit class). */
 const ALLOW_P31 = new Set([
@@ -89,16 +92,22 @@ export async function findWordImageCandidates(
 
   const exclude = new Set((opts?.exclude ?? []).map(normalizeUrlKey).filter(Boolean));
   const limit = Math.min(12, Math.max(1, opts?.limit ?? 8));
+  const cacheKey = `${query}|${limit}|${[...exclude].sort().join(",")}`;
+  const cached = imageCache.get(cacheKey);
+  if (cached && Date.now() - cached.at < IMAGE_CACHE_MS) {
+    return cached.urls;
+  }
 
   const scored: Array<{ url: string; score: number }> = [];
+  const fast = limit <= 1 && exclude.size === 0;
 
-  const wikidata = await withTimeout(searchWikidataCandidates(query), FETCH_MS);
+  const [wikidata, wiki, openverse] = await Promise.all([
+    withTimeout(searchWikidataCandidates(query), FETCH_MS),
+    withTimeout(searchWikipediaSummary(query), FETCH_MS),
+    withTimeout(searchOpenverseCandidates(query, { maxQueries: fast ? 1 : 2 }), FETCH_MS),
+  ]);
   if (wikidata) scored.push(...wikidata);
-
-  const wiki = await withTimeout(searchWikipediaSummary(query), FETCH_MS);
   if (wiki) scored.push({ url: wiki, score: 55 });
-
-  const openverse = await withTimeout(searchOpenverseCandidates(query), FETCH_MS);
   if (openverse) scored.push(...openverse);
 
   scored.sort((a, b) => b.score - a.score);
@@ -112,6 +121,7 @@ export async function findWordImageCandidates(
     out.push(item.url);
     if (out.length >= limit) break;
   }
+  if (out.length > 0) imageCache.set(cacheKey, { urls: out, at: Date.now() });
   return out;
 }
 
@@ -333,16 +343,17 @@ type OpenverseResult = {
 };
 
 async function searchOpenverseCandidates(
-  query: string
+  query: string,
+  opts?: { maxQueries?: number }
 ): Promise<Array<{ url: string; score: number }>> {
   if (isLikelyAbstract(query)) return [];
 
   const queries = [
+    `"${query}"`,
+    `"${query} photograph"`,
     `"${query} object"`,
     `"${query} illustration"`,
-    `"${query} photograph"`,
-    `"${query}"`,
-  ];
+  ].slice(0, Math.max(1, opts?.maxQueries ?? 2));
 
   const scored: Array<{ url: string; score: number }> = [];
   const seen = new Set<string>();

@@ -75,11 +75,12 @@ export function WordImage({
 
   return (
     // eslint-disable-next-line @next/next/no-img-element
-    <img
+      <img
       src={src}
       alt={alt ?? `${english} görseli`}
       className={className}
-      loading="lazy"
+      loading="eager"
+      decoding="async"
       referrerPolicy="no-referrer"
       onError={() => setFailed(true)}
     />

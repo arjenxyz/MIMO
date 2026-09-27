@@ -14,12 +14,36 @@ function stopActiveAudio() {
   activeAudio = null;
 }
 
+const primedAudio = new Map<string, HTMLAudioElement>();
+
+function takePrimed(url: string) {
+  const existing = primedAudio.get(url);
+  if (!existing) return new Audio();
+  primedAudio.delete(url);
+  return existing;
+}
+
+/** Start downloading TTS/dictionary audio before playback. */
+export function primeWordAudio(word: string, audioUrl?: string | null) {
+  if (typeof window === "undefined") return;
+  const url = audioUrl?.trim() || englishRemoteUrls(word)[0];
+  if (!url || primedAudio.has(url)) return;
+  const audio = new Audio();
+  audio.preload = "auto";
+  audio.src = url;
+  primedAudio.set(url, audio);
+  if (primedAudio.size > 12) {
+    const oldest = primedAudio.keys().next().value;
+    if (oldest) primedAudio.delete(oldest);
+  }
+}
+
 function playRemoteUrl(url: string): Promise<void> {
   const generation = ++playGeneration;
 
   return new Promise((resolve, reject) => {
     stopActiveAudio();
-    const audio = new Audio();
+    const audio = takePrimed(url);
     activeAudio = audio;
     audio.preload = "auto";
 
@@ -28,7 +52,7 @@ function playRemoteUrl(url: string): Promise<void> {
 
     const cleanup = () => {
       window.clearTimeout(timer);
-      audio.removeEventListener("canplaythrough", onReady);
+      audio.removeEventListener("canplay", onReady);
       audio.removeEventListener("loadeddata", onReady);
       audio.removeEventListener("ended", onEnded);
       audio.removeEventListener("error", onError);
@@ -75,20 +99,20 @@ function playRemoteUrl(url: string): Promise<void> {
         finish();
         return;
       }
-      // Long phrase still playing — treat as success rather than cutting it off.
-      if (!audio.paused && audio.currentTime > 0.25) {
+      if (!audio.paused && audio.currentTime > 0.2) {
         finish();
         return;
       }
       finish(new Error("audio timeout"));
-    }, 20000);
+    }, 1600);
 
-    audio.addEventListener("canplaythrough", onReady);
+    audio.addEventListener("canplay", onReady);
     audio.addEventListener("loadeddata", onReady);
     audio.addEventListener("ended", onEnded);
     audio.addEventListener("error", onError);
-    audio.src = url;
-    audio.load();
+    if (!audio.src) audio.src = url;
+    if (audio.readyState >= 2) onReady();
+    else audio.load();
   });
 }
 
@@ -111,7 +135,8 @@ function englishRemoteUrls(text: string): string[] {
 }
 
 async function speakViaEnglishRemote(text: string): Promise<boolean> {
-  for (const url of englishRemoteUrls(text)) {
+  const urls = englishRemoteUrls(text).slice(0, 2);
+  for (const url of urls) {
     try {
       await playRemoteUrl(url);
       return true;
