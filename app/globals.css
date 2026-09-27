@@ -164,12 +164,60 @@ body {
   animation: mimo-shake 0.4s ease-in-out;
 }
 
+@keyframes login-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes login-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes login-sheen {
+  0% {
+    transform: translateX(-140%) skewX(-18deg);
+  }
+  100% {
+    transform: translateX(320%) skewX(-18deg);
+  }
+}
+
+.login-float {
+  animation: login-float 3.6s ease-in-out infinite;
+}
+
+.login-rise {
+  animation: login-rise 0.65s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.login-cta-sheen {
+  animation: login-sheen 2.8s ease-in-out infinite;
+  animation-delay: 0.9s;
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .mimo-wave,
+  .mimo-bounce,
   .mimo-path-pulse,
   .mimo-path-enter,
   .mimo-score-float,
   .mimo-score-pulse,
-  .mimo-shake {
+  .mimo-shake,
+  .login-float,
+  .login-rise,
+  .login-cta-sheen {
     animation: none;
   }
 }
