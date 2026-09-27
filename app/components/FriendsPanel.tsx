@@ -3,7 +3,7 @@
 import { FormEvent, useCallback, useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { ChallengeInviteModal } from "@/app/components/ChallengeInviteModal";
-import { DEMO_FRIENDS } from "@/lib/demo";
+import { DEMO_CHALLENGES, DEMO_FRIENDS, DEMO_PROFILE } from "@/lib/demo";
 import type { ChallengeRow, FriendProfile, FriendshipRow } from "@/types";
 
 type Tab = "friends" | "requests" | "add";
@@ -67,9 +67,9 @@ export function FriendsPanel({ demo }: { demo: boolean }) {
 
   const loadChallenges = useCallback(async () => {
     if (demo) {
-      setChallengeIncoming([]);
-      setChallengeOutgoing([]);
-      setChallengeActive([]);
+      setChallengeIncoming(DEMO_CHALLENGES.incoming.map((r) => ({ ...r })));
+      setChallengeOutgoing(DEMO_CHALLENGES.outgoing.map((r) => ({ ...r })));
+      setChallengeActive(DEMO_CHALLENGES.active.map((r) => ({ ...r })));
       return;
     }
     try {
@@ -144,6 +144,27 @@ export function FriendsPanel({ demo }: { demo: boolean }) {
     setBusyId(`c-${challengeId}`);
     setError("");
     try {
+      if (demo) {
+        const row =
+          challengeIncoming.find((c) => c.id === challengeId) ||
+          challengeOutgoing.find((c) => c.id === challengeId) ||
+          challengeActive.find((c) => c.id === challengeId);
+        if (action === "accept") {
+          const vs =
+            row?.challenger_id === DEMO_PROFILE.id
+              ? row.opponent?.username
+              : row?.challenger?.username;
+          router.push(
+            `/challenge/${challengeId}?module=${row?.module ?? "match"}&vs=${encodeURIComponent(vs || "Rakip")}`
+          );
+          return;
+        }
+        setChallengeIncoming((prev) => prev.filter((c) => c.id !== challengeId));
+        setChallengeOutgoing((prev) => prev.filter((c) => c.id !== challengeId));
+        setChallengeActive((prev) => prev.filter((c) => c.id !== challengeId));
+        setNotice(action === "cancel" ? "Davet iptal edildi. (Demo)" : "Davet reddedildi. (Demo)");
+        return;
+      }
       const res = await fetch("/api/challenges", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

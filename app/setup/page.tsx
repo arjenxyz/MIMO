@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { isDemoMode } from "@/lib/demo";
 import { createClient } from "@/lib/supabase/client";
 
 export default function ProfileSetupPage() {
@@ -16,6 +17,11 @@ export default function ProfileSetupPage() {
   const [returningUser, setReturningUser] = useState(false);
 
   useEffect(() => {
+    if (isDemoMode(window.location.hostname)) {
+      router.replace("/");
+      return;
+    }
+
     let cancelled = false;
 
     async function load() {
@@ -65,7 +71,7 @@ export default function ProfileSetupPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [router]);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();

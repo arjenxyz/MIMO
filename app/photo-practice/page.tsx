@@ -13,6 +13,7 @@ import {
   PracticeExamTopBar,
 } from "@/app/components/PracticeExamChrome";
 import { formatTimer } from "@/lib/detCloze";
+import { DEMO_PHOTO_EVALUATION, isDemoMode } from "@/lib/demo";
 import { playFeedback } from "@/lib/feedbackSound";
 import { getRandomImage, stabilizePicsumUrl } from "@/lib/image-api";
 
@@ -157,6 +158,15 @@ export default function PhotoPracticePage() {
           : "The student wrote almost nothing before the timer ended.";
 
       try {
+        if (isDemoMode(typeof window !== "undefined" ? window.location.hostname : null)) {
+          await new Promise((r) => setTimeout(r, 600));
+          const next = { ...DEMO_PHOTO_EVALUATION };
+          setEvaluation(next);
+          playFeedback(isB2OrAbove(next.cefr_level));
+          setPhase("done");
+          return;
+        }
+
         const res = await fetch("/api/evaluate-photo", {
           method: "POST",
           headers: { "Content-Type": "application/json" },

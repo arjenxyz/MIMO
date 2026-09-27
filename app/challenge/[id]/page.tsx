@@ -1,7 +1,12 @@
 import { headers } from "next/headers";
 import { ChallengeArena } from "@/app/components/ChallengeArena";
 import { getChallenge } from "@/lib/challenges";
-import { isDemoMode } from "@/lib/demo";
+import {
+  buildDemoArenaChallenge,
+  DEMO_PROFILE,
+  getDemoChallengeById,
+  isDemoMode,
+} from "@/lib/demo";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import type { ChallengeModule, ChallengeRow } from "@/types";
@@ -13,21 +18,6 @@ type Props = {
   searchParams: Promise<{ module?: string; vs?: string }>;
 };
 
-const DEMO_WORDS = [
-  { id: 1, english: "water", turkish: "su" },
-  { id: 2, english: "friend", turkish: "arkadaş" },
-  { id: 3, english: "please", turkish: "lütfen" },
-  { id: 4, english: "mother", turkish: "anne" },
-  { id: 5, english: "father", turkish: "baba" },
-  { id: 6, english: "school", turkish: "okul" },
-  { id: 7, english: "book", turkish: "kitap" },
-  { id: 8, english: "city", turkish: "şehir" },
-  { id: 9, english: "happy", turkish: "mutlu" },
-  { id: 10, english: "night", turkish: "gece" },
-  { id: 11, english: "morning", turkish: "sabah" },
-  { id: 12, english: "family", turkish: "aile" },
-];
-
 export default async function ChallengePage({ params, searchParams }: Props) {
   const { id: idParam } = await params;
   const q = await searchParams;
@@ -35,28 +25,40 @@ export default async function ChallengePage({ params, searchParams }: Props) {
   const host = headerList.get("host")?.split(":")[0] ?? null;
   const demoHost = isDemoMode(host);
 
-  if (idParam === "demo" || (demoHost && !Number.isFinite(Number(idParam)))) {
-    const challengeModule: ChallengeModule =
-      q.module === "word_check" ? "word_check" : "match";
-    const vs = q.vs?.trim() || "Demo Rakip";
-    const demoChallenge: ChallengeRow = {
-      id: 0,
-      challenger_id: "demo-me",
-      opponent_id: "demo-opp",
-      module: challengeModule,
-      status: "active",
-      seed_words: DEMO_WORDS,
-      challenger_score: 0,
-      opponent_score: 0,
-      winner_id: null,
-      created_at: new Date().toISOString(),
-      started_at: new Date().toISOString(),
-      finished_at: null,
-      challenger: { id: "demo-me", username: "Sen", daily_streak: 3 },
-      opponent: { id: "demo-opp", username: vs, daily_streak: 2 },
-    };
+  const challengeModule: ChallengeModule =
+    q.module === "word_check" ? "word_check" : "match";
+  const vs = q.vs?.trim() || "Demo Rakip";
+  const numericId = Number(idParam);
+
+  if (demoHost || idParam === "demo") {
+    const fromPool =
+      Number.isFinite(numericId) && numericId > 0
+        ? getDemoChallengeById(numericId)
+        : null;
+    const demoChallenge: ChallengeRow =
+      fromPool ??
+      buildDemoArenaChallenge({
+        id: Number.isFinite(numericId) ? numericId : 0,
+        module: challengeModule,
+        vsName: vs,
+      });
+
+    const playable: ChallengeRow =
+      demoChallenge.status === "pending"
+        ? { ...demoChallenge, status: "active", started_at: new Date().toISOString() }
+        : demoChallenge;
+
     return (
-      <ChallengeArena initial={demoChallenge} userId="demo-me" demo demoVsName={vs} />
+      <ChallengeArena
+        initial={playable}
+        userId={DEMO_PROFILE.id}
+        demo
+        demoVsName={
+          playable.challenger_id === DEMO_PROFILE.id
+            ? playable.opponent?.username ?? vs
+            : playable.challenger?.username ?? vs
+        }
+      />
     );
   }
 

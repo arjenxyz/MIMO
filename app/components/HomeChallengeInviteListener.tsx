@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { DEMO_CHALLENGES, DEMO_PROFILE } from "@/lib/demo";
 import { createClient } from "@/lib/supabase/client";
 import type { ChallengeRow } from "@/types";
 
@@ -30,7 +31,10 @@ export function HomeChallengeInviteListener({ demo }: { demo: boolean }) {
   }, []);
 
   const refreshIncoming = useCallback(async () => {
-    if (demo) return;
+    if (demo) {
+      pickIncoming(DEMO_CHALLENGES.incoming);
+      return;
+    }
     try {
       const res = await fetch("/api/challenges");
       if (!res.ok) return;
@@ -42,9 +46,9 @@ export function HomeChallengeInviteListener({ demo }: { demo: boolean }) {
   }, [demo, pickIncoming]);
 
   useEffect(() => {
+    void refreshIncoming();
     if (demo) return;
 
-    void refreshIncoming();
     const poll = window.setInterval(() => void refreshIncoming(), 4000);
 
     let cleanupRealtime: (() => void) | undefined;
@@ -107,6 +111,22 @@ export function HomeChallengeInviteListener({ demo }: { demo: boolean }) {
     setBusy(true);
     setError("");
     try {
+      if (demo) {
+        dismissedRef.current.add(invite.id);
+        if (action === "accept") {
+          const vs =
+            invite.challenger_id === DEMO_PROFILE.id
+              ? invite.opponent?.username
+              : invite.challenger?.username;
+          router.push(
+            `/challenge/${invite.id}?module=${invite.module}&vs=${encodeURIComponent(vs || "Rakip")}`
+          );
+          return;
+        }
+        setInvite(null);
+        return;
+      }
+
       const res = await fetch("/api/challenges", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

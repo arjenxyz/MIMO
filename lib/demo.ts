@@ -1,4 +1,6 @@
 import type {
+  ChallengeRow,
+  ChallengeSeedWord,
   DailyQuests,
   DETExercise,
   DueGrammarItem,
@@ -31,6 +33,8 @@ export const DEMO_PROFILE: Profile = {
   total_lessons: 28,
   daily_quest_bonus_date: null,
 };
+
+const DEMO_ME = DEMO_PROFILE.id;
 
 export const DEMO_QUESTS: DailyQuests = {
   wordsDone: 2,
@@ -228,7 +232,7 @@ export const DEMO_STORIES: Story[] = [
     level: 1,
     title: "A Day at School",
     content:
-      "Mina is a student. She wakes up early and eats breakfast. Then she walks to school with her friend Ali.",
+      "Mina is a student. She wakes up early and eats breakfast. Then she walks to school with her friend Ali. In class they read a short story and write new words in their notebooks.",
     question1: "Who walks to school with Mina?",
     question2: "What does Mina eat?",
     question3: "Where does she go?",
@@ -241,7 +245,8 @@ export const DEMO_STORIES: Story[] = [
     id: 2,
     level: 2,
     title: "The Red Apple",
-    content: "Tom is hungry. He sees a red apple on the table and eats it.",
+    content:
+      "Tom is hungry. He sees a red apple on the table and eats it. Then he drinks a glass of water and feels better.",
     question1: "What color is the apple?",
     question2: "Who is hungry?",
     question3: "Where is the apple?",
@@ -250,7 +255,181 @@ export const DEMO_STORIES: Story[] = [
     answer3: "On the table",
     image_prompt: null,
   },
+  {
+    id: 3,
+    level: 2,
+    title: "Rainy Afternoon",
+    content:
+      "Lina looks out the window. It is raining hard. She stays home, makes tea, and reads her favorite book on the sofa.",
+    question1: "What is the weather like?",
+    question2: "What does Lina drink?",
+    question3: "Where does she read?",
+    answer1: "Raining",
+    answer2: "Tea",
+    answer3: "On the sofa",
+    image_prompt: null,
+  },
+  {
+    id: 4,
+    level: 3,
+    title: "The Weekend Market",
+    content:
+      "Every Saturday, Omar and his sister visit the weekend market. They buy fresh bread, olives, and sweet strawberries. Omar practices English with a friendly seller who smiles and repeats new words slowly.",
+    question1: "When do they visit the market?",
+    question2: "What fruit do they buy?",
+    question3: "Who helps Omar practice English?",
+    answer1: "Saturday",
+    answer2: "Strawberries",
+    answer3: "A seller",
+    image_prompt: null,
+  },
 ];
+
+/** Offline photo-practice result (no Gemini). */
+export const DEMO_PHOTO_EVALUATION = {
+  cefr_level: "B1" as const,
+  score: 7,
+  grammar_errors: ["Use past continuous for background actions: was walking"],
+  vocabulary_score: 7,
+  coherence_score: 8,
+  feedback:
+    "Demo değerlendirme: Ana fikri net anlattın. Daha fazla detay (renk, konum, duygu) ekleyerek B2’ye yaklaşabilirsin.",
+  improved_version:
+    "In the photo, a young woman is sitting on a park bench while two children are playing nearby. The sky looks bright, and there are green trees behind them.",
+  suggestions: [
+    "Zaman ifadeleri ekle: In the foreground / In the background…",
+    "Bir tahmin cümlesi yaz: They might be enjoying a sunny afternoon.",
+  ],
+};
+
+export const DEMO_CHALLENGE_WORDS: ChallengeSeedWord[] = [
+  { id: 1, english: "water", turkish: "su" },
+  { id: 2, english: "friend", turkish: "arkadaş" },
+  { id: 3, english: "please", turkish: "lütfen" },
+  { id: 4, english: "mother", turkish: "anne" },
+  { id: 5, english: "father", turkish: "baba" },
+  { id: 6, english: "school", turkish: "okul" },
+  { id: 7, english: "book", turkish: "kitap" },
+  { id: 8, english: "city", turkish: "şehir" },
+  { id: 9, english: "happy", turkish: "mutlu" },
+  { id: 10, english: "night", turkish: "gece" },
+  { id: 11, english: "morning", turkish: "sabah" },
+  { id: 12, english: "family", turkish: "aile" },
+];
+
+function demoChallenge(
+  id: number,
+  opts: {
+    module: ChallengeRow["module"];
+    status: ChallengeRow["status"];
+    vs: FriendProfile;
+    direction: "incoming" | "outgoing";
+    myScore?: number;
+    oppScore?: number;
+  }
+): ChallengeRow {
+  const iAmChallenger = opts.direction === "outgoing";
+  const me: FriendProfile = {
+    id: DEMO_ME,
+    username: DEMO_PROFILE.username || "demo",
+    daily_streak: DEMO_PROFILE.daily_streak,
+  };
+  const challenger = iAmChallenger ? me : opts.vs;
+  const opponent = iAmChallenger ? opts.vs : me;
+  return {
+    id,
+    challenger_id: challenger.id,
+    opponent_id: opponent.id,
+    module: opts.module,
+    status: opts.status,
+    seed_words: DEMO_CHALLENGE_WORDS,
+    challenger_score: opts.myScore ?? (opts.status === "finished" ? 8 : 0),
+    opponent_score: opts.oppScore ?? (opts.status === "finished" ? 6 : 0),
+    winner_id:
+      opts.status === "finished"
+        ? (opts.myScore ?? 8) >= (opts.oppScore ?? 6)
+          ? DEMO_ME
+          : opts.vs.id
+        : null,
+    created_at: new Date().toISOString(),
+    started_at: opts.status === "pending" ? null : new Date().toISOString(),
+    finished_at: opts.status === "finished" ? new Date().toISOString() : null,
+    challenger,
+    opponent,
+  };
+}
+
+/** Sample 1v1 challenges for Friends panel + home invite modal. */
+export const DEMO_CHALLENGES: {
+  incoming: ChallengeRow[];
+  outgoing: ChallengeRow[];
+  active: ChallengeRow[];
+} = {
+  incoming: [
+    demoChallenge(9001, {
+      module: "match",
+      status: "pending",
+      vs: { id: "demo-friend-ayse", username: "Ayşe", daily_streak: 12 },
+      direction: "incoming",
+    }),
+  ],
+  outgoing: [
+    demoChallenge(9002, {
+      module: "word_check",
+      status: "pending",
+      vs: { id: "demo-friend-mert", username: "Mert", daily_streak: 5 },
+      direction: "outgoing",
+    }),
+  ],
+  active: [
+    demoChallenge(9003, {
+      module: "match",
+      status: "active",
+      vs: { id: "demo-friend-zeynep", username: "Zeynep", daily_streak: 21 },
+      direction: "outgoing",
+      myScore: 4,
+      oppScore: 3,
+    }),
+  ],
+};
+
+export function getDemoChallengeById(id: number): ChallengeRow | null {
+  const all = [
+    ...DEMO_CHALLENGES.incoming,
+    ...DEMO_CHALLENGES.outgoing,
+    ...DEMO_CHALLENGES.active,
+  ];
+  return all.find((c) => c.id === id) ?? null;
+}
+
+/** Build a playable demo arena challenge (accept invite / invite modal). */
+export function buildDemoArenaChallenge(opts?: {
+  id?: number;
+  module?: ChallengeRow["module"];
+  vsName?: string;
+}): ChallengeRow {
+  const vsName = opts?.vsName?.trim() || "Demo Rakip";
+  return {
+    id: opts?.id ?? 0,
+    challenger_id: DEMO_ME,
+    opponent_id: "demo-opp",
+    module: opts?.module === "word_check" ? "word_check" : "match",
+    status: "active",
+    seed_words: DEMO_CHALLENGE_WORDS,
+    challenger_score: 0,
+    opponent_score: 0,
+    winner_id: null,
+    created_at: new Date().toISOString(),
+    started_at: new Date().toISOString(),
+    finished_at: null,
+    challenger: {
+      id: DEMO_ME,
+      username: "Sen",
+      daily_streak: DEMO_PROFILE.daily_streak,
+    },
+    opponent: { id: "demo-opp", username: vsName, daily_streak: 2 },
+  };
+}
 
 export const DEMO_DET_READ_COMPLETE: DETExercise[] = [
   {
@@ -294,8 +473,6 @@ export const DEMO_DET_READ_COMPLETE: DETExercise[] = [
     created_at: today(),
   },
 ];
-
-const DEMO_ME = DEMO_PROFILE.id;
 
 function demoFriend(
   id: number,

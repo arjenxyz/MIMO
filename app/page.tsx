@@ -89,6 +89,22 @@ export default async function DashboardPage() {
       state: "upcoming",
     },
     {
+      id: "grammar-srs",
+      title: "Gramer tekrarı",
+      href: "/quiz/grammar",
+      tone: "cyan",
+      icon: "grammar",
+      state: "upcoming",
+    },
+    {
+      id: "reading",
+      title: "Hikaye oku",
+      href: "/reading",
+      tone: "purple",
+      icon: "books",
+      state: "upcoming",
+    },
+    {
       id: "det",
       title: "Read & Complete",
       href: "/det/read-complete",

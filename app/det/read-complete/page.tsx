@@ -196,7 +196,10 @@ export default function ReadCompletePage() {
 
   useEffect(() => {
     setMounted(true);
-  }, []);
+    if (detectDemoClient()) {
+      startLocalSession();
+    }
+  }, [startLocalSession]);
 
   useEffect(() => {
     setValues({});

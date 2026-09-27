@@ -387,12 +387,28 @@ export function Navbar() {
                   Arkadaşlar
                 </Link>
                 <Link
+                  href="/reading"
+                  role="menuitem"
+                  className="block border-b border-mimo-border px-4 py-3 text-sm font-extrabold text-[#0369a1] hover:bg-mimo-surface dark:text-[#38bdf8]"
+                  onClick={() => detailsRef.current?.removeAttribute("open")}
+                >
+                  Hikayeler
+                </Link>
+                <Link
                   href="/words/add"
                   role="menuitem"
                   className="block border-b border-mimo-border px-4 py-3 text-sm font-extrabold text-[#0369a1] hover:bg-mimo-surface dark:text-[#38bdf8]"
                   onClick={() => detailsRef.current?.removeAttribute("open")}
                 >
                   Kelime ekle
+                </Link>
+                <Link
+                  href="/widget"
+                  role="menuitem"
+                  className="block border-b border-mimo-border px-4 py-3 text-sm font-extrabold text-mimo-fg hover:bg-mimo-surface"
+                  onClick={() => detailsRef.current?.removeAttribute("open")}
+                >
+                  Widget
                 </Link>
                 <Link
                   href="/status"
