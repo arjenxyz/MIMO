@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from "next";
-import { Nunito } from "next/font/google";
 import "./globals.css";
 import { Navbar } from "@/app/components/Navbar";
 import { AuthSessionGuard } from "@/app/components/AuthSessionGuard";
@@ -9,13 +8,8 @@ import { OfflineAutoSync } from "@/app/components/OfflineAutoSync";
 import { OfflineDocumentSync } from "@/app/components/OnlineGate";
 import { ThemeProvider } from "@/app/components/ThemeProvider";
 import { UnregisterDevServiceWorker } from "@/app/components/UnregisterDevServiceWorker";
+import { appFont } from "@/app/fonts";
 import { THEME_BOOT_SCRIPT } from "@/lib/theme";
-
-const nunito = Nunito({
-  subsets: ["latin", "latin-ext"],
-  weight: ["400", "600", "700", "800", "900"],
-  variable: "--font-nunito",
-});
 
 const APP_NAME = "MIMO";
 const APP_TITLE = "MIMO — İngilizce Öğren";
@@ -68,7 +62,7 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
       </head>
       <body
-        className={`${nunito.variable} ${nunito.className} bg-mimo-bg text-mimo-fg antialiased`}
+        className={`${appFont.variable} ${appFont.className} bg-mimo-bg text-mimo-fg antialiased`}
       >
         <ThemeProvider>
           <UnregisterDevServiceWorker />

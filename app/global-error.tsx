@@ -1,15 +1,9 @@
 "use client";
 
 import { useEffect } from "react";
-import { Nunito } from "next/font/google";
 import { reportClientError } from "@/lib/report-client-error";
 import { THEME_BOOT_SCRIPT } from "@/lib/theme";
 import "./globals.css";
-
-const nunito = Nunito({
-  subsets: ["latin", "latin-ext"],
-  weight: ["400", "700", "800", "900"],
-});
 
 /** Root-layout failure fallback — must include its own html/body. */
 export default function GlobalError({
@@ -37,7 +31,7 @@ export default function GlobalError({
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
       </head>
-      <body className={`${nunito.className} antialiased`}>
+      <body className="antialiased" style={{ fontFamily: "var(--font-nunito), Segoe UI, Arial, sans-serif" }}>
         <main
           style={{
             minHeight: "100vh",
