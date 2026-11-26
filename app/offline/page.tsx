@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { OfflinePacksManager } from "@/app/components/OfflinePacksManager";
 import { OfflinePracticeCta } from "@/app/components/OfflinePracticeCta";
 import { OfflinePracticeLink } from "@/app/components/OfflinePracticeLink";
-import { PwaRuntime } from "@/app/components/PwaRuntime";
+import { PwaInstallCard } from "@/app/components/PwaInstallCard";
 import { formatMegabytes, type OfflinePackId, type StoredOfflinePack } from "@/lib/offlinePacks";
 import { getAllStoredPacks } from "@/lib/offlineStorage";
 
@@ -129,13 +129,12 @@ export default function OfflineHubPage() {
             PWA çevrimdışı çalışma alanı
           </h1>
           <p className="mt-1 text-sm font-semibold text-mimo-muted">
-            Ana ekrana ekle; paket indir; internet kesilince bu sayfadan pratik yap. Cihazda:{" "}
+            Uygulamayı indir, paket çek; internet kesilince buradan pratik yap. Cihazda:{" "}
             <strong className="text-mimo-title">{formatMegabytes(totalLocalBytes)}</strong>
           </p>
-          <div className="mt-4">
-            <PwaRuntime />
-          </div>
         </section>
+
+        <PwaInstallCard variant="section" />
 
         <OfflinePracticeCta />
 

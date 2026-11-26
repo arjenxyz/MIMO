@@ -14,6 +14,7 @@ import { OfflinePracticeCta } from "@/app/components/OfflinePracticeCta";
 import { OfflinePracticeLink } from "@/app/components/OfflinePracticeLink";
 import { OfflineSmartLink } from "@/app/components/OfflineSmartLink";
 import { OnlineOnly } from "@/app/components/OnlineGate";
+import { PwaInstallCard } from "@/app/components/PwaInstallCard";
 import { useTheme } from "@/app/components/ThemeProvider";
 import { formatMegabytes, type OfflineManifestResponse } from "@/lib/offlinePacks";
 import { fetchOfflineManifest, warmOfflineRouteCache } from "@/lib/offlineStorage";
@@ -301,11 +302,15 @@ const FAQ_ITEMS = [
   },
   {
     q: "Çevrimdışı nasıl çalışır?",
-    a: "Kelime paketlerini (metin + İngilizce telaffuz sesleri) ve okuma pasajlarını telefonuna ya da bilgisayarına indirirsin. İnternet olmasa da çalışabilir, dinleyebilirsin. İnternet gelince paketlerin güncellenebilir.",
+    a: "Önce “Uygulamayı indir” ile MIMO’yu ana ekrana ekle, sonra kelime paketini indir. İnternet kesilince ana ekran ikonundan aç; tarayıcı sekmesi yerine PWA çevrimdışı kabuğu ve paketlerin kullanılır.",
+  },
+  {
+    q: "Uygulamayı nasıl indiririm?",
+    a: "Ana sayfadaki “Çevrimdışı için MIMO’yu indir” bölümünde “Uygulamayı indir”e bas. Chrome’da kurulum penceresi açılır; iPhone’da Safari → Paylaş → Ana Ekrana Ekle gerekir. Yerel geliştirmede (localhost) PWA kapalı olabilir — canlı sitede dene.",
   },
   {
     q: "Telefonumda da açılır mı?",
-    a: "Evet. Modern bir tarayıcı yeterli: telefon, tablet veya bilgisayar. İstersen ana ekrana ekleyerek uygulama gibi de kullanabilirsin.",
+    a: "Evet. Modern bir tarayıcı yeterli: telefon, tablet veya bilgisayar. Çevrimdışı için ana ekrana eklenen uygulamayı kullan.",
   },
   {
     q: "Bu alıştırmalar sınava yarar mı?",
@@ -580,6 +585,12 @@ export function PublicLandingPage({
                 </svg>
               )}
             </button>
+            <a
+              href="#pwa-indir"
+              className="hidden h-10 items-center rounded-2xl border border-[#1cb0f6]/40 bg-[#e8f6fe] px-3 text-xs font-extrabold text-[#0369a1] shadow-[0_2px_0_rgba(15,23,42,0.06)] transition hover:border-[#1cb0f6] active:translate-y-0.5 active:shadow-none dark:bg-[#0c4a6e]/40 dark:text-[#7dd3fc] sm:inline-flex"
+            >
+              Uygulamayı indir
+            </a>
             <OfflineSmartLink
               href="/offline"
               onOfflineBlocked={showOfflineBlocked}
@@ -642,6 +653,12 @@ export function PublicLandingPage({
               </OfflineSmartLink>
 
               <a
+                href="#pwa-indir"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[#1cb0f6] px-5 py-3.5 text-base font-black text-white shadow-[0_4px_0_#1899d6] transition hover:brightness-105 active:translate-y-0.5 active:shadow-none sm:w-auto sm:px-6"
+              >
+                Uygulamayı indir
+              </a>
+              <a
                 href="#offline-packs"
                 className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[#fd860a] px-5 py-3.5 text-base font-black text-white shadow-[0_4px_0_#c2410c] transition hover:brightness-105 active:translate-y-0.5 active:shadow-none sm:w-auto sm:px-6"
               >
@@ -653,6 +670,8 @@ export function PublicLandingPage({
                 )}
               </a>
             </div>
+
+            <PwaInstallCard variant="hero" />
 
             {/* ── Stats: compact on mobile, roomier from sm up ── */}
             <div className="mt-7 grid grid-cols-3 gap-2 sm:mt-8 sm:max-w-lg sm:gap-3">
@@ -835,10 +854,13 @@ export function PublicLandingPage({
       </section>
 
       {/* ══════════════════════════════════════════════════════
-          Offline Packs
+          PWA install + Offline Packs
           ══════════════════════════════════════════════════════ */}
-      <section id="offline-packs" className="relative z-10 mx-auto max-w-6xl px-4 pb-16 pt-6">
-        <OfflinePacksManager />
+      <section className="relative z-10 mx-auto max-w-6xl space-y-6 px-4 pb-16 pt-6">
+        <PwaInstallCard variant="section" />
+        <div id="offline-packs">
+          <OfflinePacksManager />
+        </div>
       </section>
 
       {/* ══════════════════════════════════════════════════════

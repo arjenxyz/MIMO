@@ -6,6 +6,7 @@ import { ClearStaleAppShellCache } from "@/app/components/ClearStaleAppShellCach
 import { FeedbackSoundBoot } from "@/app/components/FeedbackSoundBoot";
 import { OfflineAutoSync } from "@/app/components/OfflineAutoSync";
 import { OfflineDocumentSync } from "@/app/components/OnlineGate";
+import { PwaInstallCapture } from "@/app/components/PwaInstallCapture";
 import { ThemeProvider } from "@/app/components/ThemeProvider";
 import { UnregisterDevServiceWorker } from "@/app/components/UnregisterDevServiceWorker";
 import { appFont } from "@/app/fonts";
@@ -66,6 +67,7 @@ export default function RootLayout({
       >
         <ThemeProvider>
           <UnregisterDevServiceWorker />
+          <PwaInstallCapture />
           <ClearStaleAppShellCache />
           <OfflineDocumentSync />
           <AuthSessionGuard />
