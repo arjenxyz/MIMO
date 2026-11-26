@@ -63,15 +63,17 @@ export function clearForceOfflinePack() {
   }
 }
 
-/** True when offline, flagged, or legacy ?source=offline. */
+/** True when offline, on /offline/* PWA shell, flagged, or legacy ?source=offline. */
 export function wantsForceOfflinePack() {
   if (isBrowserOffline()) return true;
-  try {
-    if (sessionStorage.getItem(FORCE_PACK_KEY) === "1") return true;
-  } catch {
-    // ignore
-  }
   if (typeof window !== "undefined") {
+    const path = window.location.pathname || "";
+    if (path === "/offline" || path.startsWith("/offline/")) return true;
+    try {
+      if (sessionStorage.getItem(FORCE_PACK_KEY) === "1") return true;
+    } catch {
+      // ignore
+    }
     try {
       if (new URLSearchParams(window.location.search).get("source") === "offline") {
         return true;

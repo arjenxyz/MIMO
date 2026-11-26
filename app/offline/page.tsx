@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { OfflinePacksManager } from "@/app/components/OfflinePacksManager";
 import { OfflinePracticeCta } from "@/app/components/OfflinePracticeCta";
 import { OfflinePracticeLink } from "@/app/components/OfflinePracticeLink";
+import { PwaRuntime } from "@/app/components/PwaRuntime";
 import { formatMegabytes, type OfflinePackId, type StoredOfflinePack } from "@/lib/offlinePacks";
 import { getAllStoredPacks } from "@/lib/offlineStorage";
 
@@ -40,12 +41,11 @@ export default function OfflineHubPage() {
     0
   );
 
-  const usePack = Boolean(wordsPack?.itemCount);
   const quickActivities = [
     {
       title: "Kelime Testi",
-      href: "/quiz",
-      forcePack: usePack,
+      href: "/offline/quiz",
+      forcePack: true,
       meta: wordsPack
         ? `${wordsPack.itemCount} kelime + ses (${formatMegabytes(wordsPack.byteSize)})`
         : "Yazar paketini indirerek aç",
@@ -53,8 +53,8 @@ export default function OfflineHubPage() {
     },
     {
       title: "Hızlı Eşleştir",
-      href: "/quiz/match",
-      forcePack: usePack,
+      href: "/offline/match",
+      forcePack: true,
       meta: wordsPack
         ? `${wordsPack.itemCount} kelime hazır`
         : "Kelime paketi indirilince zenginleşir",
@@ -62,21 +62,21 @@ export default function OfflineHubPage() {
     },
     {
       title: "Yazım Doğru mu?",
-      href: "/quiz/word-check",
-      forcePack: usePack,
+      href: "/offline/word-check",
+      forcePack: true,
       meta: wordsPack ? `${wordsPack.itemCount} kelime hazır` : "Çevrimdışı dene",
       tone: "bg-[#e11d48] shadow-[0_3px_0_#be123c]",
     },
     {
       title: "Listen & Type",
-      href: "/det/listen-type",
-      forcePack: usePack,
+      href: "/offline/listen",
+      forcePack: true,
       meta: "Tarayıcı sesi ile internetsiz dikte",
       tone: "bg-[#0284c7] shadow-[0_3px_0_#0369a1]",
     },
     {
       title: "Read & Complete",
-      href: "/det/read-complete",
+      href: "/offline/read",
       forcePack: false,
       meta: detPack
         ? `${detPack.itemCount} pasaj (${formatMegabytes(detPack.byteSize)})`
@@ -97,7 +97,7 @@ export default function OfflineHubPage() {
               height={34}
               className="h-8 w-8 rounded-full object-cover ring-2 ring-[#fd860a]/35"
             />
-            <span className="text-lg font-black text-mimo-title">MIMO · Çevrimdışı pratik</span>
+            <span className="text-lg font-black text-mimo-title">MIMO · PWA pratik</span>
           </Link>
 
           <div className="flex items-center gap-2">
@@ -121,27 +121,26 @@ export default function OfflineHubPage() {
       </header>
 
       <div className="mx-auto max-w-5xl space-y-8 px-4 py-8">
+        <section className="rounded-3xl border border-mimo-border bg-mimo-card p-6 shadow-sm">
+          <p className="text-xs font-black uppercase tracking-[0.16em] text-[#1cb0f6]">
+            Yerel depolama · kelime + ses
+          </p>
+          <h1 className="mt-1 text-2xl font-black text-mimo-title sm:text-3xl">
+            PWA çevrimdışı çalışma alanı
+          </h1>
+          <p className="mt-1 text-sm font-semibold text-mimo-muted">
+            Ana ekrana ekle; paket indir; internet kesilince bu sayfadan pratik yap. Cihazda:{" "}
+            <strong className="text-mimo-title">{formatMegabytes(totalLocalBytes)}</strong>
+          </p>
+          <div className="mt-4">
+            <PwaRuntime />
+          </div>
+        </section>
+
         <OfflinePracticeCta />
 
         <section className="rounded-3xl border border-mimo-border bg-mimo-card p-6 shadow-sm">
-          <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-            <div>
-              <p className="text-xs font-black uppercase tracking-[0.16em] text-[#1cb0f6]">
-                Yerel depolama · kelime + ses
-              </p>
-              <h1 className="mt-1 text-2xl font-black text-mimo-title sm:text-3xl">
-                İnternetsiz çalışma alanı
-              </h1>
-              <p className="mt-1 text-sm font-semibold text-mimo-muted">
-                Cihazındaki kelime ve ses paketleri:{" "}
-                <strong className="text-mimo-title">
-                  {formatMegabytes(totalLocalBytes)}
-                </strong>
-                . Kampüste, yolda veya evde — bağlantı olmasa da pratik yapabilirsin.
-              </p>
-            </div>
-          </div>
-
+          <h2 className="text-lg font-black text-mimo-title">Hızlı aç</h2>
           <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {quickActivities.map((act) => (
               <OfflinePracticeLink

@@ -1,10 +1,17 @@
 import withPWAInit from "@ducanh2912/next-pwa";
 
+function isOfflinePwaPath(pathname) {
+  return (
+    pathname === "/offline" ||
+    pathname.startsWith("/offline/") ||
+    pathname === "/~offline"
+  );
+}
+
 function isPublicOfflinePath(pathname) {
   return (
+    isOfflinePwaPath(pathname) ||
     pathname === "/" ||
-    pathname === "/offline" ||
-    pathname === "/~offline" ||
     pathname.startsWith("/about") ||
     pathname.startsWith("/nasil-kullanilir") ||
     pathname.startsWith("/quiz") ||
@@ -29,7 +36,8 @@ function isPrivatePath(pathname) {
     pathname.startsWith("/words") ||
     pathname.startsWith("/photo-practice") ||
     pathname.startsWith("/widget") ||
-    pathname.startsWith("/challenge")
+    pathname.startsWith("/challenge") ||
+    pathname.startsWith("/messages")
   );
 }
 
@@ -37,34 +45,44 @@ const withPWA = withPWAInit({
   dest: "public",
   disable: process.env.NODE_ENV === "development",
   register: true,
-  // Cache "/" so a hard refresh offline can reopen the last shell.
-  // Auth/login stays NetworkOnly below; document failures use app/~offline.
+  customWorkerSrc: "worker",
   cacheStartUrl: true,
   dynamicStartUrl: true,
   cacheOnFrontEndNav: true,
+  aggressiveFrontEndNavCaching: true,
   extendDefaultRuntimeCaching: true,
   workboxOptions: {
     cleanupOutdatedCaches: true,
     skipWaiting: true,
     clientsClaim: true,
-    // Public practice shells: NetworkFirst with a short timeout so offline taps
-    // fall back to cache quickly instead of hanging on dead network.
-    // Private/auth HTML+RSC+API stay NetworkOnly (no cross-account leakage).
     runtimeCaching: [
       {
-        // HTML + RSC for public practice shells. ignoreSearch so /quiz?_rsc=…
-        // still hits the cached /quiz document when offline.
+        // Dedicated offline PWA shells — prefer cache so installed app opens offline.
         urlPattern: ({ request, url }) => {
           if (request.method !== "GET") return false;
+          return isOfflinePwaPath(url.pathname);
+        },
+        handler: "CacheFirst",
+        options: {
+          cacheName: "mimo-pwa-shell-v1",
+          matchOptions: { ignoreSearch: true },
+          expiration: {
+            maxEntries: 64,
+            maxAgeSeconds: 60 * 24 * 60 * 60,
+          },
+        },
+      },
+      {
+        urlPattern: ({ request, url }) => {
+          if (request.method !== "GET") return false;
+          if (isOfflinePwaPath(url.pathname)) return false;
           return isPublicOfflinePath(url.pathname);
         },
         handler: "NetworkFirst",
         options: {
           cacheName: "mimo-public-pages-v1",
           networkTimeoutSeconds: 1.5,
-          matchOptions: {
-            ignoreSearch: true,
-          },
+          matchOptions: { ignoreSearch: true },
           expiration: {
             maxEntries: 96,
             maxAgeSeconds: 30 * 24 * 60 * 60,
@@ -72,7 +90,6 @@ const withPWA = withPWAInit({
         },
       },
       {
-        // Next static chunks — CacheFirst so practice pages can boot offline.
         urlPattern: ({ url }) =>
           url.pathname.startsWith("/_next/static/") ||
           url.pathname.startsWith("/_next/data/"),
@@ -93,7 +110,6 @@ const withPWA = withPWAInit({
           if (pathname.startsWith("/_next/")) return false;
           if (isPrivatePath(pathname)) return true;
           if (request.mode === "navigate" || request.destination === "document") {
-            // Remaining shells (status, messages, …): network only; ~offline catches fail.
             return true;
           }
           try {

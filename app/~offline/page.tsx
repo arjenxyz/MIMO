@@ -30,7 +30,7 @@ export default function OfflineFallbackPage() {
           Çevrimdışı alana git
         </Link>
         <OfflinePracticeLink
-          href="/quiz"
+          href="/offline/quiz"
           className="rounded-2xl border border-mimo-border bg-mimo-card px-5 py-3.5 text-center text-sm font-black text-mimo-title"
         >
           Kelime testi

@@ -35,7 +35,7 @@ export function InstallPwaButton() {
   if (installed) {
     return (
       <p className="rounded-2xl border-2 border-[#58cc02]/40 bg-[#58cc02]/10 px-4 py-3 text-center text-sm font-extrabold text-[#58cc02]">
-        Uygulama ana ekranda — widget önizlemesini buradan açabilirsin.
+        Uygulama ana ekranda — açılınca doğrudan çevrimdışı PWA alanına gider.
       </p>
     );
   }

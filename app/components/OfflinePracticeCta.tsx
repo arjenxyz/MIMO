@@ -6,8 +6,7 @@ import { loadOfflinePackWords } from "@/lib/offlinePractice";
 import { useOnlineStatus } from "@/lib/useOnlineStatus";
 
 /**
- * Primary entry into practicing with downloaded packs.
- * Always visible when a pack exists; emphasized while offline.
+ * Primary entry into practicing with downloaded packs via /offline/* PWA shells.
  */
 export function OfflinePracticeCta({
   className = "",
@@ -52,7 +51,7 @@ export function OfflinePracticeCta({
   if (compact) {
     return (
       <OfflinePracticeLink
-        href="/quiz"
+        href="/offline/quiz"
         className={`inline-flex items-center justify-center rounded-2xl bg-[#58cc02] px-4 py-2.5 text-xs font-black uppercase tracking-wide text-white shadow-[0_3px_0_#46a302] ${className}`}
       >
         Çevrimdışı pratik ({wordCount})
@@ -65,35 +64,35 @@ export function OfflinePracticeCta({
       className={`rounded-3xl border border-[#58cc02]/35 bg-mimo-card p-5 shadow-sm ${className}`}
     >
       <p className="text-xs font-black uppercase tracking-[0.14em] text-[#58cc02]">
-        {online ? "Cihazındaki paket" : "Çevrimdışı pratik"}
+        {online ? "PWA · cihazındaki paket" : "Çevrimdışı PWA pratik"}
       </p>
       <h3 className="mt-1 text-lg font-black text-mimo-title sm:text-xl">
         İndirdiğin {wordCount} kelimeyle çalış
       </h3>
       <p className="mt-1 text-sm font-semibold text-mimo-muted">
-        Test, eşleştirme, yazım ve dinleme — paketteki kelimeler ve sesler kullanılır.
+        Bu kısayollar `/offline` kabuğunda açılır — internet olmadan PWA ile çalışır.
       </p>
       <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
         <OfflinePracticeLink
-          href="/quiz"
+          href="/offline/quiz"
           className="inline-flex flex-1 items-center justify-center rounded-2xl bg-[#58cc02] px-4 py-3 text-sm font-black text-white shadow-[0_3px_0_#46a302]"
         >
           Kelime testi
         </OfflinePracticeLink>
         <OfflinePracticeLink
-          href="/quiz/match"
+          href="/offline/match"
           className="inline-flex flex-1 items-center justify-center rounded-2xl border border-mimo-border bg-mimo-surface px-4 py-3 text-sm font-black text-mimo-title"
         >
           Eşleştir
         </OfflinePracticeLink>
         <OfflinePracticeLink
-          href="/quiz/word-check"
+          href="/offline/word-check"
           className="inline-flex flex-1 items-center justify-center rounded-2xl border border-mimo-border bg-mimo-surface px-4 py-3 text-sm font-black text-mimo-title"
         >
           Yazım
         </OfflinePracticeLink>
         <OfflinePracticeLink
-          href="/det/listen-type"
+          href="/offline/listen"
           className="inline-flex flex-1 items-center justify-center rounded-2xl border border-mimo-border bg-mimo-surface px-4 py-3 text-sm font-black text-mimo-title"
         >
           Dinle &amp; yaz

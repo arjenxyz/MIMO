@@ -350,21 +350,13 @@ export function Navbar() {
               </div>
             </OnlineOnly>
 
-            {online ? (
-              <Link
-                href="/offline"
-                className="rounded-xl border border-mimo-border bg-mimo-surface px-2.5 py-1.5 text-xs font-extrabold text-[#0d9488] dark:text-[#5eead4]"
-              >
-                Çevrimdışı
-              </Link>
-            ) : (
-              <OfflinePracticeLink
-                href="/quiz"
-                className="rounded-xl border border-mimo-border bg-mimo-surface px-2.5 py-1.5 text-xs font-extrabold text-[#0d9488] dark:text-[#5eead4]"
-              >
-                Çevrimdışı pratik
-              </OfflinePracticeLink>
-            )}
+            <OfflinePracticeLink
+              href={online ? "/offline" : "/offline/quiz"}
+              forcePack={!online}
+              className="rounded-xl border border-mimo-border bg-mimo-surface px-2.5 py-1.5 text-xs font-extrabold text-[#0d9488] dark:text-[#5eead4]"
+            >
+              {online ? "PWA / çevrimdışı" : "Çevrimdışı pratik"}
+            </OfflinePracticeLink>
 
             <details ref={detailsRef} className="relative">
               <summary

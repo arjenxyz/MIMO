@@ -857,7 +857,7 @@ export function OfflinePacksManager({
                     </div>
                   ) : installed ? (
                     <OfflinePracticeLink
-                      href="/quiz"
+                      href="/offline/quiz"
                       className="flex w-full items-center justify-center rounded-2xl bg-[#58cc02] px-4 py-2.5 text-xs font-black uppercase tracking-wide text-white shadow-[0_3px_0_#46a302]"
                     >
                       Çevrimdışı pratik →

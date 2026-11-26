@@ -29,6 +29,11 @@ const LEGACY_OFFLINE_SHELL_CACHE = "mimo-offline-pages-v1";
 const OFFLINE_PAGE_URLS = [
   "/",
   "/offline",
+  "/offline/quiz",
+  "/offline/match",
+  "/offline/word-check",
+  "/offline/listen",
+  "/offline/read",
   "/~offline",
   "/about",
   "/nasil-kullanilir",
@@ -40,11 +45,6 @@ const OFFLINE_PAGE_URLS = [
   "/grammar",
   "/reading",
 ];
-
-/** Also warm from pack download / landing so practice shells exist before going offline. */
-export function warmPracticeShellsNow() {
-  return warmOfflineRouteCache();
-}
 
 export type DownloadProgress = AudioDownloadProgress & {
   authorId?: string | null;

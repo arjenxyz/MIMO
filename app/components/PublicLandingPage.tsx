@@ -430,7 +430,15 @@ export function PublicLandingPage({
               <OfflinePracticeCta />
             </div>
             <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {PUBLIC_FEATURES.map((feat) => (
+              {(
+                [
+                  { title: "Kelime testi", href: "/offline/quiz", badge: "PWA" },
+                  { title: "Eşleştir", href: "/offline/match", badge: "PWA" },
+                  { title: "Yazım", href: "/offline/word-check", badge: "PWA" },
+                  { title: "Dinle & yaz", href: "/offline/listen", badge: "PWA" },
+                  { title: "Okuma", href: "/offline/read", badge: "PWA" },
+                ] as const
+              ).map((feat) => (
                 <OfflinePracticeLink
                   key={feat.href}
                   href={feat.href}
@@ -444,9 +452,9 @@ export function PublicLandingPage({
                 href="/offline"
                 className="rounded-2xl border border-[#fd860a]/40 bg-[#fff8f1] p-4 transition hover:border-[#fd860a] dark:bg-[#7c2d12]/20"
               >
-                <p className="text-base font-black text-mimo-title">Çevrimdışı alan</p>
+                <p className="text-base font-black text-mimo-title">PWA alanı</p>
                 <p className="mt-1 text-xs font-bold text-mimo-muted">
-                  Cihazındaki paketler
+                  Ana ekran · paketler
                 </p>
               </Link>
             </div>

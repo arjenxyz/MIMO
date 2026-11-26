@@ -4,8 +4,12 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "MIMO — İngilizce Öğren",
     short_name: "MIMO",
-    description: "Spaced repetition ile her gün pratik yapan İngilizce öğrenme platformu.",
-    start_url: "/",
+    description:
+      "Hazırlık İngilizcesi: kelime, dinleme ve okuma. Çevrimdışı paketlerle internetsiz pratik.",
+    // Installed PWA opens the offline workspace (works without network).
+    start_url: "/offline",
+    scope: "/",
+    id: "/",
     display: "standalone",
     orientation: "portrait",
     background_color: "#fff8f1",
@@ -34,17 +38,18 @@ export default function manifest(): MetadataRoute.Manifest {
     ],
     shortcuts: [
       {
-        name: "Günlük seri",
-        short_name: "Seri",
-        description: "Günlük seri widget önizlemesi",
-        url: "/widget",
-        icons: [
-          {
-            src: "/icons/icon-192.png",
-            sizes: "192x192",
-            type: "image/png",
-          },
-        ],
+        name: "Çevrimdışı pratik",
+        short_name: "Pratik",
+        description: "İndirdiğin kelime paketleriyle çalış",
+        url: "/offline/quiz",
+        icons: [{ src: "/icons/icon-192.png", sizes: "192x192", type: "image/png" }],
+      },
+      {
+        name: "Kelime paketi",
+        short_name: "Paketler",
+        description: "Çevrimdışı paket alanı",
+        url: "/offline",
+        icons: [{ src: "/icons/icon-192.png", sizes: "192x192", type: "image/png" }],
       },
     ],
   };
