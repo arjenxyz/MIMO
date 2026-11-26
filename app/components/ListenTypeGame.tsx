@@ -35,6 +35,7 @@ type Phase = "ready" | "answering" | "feedback" | "done";
 
 export function ListenTypeGame({ seedWords }: { seedWords: SeedWord[] }) {
   const [offlineSeeds, setOfflineSeeds] = useState<SeedWord[]>([]);
+  const [preferLocal, setPreferLocal] = useState(false);
   const [phase, setPhase] = useState<Phase>("ready");
   const [prompts, setPrompts] = useState<ListenTypePrompt[]>([]);
   const [index, setIndex] = useState(0);
@@ -90,6 +91,10 @@ export function ListenTypeGame({ seedWords }: { seedWords: SeedWord[] }) {
 
   useEffect(() => {
     let cancelled = false;
+    const force =
+      !navigator.onLine ||
+      new URLSearchParams(window.location.search).get("source") === "offline";
+    setPreferLocal(force);
     void getStoredPack("words").then((pack) => {
       if (cancelled || !pack?.data?.length) return;
       setOfflineSeeds(
@@ -107,7 +112,12 @@ export function ListenTypeGame({ seedWords }: { seedWords: SeedWord[] }) {
 
   const startRound = useCallback(() => {
     stopAudio();
-    const merged = offlineSeeds.length > 0 ? [...seedWords, ...offlineSeeds] : seedWords;
+    const merged =
+      preferLocal && offlineSeeds.length > 0
+        ? offlineSeeds
+        : offlineSeeds.length > 0
+          ? [...seedWords, ...offlineSeeds]
+          : seedWords;
     const round = buildListenTypeRound(merged, QUESTION_COUNT);
     setPrompts(round);
     setIndex(0);
@@ -117,7 +127,7 @@ export function ListenTypeGame({ seedWords }: { seedWords: SeedWord[] }) {
     setScore(0);
     setLastCorrect(false);
     setPhase("answering");
-  }, [offlineSeeds, seedWords, stopAudio]);
+  }, [offlineSeeds, seedWords, preferLocal, stopAudio]);
 
   // Auto-play once when a new question starts
   useEffect(() => {

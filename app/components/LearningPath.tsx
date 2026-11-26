@@ -298,7 +298,12 @@ export function LearningPath({
   }, [rail?.d, activeIndex, visibleNodes.length]);
 
   const activeNode = visibleNodes[activeIndex] ?? visibleNodes[0];
-  const ctaHref = activeNode?.href ?? primaryHref;
+  const withOfflineSource = (href: string) => {
+    if (online) return href;
+    if (href.includes("source=")) return href;
+    return `${href}${href.includes("?") ? "&" : "?"}source=offline`;
+  };
+  const ctaHref = withOfflineSource(activeNode?.href ?? primaryHref);
   const ctaLabel = online ? primaryLabel : activeNode ? `${activeNode.title} →` : primaryLabel;
 
   return (
@@ -426,7 +431,7 @@ export function LearningPath({
                         ref={(el) => {
                           nodeRefs.current[index] = el;
                         }}
-                        href={node.href}
+                        href={withOfflineSource(node.href)}
                         aria-current={isActive ? "step" : undefined}
                         aria-label={`${node.title}${isActive ? " — sıradaki" : isDone ? " — tamamlandı" : ""}`}
                         className={[

@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { OfflinePacksManager } from "@/app/components/OfflinePacksManager";
+import { OfflinePracticeCta } from "@/app/components/OfflinePracticeCta";
 import { formatMegabytes, type OfflinePackId, type StoredOfflinePack } from "@/lib/offlinePacks";
 import { getAllStoredPacks } from "@/lib/offlineStorage";
 
@@ -38,10 +39,11 @@ export default function OfflineHubPage() {
     0
   );
 
+  const packQuery = wordsPack?.itemCount ? "?source=offline" : "";
   const quickActivities = [
     {
       title: "Kelime Testi",
-      href: "/quiz",
+      href: `/quiz${packQuery}`,
       meta: wordsPack
         ? `${wordsPack.itemCount} kelime + ses (${formatMegabytes(wordsPack.byteSize)})`
         : "Yazar paketini indirerek aç",
@@ -49,7 +51,7 @@ export default function OfflineHubPage() {
     },
     {
       title: "Hızlı Eşleştir",
-      href: "/quiz/match",
+      href: `/quiz/match${packQuery}`,
       meta: wordsPack
         ? `${wordsPack.itemCount} kelime hazır`
         : "Kelime paketi indirilince zenginleşir",
@@ -57,13 +59,13 @@ export default function OfflineHubPage() {
     },
     {
       title: "Yazım Doğru mu?",
-      href: "/quiz/word-check",
+      href: `/quiz/word-check${packQuery}`,
       meta: wordsPack ? `${wordsPack.itemCount} kelime hazır` : "Çevrimdışı dene",
       tone: "bg-[#e11d48] shadow-[0_3px_0_#be123c]",
     },
     {
       title: "Listen & Type",
-      href: "/det/listen-type",
+      href: `/det/listen-type${packQuery}`,
       meta: "Tarayıcı sesi ile internetsiz dikte",
       tone: "bg-[#0284c7] shadow-[0_3px_0_#0369a1]",
     },
@@ -113,6 +115,8 @@ export default function OfflineHubPage() {
       </header>
 
       <div className="mx-auto max-w-5xl space-y-8 px-4 py-8">
+        <OfflinePracticeCta />
+
         <section className="rounded-3xl border border-mimo-border bg-mimo-card p-6 shadow-sm">
           <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
             <div>

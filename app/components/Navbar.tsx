@@ -350,10 +350,10 @@ export function Navbar() {
             </OnlineOnly>
 
             <Link
-              href="/offline"
+              href={online ? "/offline" : "/quiz?source=offline"}
               className="rounded-xl border border-mimo-border bg-mimo-surface px-2.5 py-1.5 text-xs font-extrabold text-[#0d9488] dark:text-[#5eead4]"
             >
-              Pratik
+              {online ? "Çevrimdışı" : "Çevrimdışı pratik"}
             </Link>
 
             <details ref={detailsRef} className="relative">

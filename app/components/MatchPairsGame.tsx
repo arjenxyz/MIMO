@@ -129,28 +129,43 @@ function findTile(board: Board, uid: string): Tile | undefined {
 
 export function MatchPairsGame({ words }: { words: MatchWord[] }) {
   const [extraWords, setExtraWords] = useState<MatchWord[]>([]);
+  const [packReady, setPackReady] = useState(false);
+  const [preferLocal, setPreferLocal] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
-    void getStoredPack("words").then((pack) => {
-      if (cancelled || !pack?.data?.length) return;
-      setExtraWords(
-        pack.data.map((w) => ({
-          id: w.id,
-          english: w.english,
-          turkish: w.turkish,
-        }))
-      );
-    });
+    const force =
+      !navigator.onLine ||
+      new URLSearchParams(window.location.search).get("source") === "offline";
+    setPreferLocal(force);
+    void getStoredPack("words")
+      .then((pack) => {
+        if (cancelled || !pack?.data?.length) return;
+        setExtraWords(
+          pack.data.map((w) => ({
+            id: w.id,
+            english: w.english,
+            turkish: w.turkish,
+          }))
+        );
+      })
+      .finally(() => {
+        if (!cancelled) setPackReady(true);
+      });
     return () => {
       cancelled = true;
     };
   }, []);
 
   const pool = useMemo(() => {
-    const merged = extraWords.length > 0 ? [...words, ...extraWords] : words;
+    const source =
+      preferLocal && extraWords.length > 0
+        ? extraWords
+        : extraWords.length > 0
+          ? [...words, ...extraWords]
+          : words;
     const seen = new Set<string>();
-    return merged.filter((w) => {
+    return source.filter((w) => {
       const en = w.english.trim();
       const tr = primaryTurkish(w.turkish);
       if (!en || !tr) return false;
@@ -159,7 +174,7 @@ export function MatchPairsGame({ words }: { words: MatchWord[] }) {
       seen.add(key);
       return true;
     });
-  }, [words, extraWords]);
+  }, [words, extraWords, preferLocal]);
 
   const [phase, setPhase] = useState<"ready" | "running" | "done">("ready");
   const [secondsLeft, setSecondsLeft] = useState(SESSION_SECONDS);
@@ -351,15 +366,25 @@ export function MatchPairsGame({ words }: { words: MatchWord[] }) {
               Her 30 saniyede tahta karışır; süre durur, komboun kalır.
             </p>
             <p className="mt-5 text-xs font-bold uppercase tracking-[0.12em] text-mimo-muted">
-              Havuz · {pool.length} kelime
+              {!packReady
+                ? "Paket okunuyor…"
+                : preferLocal && extraWords.length > 0
+                  ? `Cihaz paketi · ${pool.length} kelime`
+                  : `Havuz · ${pool.length} kelime`}
             </p>
+            {preferLocal && packReady && pool.length === 0 ? (
+              <p className="mt-3 text-sm font-extrabold text-[#c2410c]">
+                Cihazda kelime paketi yok. Önce bir paket indir.
+              </p>
+            ) : null}
             <div className="mt-6 flex w-full flex-col gap-3">
               <PracticeExamPrimaryButton
                 variant="green"
                 className="w-full"
                 onClick={startGame}
+                disabled={!packReady || pool.length < 2}
               >
-                Başlat
+                {!packReady ? "Hazırlanıyor…" : "Başlat"}
               </PracticeExamPrimaryButton>
               <Link
                 href="/"

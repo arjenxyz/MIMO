@@ -22,6 +22,7 @@ type Feedback = "correct" | "wrong" | "timeout" | null;
 
 export function RealWordGame({ seedWords }: { seedWords: string[] }) {
   const [offlineWords, setOfflineWords] = useState<string[]>([]);
+  const [preferLocal, setPreferLocal] = useState(false);
   const [phase, setPhase] = useState<"ready" | "running" | "done">("ready");
   const [items, setItems] = useState<RealWordItem[]>([]);
   const [index, setIndex] = useState(0);
@@ -48,8 +49,10 @@ export function RealWordGame({ seedWords }: { seedWords: string[] }) {
   const startRound = useCallback(() => {
     clearAdvance();
     answeringRef.current = false;
-    // One question per learned word (no fixed 12-cap).
-    const activePool = Array.from(new Set([...seedWords, ...offlineWords]));
+    const activePool =
+      preferLocal && offlineWords.length > 0
+        ? Array.from(new Set(offlineWords))
+        : Array.from(new Set([...seedWords, ...offlineWords]));
     setItems(buildRealWordRound(activePool.length > 0 ? activePool : seedWords));
     setIndex(0);
     setSecondsLeft(QUESTION_SECONDS);
@@ -58,10 +61,14 @@ export function RealWordGame({ seedWords }: { seedWords: string[] }) {
     setBestStreak(0);
     setFeedback(null);
     setPhase("running");
-  }, [offlineWords, seedWords]);
+  }, [offlineWords, seedWords, preferLocal]);
 
   useEffect(() => {
     let cancelled = false;
+    const force =
+      !navigator.onLine ||
+      new URLSearchParams(window.location.search).get("source") === "offline";
+    setPreferLocal(force);
     void getStoredPack("words").then((pack) => {
       if (cancelled || !pack?.data?.length) return;
       setOfflineWords(pack.data.map((w) => w.english));

@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import { OfflinePacksManager } from "@/app/components/OfflinePacksManager";
+import { OfflinePracticeCta } from "@/app/components/OfflinePracticeCta";
 import { OfflineSmartLink } from "@/app/components/OfflineSmartLink";
 import { OnlineOnly } from "@/app/components/OnlineGate";
 import { useTheme } from "@/app/components/ThemeProvider";
@@ -424,11 +425,14 @@ export function PublicLandingPage({
               Giriş, indirme, mesaj ve hesap özellikleri gizli. İnternet gelince tekrar
               görünür.
             </p>
+            <div className="mt-5">
+              <OfflinePracticeCta />
+            </div>
             <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {PUBLIC_FEATURES.map((feat) => (
                 <Link
                   key={feat.href}
-                  href={feat.href}
+                  href={`${feat.href}?source=offline`}
                   className="rounded-2xl border border-mimo-border bg-mimo-surface p-4 transition hover:border-[#1cb0f6]/40"
                 >
                   <p className="text-base font-black text-mimo-title">{feat.title}</p>

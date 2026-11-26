@@ -13,7 +13,11 @@ import {
 import { WordUploaderAttribution } from "@/app/components/WordUploaderAttribution";
 import { DEMO_DUE_WORDS, isDemoMode } from "@/lib/demo";
 import { playFeedback } from "@/lib/feedbackSound";
-import { getStoredPack } from "@/lib/offlineStorage";
+import {
+  isBrowserOffline,
+  loadOfflinePackWords,
+  wordsToDueItems,
+} from "@/lib/offlinePractice";
 import { playWordAudio, primeWordAudio } from "@/lib/speak";
 import type { DueWordItem, Quality, Word } from "@/types";
 
@@ -117,13 +121,35 @@ export default function WordQuizPage() {
       );
       if (!cancelled) setDemo(localDemo);
 
+      const forceOfflinePack =
+        isBrowserOffline() ||
+        (typeof window !== "undefined" &&
+          new URLSearchParams(window.location.search).get("source") === "offline");
+
       try {
-        if (localDemo) {
-          if (!cancelled) {
-            setItems(DEMO_DUE_WORDS);
-            setLoading(false);
+        // Offline / explicit pack practice: never wait on Supabase.
+        if (forceOfflinePack || localDemo) {
+          const packWords = await loadOfflinePackWords();
+          if (packWords.length > 0) {
+            if (!cancelled) {
+              setGuestMode(true);
+              setItems(wordsToDueItems(packWords, 12));
+            }
+            return;
           }
-          return;
+          if (localDemo) {
+            if (!cancelled) setItems(DEMO_DUE_WORDS);
+            return;
+          }
+          if (forceOfflinePack) {
+            if (!cancelled) {
+              setGuestMode(true);
+              setError(
+                "Cihazda kelime paketi yok. Çevrimiçiyken bir paket indir, sonra tekrar dene."
+              );
+            }
+            return;
+          }
         }
 
         const [{ createClient }, { assignNewWords, getDueWords, getUserWords }] = await Promise.all([
@@ -141,11 +167,8 @@ export default function WordQuizPage() {
         ]);
 
         if (!user) {
-          let guestWords: Word[] = [];
-          const offlinePack = await getStoredPack("words");
-          if (offlinePack?.data?.length) {
-            guestWords = offlinePack.data;
-          } else if (typeof navigator === "undefined" || navigator.onLine) {
+          let guestWords: Word[] = await loadOfflinePackWords();
+          if (!guestWords.length && navigator.onLine) {
             try {
               const res = await fetch("/api/offline-packs?pack=words", { cache: "no-store" });
               if (res.ok) {
@@ -158,24 +181,9 @@ export default function WordQuizPage() {
           }
 
           if (guestWords.length > 0) {
-            const today = new Date().toISOString().slice(0, 10);
-            const picked = shuffle(guestWords).slice(0, 12);
-            const guestItems: DueWordItem[] = picked.map((w, idx) => ({
-              id: w.id || idx + 1,
-              user_id: "guest",
-              word_id: w.id,
-              ease_factor: 2.5,
-              repetition: 0,
-              interval: 1,
-              next_review: today,
-              correct_count: 0,
-              wrong_count: 0,
-              last_answered: today,
-              words: w,
-            }));
             if (!cancelled) {
               setGuestMode(true);
-              setItems(guestItems);
+              setItems(wordsToDueItems(guestWords, 12));
             }
           } else if (!cancelled) {
             setGuestMode(true);
@@ -197,26 +205,10 @@ export default function WordQuizPage() {
         if (!cancelled) setItems(due);
       } catch (err) {
         if (!cancelled) {
-          const offlinePack = await getStoredPack("words");
-          if (offlinePack?.data?.length) {
-            const today = new Date().toISOString().slice(0, 10);
-            const picked = shuffle(offlinePack.data).slice(0, 12);
+          const packWords = await loadOfflinePackWords();
+          if (packWords.length > 0) {
             setGuestMode(true);
-            setItems(
-              picked.map((w, idx) => ({
-                id: w.id || idx + 1,
-                user_id: "guest",
-                word_id: w.id,
-                ease_factor: 2.5,
-                repetition: 0,
-                interval: 1,
-                next_review: today,
-                correct_count: 0,
-                wrong_count: 0,
-                last_answered: today,
-                words: w,
-              }))
-            );
+            setItems(wordsToDueItems(packWords, 12));
           } else if (localDemo) {
             setDemo(true);
             setItems(DEMO_DUE_WORDS);
