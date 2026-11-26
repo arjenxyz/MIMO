@@ -1,16 +1,15 @@
 "use client";
 
 import { useEffect } from "react";
-import { clearClientCaches } from "@/lib/clearClientCaches";
 
 /**
- * Bust stale PWA/page caches that can keep another account's HTML around.
- * Runs once per tab session (flag bumped when cache policy changes).
+ * One-time cleanup of known-poisoned auth HTML caches.
+ * Does NOT wipe PWA shell / workbox caches — that broke install + offline.
  */
 export function ClearStaleAppShellCache() {
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const flag = "mimo-shell-cache-cleared-v3";
+    if (typeof window === "undefined" || !("caches" in window)) return;
+    const flag = "mimo-shell-cache-cleared-v4";
     try {
       if (sessionStorage.getItem(flag) === "1") return;
       sessionStorage.setItem(flag, "1");
@@ -18,13 +17,18 @@ export function ClearStaleAppShellCache() {
       // continue
     }
 
-    void clearClientCaches().then(() => {
+    void (async () => {
       try {
-        sessionStorage.setItem(flag, "1");
+        const keys = await caches.keys();
+        await Promise.all(
+          keys
+            .filter((key) => /start-url|pages-v1|rsc/i.test(key) && !/pwa-shell|workbox|precache/i.test(key))
+            .map((key) => caches.delete(key))
+        );
       } catch {
         // ignore
       }
-    });
+    })();
   }, []);
 
   return null;

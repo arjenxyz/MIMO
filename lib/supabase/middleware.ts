@@ -4,9 +4,55 @@ import { isDemoMode } from "@/lib/demo";
 import { needsProfileSetup } from "@/lib/profileSetup";
 import type { Profile } from "@/types";
 
+/** PWA / static shell assets must never hit the login gate or Chrome refuses install. */
+function isPwaOrStaticAsset(pathname: string) {
+  return (
+    pathname === "/manifest.webmanifest" ||
+    pathname === "/manifest.json" ||
+    pathname === "/sw.js" ||
+    pathname === "/~offline" ||
+    pathname.startsWith("/workbox-") ||
+    pathname.startsWith("/worker-") ||
+    pathname.startsWith("/icons/") ||
+    /\.(?:webmanifest|map|ico|txt|xml)$/i.test(pathname)
+  );
+}
+
+function isPublicPath(pathname: string) {
+  return (
+    isPwaOrStaticAsset(pathname) ||
+    pathname === "/" ||
+    pathname.startsWith("/login") ||
+    pathname.startsWith("/register") ||
+    pathname.startsWith("/onboarding") ||
+    pathname.startsWith("/auth") ||
+    pathname.startsWith("/about") ||
+    pathname.startsWith("/nasil-kullanilir") ||
+    pathname.startsWith("/offline") ||
+    pathname.startsWith("/api/report-error") ||
+    pathname.startsWith("/api/cron") ||
+    pathname.startsWith("/api/status") ||
+    pathname.startsWith("/api/offline-packs") ||
+    pathname.startsWith("/api/word-audio") ||
+    pathname.startsWith("/api/word-image") ||
+    pathname === "/status" ||
+    pathname === "/quiz" ||
+    pathname.startsWith("/quiz/match") ||
+    pathname.startsWith("/quiz/word-check") ||
+    pathname.startsWith("/det/listen-type") ||
+    pathname.startsWith("/det/read-complete")
+  );
+}
+
 export async function updateSession(request: NextRequest) {
   const host = request.nextUrl.hostname;
   const demo = isDemoMode(host);
+  const pathname = request.nextUrl.pathname;
+
+  // Never auth-gate the service worker or web manifest — installability depends on them.
+  if (isPwaOrStaticAsset(pathname)) {
+    return NextResponse.next({ request });
+  }
 
   // Localhost / development: no login gate
   if (demo) {
@@ -41,28 +87,7 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const pathname = request.nextUrl.pathname;
-  const isPublic =
-    pathname === "/" ||
-    pathname.startsWith("/login") ||
-    pathname.startsWith("/register") ||
-    pathname.startsWith("/onboarding") ||
-    pathname.startsWith("/auth") ||
-    pathname.startsWith("/about") ||
-    pathname.startsWith("/nasil-kullanilir") ||
-    pathname.startsWith("/offline") ||
-    pathname.startsWith("/api/report-error") ||
-    pathname.startsWith("/api/cron") ||
-    pathname.startsWith("/api/status") ||
-    pathname.startsWith("/api/offline-packs") ||
-    pathname.startsWith("/api/word-audio") ||
-    pathname.startsWith("/api/word-image") ||
-    pathname === "/status" ||
-    pathname === "/quiz" ||
-    pathname.startsWith("/quiz/match") ||
-    pathname.startsWith("/quiz/word-check") ||
-    pathname.startsWith("/det/listen-type") ||
-    pathname.startsWith("/det/read-complete");
+  const isPublic = isPublicPath(pathname);
 
   if (!user && !isPublic && pathname !== "/setup") {
     const redirectUrl = request.nextUrl.clone();
@@ -97,7 +122,8 @@ export async function updateSession(request: NextRequest) {
       pathname.startsWith("/setup") ||
       pathname.startsWith("/auth") ||
       pathname.startsWith("/api/profile/setup") ||
-      pathname.startsWith("/api/report-error");
+      pathname.startsWith("/api/report-error") ||
+      isPublicPath(pathname);
 
     if (incomplete && !setupExempt) {
       const redirectUrl = request.nextUrl.clone();

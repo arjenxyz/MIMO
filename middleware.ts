@@ -7,6 +7,10 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    /*
+     * Skip Next internals, images, and PWA install assets (SW + manifest).
+     * Auth-gating those breaks Chrome "This app can't be installed".
+     */
+    "/((?!_next/static|_next/image|favicon.ico|sw\\.js|workbox-.*|worker-.*|manifest\\.webmanifest|icons/|~offline|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|webmanifest)$).*)",
   ],
 };
