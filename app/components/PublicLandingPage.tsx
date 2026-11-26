@@ -14,10 +14,10 @@ import { OfflinePracticeCta } from "@/app/components/OfflinePracticeCta";
 import { OfflinePracticeLink } from "@/app/components/OfflinePracticeLink";
 import { OfflineSmartLink } from "@/app/components/OfflineSmartLink";
 import { OnlineOnly } from "@/app/components/OnlineGate";
-import { PwaInstallCard } from "@/app/components/PwaInstallCard";
 import { useTheme } from "@/app/components/ThemeProvider";
 import { formatMegabytes, type OfflineManifestResponse } from "@/lib/offlinePacks";
 import { fetchOfflineManifest, warmOfflineRouteCache } from "@/lib/offlineStorage";
+import { useNativeApp } from "@/lib/useNativeApp";
 import { useOnlineStatus } from "@/lib/useOnlineStatus";
 
 /* ═══════════════════════════════════════════════════════════
@@ -302,15 +302,11 @@ const FAQ_ITEMS = [
   },
   {
     q: "Çevrimdışı nasıl çalışır?",
-    a: "Önce “Uygulamayı indir” ile MIMO’yu ana ekrana ekle, sonra kelime paketini indir. İnternet kesilince ana ekran ikonundan aç; tarayıcı sekmesi yerine PWA çevrimdışı kabuğu ve paketlerin kullanılır.",
-  },
-  {
-    q: "Uygulamayı nasıl indiririm?",
-    a: "Ana sayfadaki “Çevrimdışı için MIMO’yu indir” bölümünde “Uygulamayı indir”e bas. Chrome’da kurulum penceresi açılır; iPhone’da Safari → Paylaş → Ana Ekrana Ekle gerekir. Yerel geliştirmede (localhost) PWA kapalı olabilir — canlı sitede dene.",
+    a: "Kelime paketini (metin + ses) indir. Paket cihazda kalır; internet kesilince pratiklere devam edebilirsin. Android uygulamasında da aynı paketler kullanılır.",
   },
   {
     q: "Telefonumda da açılır mı?",
-    a: "Evet. Modern bir tarayıcı yeterli: telefon, tablet veya bilgisayar. Çevrimdışı için ana ekrana eklenen uygulamayı kullan.",
+    a: "Evet. Tarayıcıdan veya Android APK uygulamasından açabilirsin. Pratik ve paketler aynı siteden gelir.",
   },
   {
     q: "Bu alıştırmalar sınava yarar mı?",
@@ -332,6 +328,7 @@ export function PublicLandingPage({
 }) {
   const { theme, toggleTheme } = useTheme();
   const online = useOnlineStatus();
+  const isNativeApp = useNativeApp();
   const [navScrolled, setNavScrolled] = useState(false);
   const [manifest, setManifest] = useState<OfflineManifestResponse | null>(null);
   const [openFAQ, setOpenFAQ] = useState<number | null>(null);
@@ -585,18 +582,12 @@ export function PublicLandingPage({
                 </svg>
               )}
             </button>
-            <a
-              href="#pwa-indir"
-              className="hidden h-10 items-center rounded-2xl border border-[#1cb0f6]/40 bg-[#e8f6fe] px-3 text-xs font-extrabold text-[#0369a1] shadow-[0_2px_0_rgba(15,23,42,0.06)] transition hover:border-[#1cb0f6] active:translate-y-0.5 active:shadow-none dark:bg-[#0c4a6e]/40 dark:text-[#7dd3fc] sm:inline-flex"
-            >
-              Uygulamayı indir
-            </a>
             <OfflineSmartLink
               href="/offline"
               onOfflineBlocked={showOfflineBlocked}
               className="hidden h-10 items-center rounded-2xl border border-mimo-border bg-mimo-surface px-3 text-xs font-extrabold text-mimo-fg shadow-[0_2px_0_rgba(15,23,42,0.06)] transition hover:border-[#fd860a]/45 hover:text-[#ea580c] active:translate-y-0.5 active:shadow-none sm:inline-flex"
             >
-              Çevrimdışı
+              Paketler
             </OfflineSmartLink>
             <OnlineOnly>
               <Link
@@ -625,18 +616,29 @@ export function PublicLandingPage({
             <div className="inline-flex flex-wrap items-center gap-2 rounded-full border border-[#fd860a]/30 bg-mimo-card px-3.5 py-1.5 text-xs font-black text-[#ea580c] shadow-sm">
               <span>✦ ÜCRETSİZ PRATİK</span>
               <span className="text-mimo-border">•</span>
-              <span className="text-[#0369a1] dark:text-[#38bdf8]">ÇEVRİMDIŞI HAZIR</span>
+              <span className="text-[#0369a1] dark:text-[#38bdf8]">
+                {isNativeApp ? "UYGULAMA" : "ÇEVRİMDIŞI HAZIR"}
+              </span>
             </div>
 
             <h1 className="mt-5 text-[1.85rem] font-black leading-[1.12] tracking-tight text-mimo-title sm:text-5xl lg:text-[3.35rem]">
-              Hazırlıkta İngilizce pratik —{" "}
-              <span className="text-gradient-mimo">kısa, net, her gün.</span>
+              {isNativeApp ? (
+                <>
+                  Bugün kısa bir pratik —{" "}
+                  <span className="text-gradient-mimo">hemen başla.</span>
+                </>
+              ) : (
+                <>
+                  Hazırlıkta İngilizce pratik —{" "}
+                  <span className="text-gradient-mimo">kısa, net, her gün.</span>
+                </>
+              )}
             </h1>
 
             <p className="mt-3 max-w-2xl text-[0.95rem] font-semibold leading-relaxed text-mimo-muted sm:mt-4 sm:text-lg">
-              MIMO; kelime, yazım, dinleme ve okuma alıştırmalarıyla hazırlık sürecini
-              destekler. Hesap açmadan başlayabilir, dilersen kelime paketlerini sesleriyle
-              indirip internet olmadan da çalışmaya devam edebilirsin.
+              {isNativeApp
+                ? "Kelime, yazım, dinleme ve okuma. İstersen paket indirip internet olmadan da çalış."
+                : "MIMO; kelime, yazım, dinleme ve okuma alıştırmalarıyla hazırlık sürecini destekler. Hesap açmadan başlayabilir, dilersen kelime paketlerini sesleriyle indirip internet olmadan da çalışmaya devam edebilirsin."}
             </p>
 
             <div className="mt-7 flex flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
@@ -653,12 +655,6 @@ export function PublicLandingPage({
               </OfflineSmartLink>
 
               <a
-                href="#pwa-indir"
-                className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[#1cb0f6] px-5 py-3.5 text-base font-black text-white shadow-[0_4px_0_#1899d6] transition hover:brightness-105 active:translate-y-0.5 active:shadow-none sm:w-auto sm:px-6"
-              >
-                Uygulamayı indir
-              </a>
-              <a
                 href="#offline-packs"
                 className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[#fd860a] px-5 py-3.5 text-base font-black text-white shadow-[0_4px_0_#c2410c] transition hover:brightness-105 active:translate-y-0.5 active:shadow-none sm:w-auto sm:px-6"
               >
@@ -670,8 +666,6 @@ export function PublicLandingPage({
                 )}
               </a>
             </div>
-
-            <PwaInstallCard variant="hero" />
 
             {/* ── Stats: compact on mobile, roomier from sm up ── */}
             <div className="mt-7 grid grid-cols-3 gap-2 sm:mt-8 sm:max-w-lg sm:gap-3">
@@ -854,13 +848,10 @@ export function PublicLandingPage({
       </section>
 
       {/* ══════════════════════════════════════════════════════
-          PWA install + Offline Packs
+          Offline Packs
           ══════════════════════════════════════════════════════ */}
-      <section className="relative z-10 mx-auto max-w-6xl space-y-6 px-4 pb-16 pt-6">
-        <PwaInstallCard variant="section" />
-        <div id="offline-packs">
-          <OfflinePacksManager />
-        </div>
+      <section id="offline-packs" className="relative z-10 mx-auto max-w-6xl px-4 pb-16 pt-6">
+        <OfflinePacksManager />
       </section>
 
       {/* ══════════════════════════════════════════════════════

@@ -6,11 +6,13 @@ import { useEffect, useState } from "react";
 import { OfflinePacksManager } from "@/app/components/OfflinePacksManager";
 import { OfflinePracticeCta } from "@/app/components/OfflinePracticeCta";
 import { OfflinePracticeLink } from "@/app/components/OfflinePracticeLink";
-import { PwaInstallCard } from "@/app/components/PwaInstallCard";
+import { PwaRuntime } from "@/app/components/PwaRuntime";
+import { useNativeApp } from "@/lib/useNativeApp";
 import { formatMegabytes, type OfflinePackId, type StoredOfflinePack } from "@/lib/offlinePacks";
 import { getAllStoredPacks } from "@/lib/offlineStorage";
 
 export default function OfflineHubPage() {
+  const isNativeApp = useNativeApp();
   const [stored, setStored] = useState<Partial<Record<OfflinePackId, StoredOfflinePack>>>({});
   const [online, setOnline] = useState(true);
 
@@ -129,12 +131,17 @@ export default function OfflineHubPage() {
             PWA çevrimdışı çalışma alanı
           </h1>
           <p className="mt-1 text-sm font-semibold text-mimo-muted">
-            Uygulamayı indir, paket çek; internet kesilince buradan pratik yap. Cihazda:{" "}
+            {isNativeApp
+              ? "Paket indir; internet kesilince buradan pratik yap. Cihazda: "
+              : "Paket indir; dilersen tarayıcıda çevrimdışı kabuğu kullan. Cihazda: "}
             <strong className="text-mimo-title">{formatMegabytes(totalLocalBytes)}</strong>
           </p>
+          {!isNativeApp ? (
+            <div className="mt-4">
+              <PwaRuntime showInstall={false} />
+            </div>
+          ) : null}
         </section>
-
-        <PwaInstallCard variant="section" />
 
         <OfflinePracticeCta />
 

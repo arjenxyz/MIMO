@@ -16,8 +16,8 @@ SplashScreen.preventAutoHideAsync().catch(() => {
   // already hidden
 });
 
-/** Production MIMO site — change if you add a custom domain. */
-const APP_URL = "https://mimo-olive.vercel.app/offline";
+/** Production MIMO site — homepage is APK-aware (hides PWA install noise). */
+const APP_URL = "https://mimo-olive.vercel.app/";
 
 type NavState = { canGoBack?: boolean };
 

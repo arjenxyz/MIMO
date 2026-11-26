@@ -23,11 +23,22 @@
         "backgroundColor": "#fff8f1",
         "foregroundImage": "./assets/adaptive-icon.png"
       },
-      "permissions": ["INTERNET", "ACCESS_NETWORK_STATE"]
+      "permissions": [
+        "INTERNET",
+        "ACCESS_NETWORK_STATE"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "plugins": ["expo-splash-screen"]
+    "plugins": [
+      "expo-splash-screen"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "5da08ae9-406a-4852-8d69-f84d78800ebe"
+      }
+    },
+    "owner": "mimo321"
   }
 }
