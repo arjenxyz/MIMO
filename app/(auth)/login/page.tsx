@@ -1,0 +1,194 @@
+"use client";
+
+import Image from "next/image";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { SocialAuthButtons } from "@/app/components/SocialAuthButtons";
+import { createClient } from "@/lib/supabase/client";
+import { isDemoMode } from "@/lib/demo";
+
+function Decor() {
+  return (
+    <>
+      <div className="pointer-events-none absolute -left-16 -top-10 h-56 w-56 rounded-full bg-[#d8f5c8]/70 lg:h-80 lg:w-80" />
+      <div className="pointer-events-none absolute -right-10 top-8 h-44 w-44 rounded-full bg-[#ffe8a3]/80 lg:h-72 lg:w-72" />
+      <div className="pointer-events-none absolute -bottom-16 -left-8 h-52 w-52 rounded-full bg-[#c9f0e3]/70 lg:h-96 lg:w-96" />
+      <div className="pointer-events-none absolute -bottom-20 -right-12 h-64 w-64 rounded-full bg-[#ffd0df]/70 lg:h-[28rem] lg:w-[28rem]" />
+      <div className="pointer-events-none absolute left-10 top-28 text-2xl text-[#9be06a] lg:left-16 lg:top-16 lg:text-4xl">
+        ✦
+      </div>
+      <div className="pointer-events-none absolute right-16 top-40 text-xl text-[#c4b5fd] lg:right-20 lg:top-24 lg:text-3xl">
+        ✦
+      </div>
+      <div className="pointer-events-none absolute bottom-10 left-6 text-3xl text-[#fbbf24]/70 lg:bottom-10 lg:left-8 lg:text-5xl">
+        🐾
+      </div>
+      <div className="pointer-events-none absolute bottom-16 right-10 hidden text-4xl text-[#fda4af]/60 lg:block">
+        ✦
+      </div>
+    </>
+  );
+}
+
+function DemoContinue() {
+  return (
+    <div className="mt-6 space-y-3">
+      <button
+        type="button"
+        onClick={() => {
+          window.location.assign("/");
+        }}
+        className="login-cta relative flex w-full items-center justify-center overflow-hidden rounded-2xl bg-[#1cb0f6] px-6 py-3.5 text-[15px] font-extrabold tracking-wide text-white shadow-[0_3px_0_#1899d6] transition active:translate-y-0.5 active:shadow-none"
+      >
+        <span className="relative z-10">Continue with sample data</span>
+        <span
+          aria-hidden
+          className="login-cta-sheen absolute inset-y-0 -left-1/3 w-1/3 skew-x-[-18deg] bg-white/30"
+        />
+      </button>
+      <p className="text-center text-xs font-bold leading-snug text-[#9ca3af]">
+        No sign-in needed — the learning path and practices are ready to explore.
+      </p>
+    </div>
+  );
+}
+
+export default function LoginPage() {
+  const [checking, setChecking] = useState(true);
+  const [demo, setDemo] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function gate() {
+      if (isDemoMode(window.location.hostname)) {
+        if (!cancelled) {
+          setDemo(true);
+          setChecking(false);
+        }
+        return;
+      }
+
+      try {
+        const supabase = createClient();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (user) {
+          window.location.replace("/");
+          return;
+        }
+      } catch {
+        // show login
+      }
+      if (!cancelled) setChecking(false);
+    }
+
+    void gate();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (checking) {
+    return (
+      <main className="flex min-h-[100dvh] items-center justify-center bg-mimo-bg font-extrabold text-mimo-muted">
+        Loading…
+      </main>
+    );
+  }
+
+  const subtitle = demo
+    ? "Demo is live — explore with sample progress."
+    : "Sign in to continue your streak.";
+
+  return (
+    <main className="relative min-h-[100dvh] overflow-hidden bg-[#fff8f1]">
+      <Decor />
+
+      <div className="relative z-10 flex min-h-[100dvh] items-center justify-center px-4 py-10 lg:hidden">
+        <section className="login-rise w-full max-w-md rounded-[2rem] bg-white/80 px-6 py-10 text-center shadow-xl backdrop-blur-sm">
+          <div className="login-float mx-auto h-28 w-28">
+            <Image
+              src="/mimo-avatar.png"
+              alt="Mimo"
+              width={160}
+              height={160}
+              priority
+              className="h-28 w-28 rounded-full object-cover shadow-lg ring-4 ring-[#fd860a]/25"
+            />
+          </div>
+          <p className="mt-5 text-[11px] font-black uppercase tracking-[0.22em] text-[#1cb0f6]">
+            MIMO
+          </p>
+          <h1 className="mt-2 text-4xl font-black tracking-tight text-[#1f2937]">Welcome</h1>
+          <p className="mt-2 font-bold text-[#6b7280]">{subtitle}</p>
+          {demo ? (
+            <DemoContinue />
+          ) : (
+            <div className="mt-8 space-y-4">
+              <SocialAuthButtons />
+              <Link
+                href="/"
+                className="block text-center text-xs font-extrabold text-[#1cb0f6] transition hover:underline"
+              >
+                Giriş yapmadan pratik yap &amp; çevrimdışı indir →
+              </Link>
+            </div>
+          )}
+        </section>
+      </div>
+
+      <div className="relative z-10 mx-auto hidden min-h-[100dvh] max-w-6xl items-center gap-10 px-10 py-12 lg:grid lg:grid-cols-2 xl:gap-16">
+        <section className="relative z-10 flex flex-col items-start justify-center">
+          <div className="relative overflow-hidden rounded-[2.5rem] bg-[#fd860a] p-2 shadow-xl">
+            <Image
+              src="/mimo.png"
+              alt="Mimo"
+              width={640}
+              height={640}
+              priority
+              className="relative h-auto w-[min(100%,420px)] select-none rounded-[2rem]"
+            />
+          </div>
+          <h2 className="mt-4 text-4xl font-black text-[#1f2937]">MIMO</h2>
+          <p className="relative z-10 mt-2 max-w-sm text-lg font-bold text-[#6b7280]">
+            Learn English with short, focused practice every day.
+          </p>
+        </section>
+
+        <section className="login-rise rounded-[2.5rem] border border-white/70 bg-white/90 p-10 shadow-2xl backdrop-blur">
+          <div className="flex items-center gap-4">
+            <div className="login-float shrink-0">
+              <Image
+                src="/mimo-avatar.png"
+                alt="Mimo avatar"
+                width={72}
+                height={72}
+                className="h-16 w-16 rounded-full object-cover ring-4 ring-[#fd860a]/20"
+              />
+            </div>
+            <div>
+              <h1 className="text-3xl font-black tracking-tight text-[#1f2937]">Welcome</h1>
+              <p className="font-bold text-[#6b7280]">{subtitle}</p>
+            </div>
+          </div>
+
+          {demo ? (
+            <DemoContinue />
+          ) : (
+            <div className="mt-8 space-y-4">
+              <SocialAuthButtons />
+              <Link
+                href="/"
+                className="block text-center text-xs font-extrabold text-[#1cb0f6] transition hover:underline"
+              >
+                Giriş yapmadan pratik yap &amp; çevrimdışı indir →
+              </Link>
+            </div>
+          )}
+        </section>
+      </div>
+    </main>
+  );
+}

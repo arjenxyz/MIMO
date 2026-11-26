@@ -1,0 +1,306 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #f3f4f6;
+  --foreground: #0f172a;
+  --mimo-bg: #f3f4f6;
+  --mimo-fg: #0f172a;
+  --mimo-card: #ffffff;
+  --mimo-muted: #64748b;
+  --mimo-border: #e5e7eb;
+  --mimo-border-soft: #e2e8f0;
+  --mimo-surface: #f8fafc;
+  --mimo-title: #1e3a5f;
+  --mimo-nav: rgba(255, 255, 255, 0.95);
+}
+
+html.dark {
+  --background: #0f1a1e;
+  --foreground: #f1f5f9;
+  --mimo-bg: #0f1a1e;
+  --mimo-fg: #f1f5f9;
+  --mimo-card: #1a2a31;
+  --mimo-muted: #94a3b8;
+  --mimo-border: #2a3940;
+  --mimo-border-soft: #334155;
+  --mimo-surface: #152229;
+  --mimo-title: #e2e8f0;
+  --mimo-nav: rgba(15, 26, 30, 0.95);
+}
+
+html,
+body {
+  min-height: 100%;
+  color: var(--foreground);
+  background: var(--background);
+}
+
+body {
+  font-family: var(--font-nunito), "Nunito", Arial, Helvetica, sans-serif;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+@keyframes mimo-wave {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  40% {
+    transform: rotate(18deg);
+  }
+  70% {
+    transform: rotate(-6deg);
+  }
+}
+
+@keyframes mimo-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.mimo-wave {
+  transform-origin: 70% 70%;
+  animation: mimo-wave 1.6s ease-in-out infinite;
+}
+
+.mimo-bounce {
+  animation: mimo-bounce 2.4s ease-in-out infinite;
+}
+
+@keyframes mimo-path-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.035);
+  }
+}
+
+.mimo-path-pulse {
+  animation: mimo-path-pulse 2s ease-in-out infinite;
+}
+
+@keyframes mimo-path-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.mimo-path-enter {
+  animation: mimo-path-enter 0.45s ease-out both;
+}
+
+@keyframes mimo-score-float {
+  0% {
+    opacity: 0;
+    transform: translateY(8px) scale(0.9);
+  }
+  20% {
+    opacity: 1;
+    transform: translateY(0) scale(1.08);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-36px) scale(1);
+  }
+}
+
+@keyframes mimo-score-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.06);
+  }
+}
+
+@keyframes mimo-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-6px);
+  }
+  40% {
+    transform: translateX(6px);
+  }
+  60% {
+    transform: translateX(-4px);
+  }
+  80% {
+    transform: translateX(4px);
+  }
+}
+
+.mimo-score-float {
+  animation: mimo-score-float 0.9s ease-out forwards;
+}
+
+.mimo-score-pulse {
+  animation: mimo-score-pulse 0.55s ease-out;
+}
+
+.mimo-shake {
+  animation: mimo-shake 0.4s ease-in-out;
+}
+
+@keyframes login-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes login-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes login-sheen {
+  0% {
+    transform: translateX(-140%) skewX(-18deg);
+  }
+  100% {
+    transform: translateX(320%) skewX(-18deg);
+  }
+}
+
+.login-float {
+  animation: login-float 3.6s ease-in-out infinite;
+}
+
+.login-rise {
+  animation: login-rise 0.65s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.login-cta-sheen {
+  animation: login-sheen 2.8s ease-in-out infinite;
+  animation-delay: 0.9s;
+}
+
+/* ── Scroll-reveal (IntersectionObserver driven) ── */
+@keyframes reveal-up {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.reveal-up {
+  opacity: 0;
+  animation: reveal-up 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* Stagger children */
+.reveal-stagger > * { opacity: 0; }
+.reveal-stagger.is-visible > *:nth-child(1) { animation: reveal-up 0.5s 0.05s cubic-bezier(0.22,1,0.36,1) forwards; }
+.reveal-stagger.is-visible > *:nth-child(2) { animation: reveal-up 0.5s 0.12s cubic-bezier(0.22,1,0.36,1) forwards; }
+.reveal-stagger.is-visible > *:nth-child(3) { animation: reveal-up 0.5s 0.19s cubic-bezier(0.22,1,0.36,1) forwards; }
+.reveal-stagger.is-visible > *:nth-child(4) { animation: reveal-up 0.5s 0.26s cubic-bezier(0.22,1,0.36,1) forwards; }
+.reveal-stagger.is-visible > *:nth-child(5) { animation: reveal-up 0.5s 0.33s cubic-bezier(0.22,1,0.36,1) forwards; }
+.reveal-stagger.is-visible > *:nth-child(6) { animation: reveal-up 0.5s 0.40s cubic-bezier(0.22,1,0.36,1) forwards; }
+
+/* ── FAQ accordion ── */
+.faq-answer {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.faq-answer[data-open="true"] {
+  grid-template-rows: 1fr;
+}
+.faq-answer > div {
+  overflow: hidden;
+}
+
+/* ── Gradient text utility ── */
+.text-gradient-mimo {
+  background: linear-gradient(135deg, #fd860a 0%, #1cb0f6 50%, #58cc02 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Landing top nav links */
+.landing-nav-link {
+  @apply rounded-xl px-3 py-1.5 text-mimo-muted transition hover:bg-mimo-card hover:text-mimo-title;
+}
+.landing-nav-link:focus-visible {
+  outline: 2px solid #1cb0f6;
+  outline-offset: 2px;
+}
+
+/* ── Step connector line pulse ── */
+@keyframes step-pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+.step-connector-pulse {
+  animation: step-pulse 2.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mimo-wave,
+  .mimo-bounce,
+  .mimo-path-pulse,
+  .mimo-path-enter,
+  .mimo-score-float,
+  .mimo-score-pulse,
+  .mimo-shake,
+  .login-float,
+  .login-rise,
+  .login-cta-sheen,
+  .reveal-up,
+  .step-connector-pulse {
+    animation: none;
+  }
+  .reveal-up,
+  .reveal-stagger > * {
+    opacity: 1;
+  }
+  .faq-answer {
+    transition: none;
+  }
+}
+
+.duo-btn {
+  @apply w-full rounded-2xl py-4 text-base font-extrabold uppercase tracking-wide transition-all;
+}
+
+.duo-btn:active {
+  transform: translateY(4px);
+  box-shadow: none;
+}
