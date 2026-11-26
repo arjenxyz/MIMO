@@ -21,11 +21,15 @@ const DB_VERSION = 2;
 const STORE_NAME = "packs";
 const AUDIO_STORE = "audio";
 const LS_PREFIX = "mimo-offline-pack:";
-const OFFLINE_SHELL_CACHE = "mimo-offline-pages-v1";
+/** Must match next.config.mjs NetworkFirst cacheName for public shells. */
+const OFFLINE_SHELL_CACHE = "mimo-public-pages-v1";
+/** Legacy cache name from earlier warmers — still checked by OfflineSmartLink. */
+const LEGACY_OFFLINE_SHELL_CACHE = "mimo-offline-pages-v1";
 
 const OFFLINE_PAGE_URLS = [
   "/",
   "/offline",
+  "/~offline",
   "/about",
   "/nasil-kullanilir",
   "/quiz",
@@ -33,6 +37,8 @@ const OFFLINE_PAGE_URLS = [
   "/quiz/word-check",
   "/det/listen-type",
   "/det/read-complete",
+  "/grammar",
+  "/reading",
 ];
 
 export type DownloadProgress = AudioDownloadProgress & {
@@ -242,22 +248,27 @@ export async function warmOfflineRouteCache(): Promise<void> {
     await Promise.allSettled(
       OFFLINE_PAGE_URLS.map(async (url) => {
         const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), 4000);
+        const timer = setTimeout(() => controller.abort(), 8000);
         try {
+          // Same-origin navigate shells for the SW NetworkFirst cache.
           const res = await fetch(url, {
-            credentials: "omit",
-            // Prefer already-cached shells; only hit network if missing.
-            cache: "force-cache",
+            credentials: "same-origin",
+            cache: "no-cache",
             signal: controller.signal,
+            headers: { Accept: "text/html" },
           });
           if (res.ok) {
             await cache.put(url, res.clone());
+            // Absolute key helps some SW matchers.
+            await cache.put(new URL(url, window.location.origin).href, res.clone());
           }
         } finally {
           clearTimeout(timer);
         }
       })
     );
+    // Drop legacy cache so OfflineSmartLink + SW agree on one store.
+    await caches.delete(LEGACY_OFFLINE_SHELL_CACHE).catch(() => false);
   } catch {
     // non-fatal
   }

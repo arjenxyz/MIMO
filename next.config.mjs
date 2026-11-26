@@ -2,12 +2,16 @@ import withPWAInit from "@ducanh2912/next-pwa";
 
 function isPublicOfflinePath(pathname) {
   return (
+    pathname === "/" ||
     pathname === "/offline" ||
+    pathname === "/~offline" ||
     pathname.startsWith("/about") ||
     pathname.startsWith("/nasil-kullanilir") ||
     pathname.startsWith("/quiz") ||
     pathname.startsWith("/det/") ||
-    pathname === "/det"
+    pathname === "/det" ||
+    pathname.startsWith("/grammar") ||
+    pathname.startsWith("/reading")
   );
 }
 
@@ -33,9 +37,11 @@ const withPWA = withPWAInit({
   dest: "public",
   disable: process.env.NODE_ENV === "development",
   register: true,
-  // App Router + auth redirects: NEVER use document fallback (serves wrong HTML for /login).
-  cacheStartUrl: false,
+  // Cache "/" so a hard refresh offline can reopen the last shell.
+  // Auth/login stays NetworkOnly below; document failures use app/~offline.
+  cacheStartUrl: true,
   dynamicStartUrl: true,
+  cacheOnFrontEndNav: true,
   extendDefaultRuntimeCaching: true,
   workboxOptions: {
     cleanupOutdatedCaches: true,
@@ -55,7 +61,7 @@ const withPWA = withPWAInit({
           cacheName: "mimo-public-pages-v1",
           networkTimeoutSeconds: 2,
           expiration: {
-            maxEntries: 64,
+            maxEntries: 96,
             maxAgeSeconds: 30 * 24 * 60 * 60,
           },
         },
@@ -67,7 +73,7 @@ const withPWA = withPWAInit({
           if (isPublicOfflinePath(pathname)) return false;
           if (isPrivatePath(pathname)) return true;
           if (request.mode === "navigate" || request.destination === "document") {
-            // "/" and other shells: do not cache (logged-in vs public).
+            // Remaining shells (status, messages, …): network only; ~offline catches fail.
             return true;
           }
           try {
