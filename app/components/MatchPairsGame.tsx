@@ -13,6 +13,7 @@ import {
 } from "@/app/components/PracticeExamChrome";
 import { formatTimer } from "@/lib/detCloze";
 import { playFeedback } from "@/lib/feedbackSound";
+import { wantsForceOfflinePack } from "@/lib/offlinePractice";
 import { getStoredPack } from "@/lib/offlineStorage";
 
 export type MatchWord = {
@@ -134,10 +135,7 @@ export function MatchPairsGame({ words }: { words: MatchWord[] }) {
 
   useEffect(() => {
     let cancelled = false;
-    const force =
-      !navigator.onLine ||
-      new URLSearchParams(window.location.search).get("source") === "offline";
-    setPreferLocal(force);
+    setPreferLocal(wantsForceOfflinePack());
     void getStoredPack("words")
       .then((pack) => {
         if (cancelled || !pack?.data?.length) return;

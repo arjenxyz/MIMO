@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { OfflinePracticeLink } from "@/app/components/OfflinePracticeLink";
 
 /**
  * next-pwa document fallback (`/~offline`).
@@ -26,12 +29,12 @@ export default function OfflineFallbackPage() {
         >
           Çevrimdışı alana git
         </Link>
-        <Link
+        <OfflinePracticeLink
           href="/quiz"
           className="rounded-2xl border border-mimo-border bg-mimo-card px-5 py-3.5 text-center text-sm font-black text-mimo-title"
         >
           Kelime testi
-        </Link>
+        </OfflinePracticeLink>
         <Link
           href="/"
           className="rounded-2xl border border-mimo-border bg-mimo-card px-5 py-3.5 text-center text-sm font-black text-mimo-title"

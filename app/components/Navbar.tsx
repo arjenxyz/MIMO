@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { OfflinePracticeLink } from "@/app/components/OfflinePracticeLink";
 import { OnlineOnly } from "@/app/components/OnlineGate";
 import { DEMO_PROFILE, isDemoMode } from "@/lib/demo";
 import { createClient } from "@/lib/supabase/client";
@@ -349,12 +350,21 @@ export function Navbar() {
               </div>
             </OnlineOnly>
 
-            <Link
-              href={online ? "/offline" : "/quiz?source=offline"}
-              className="rounded-xl border border-mimo-border bg-mimo-surface px-2.5 py-1.5 text-xs font-extrabold text-[#0d9488] dark:text-[#5eead4]"
-            >
-              {online ? "Çevrimdışı" : "Çevrimdışı pratik"}
-            </Link>
+            {online ? (
+              <Link
+                href="/offline"
+                className="rounded-xl border border-mimo-border bg-mimo-surface px-2.5 py-1.5 text-xs font-extrabold text-[#0d9488] dark:text-[#5eead4]"
+              >
+                Çevrimdışı
+              </Link>
+            ) : (
+              <OfflinePracticeLink
+                href="/quiz"
+                className="rounded-xl border border-mimo-border bg-mimo-surface px-2.5 py-1.5 text-xs font-extrabold text-[#0d9488] dark:text-[#5eead4]"
+              >
+                Çevrimdışı pratik
+              </OfflinePracticeLink>
+            )}
 
             <details ref={detailsRef} className="relative">
               <summary

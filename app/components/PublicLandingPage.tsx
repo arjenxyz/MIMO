@@ -11,6 +11,7 @@ import {
 } from "react";
 import { OfflinePacksManager } from "@/app/components/OfflinePacksManager";
 import { OfflinePracticeCta } from "@/app/components/OfflinePracticeCta";
+import { OfflinePracticeLink } from "@/app/components/OfflinePracticeLink";
 import { OfflineSmartLink } from "@/app/components/OfflineSmartLink";
 import { OnlineOnly } from "@/app/components/OnlineGate";
 import { useTheme } from "@/app/components/ThemeProvider";
@@ -430,14 +431,14 @@ export function PublicLandingPage({
             </div>
             <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {PUBLIC_FEATURES.map((feat) => (
-                <Link
+                <OfflinePracticeLink
                   key={feat.href}
-                  href={`${feat.href}?source=offline`}
+                  href={feat.href}
                   className="rounded-2xl border border-mimo-border bg-mimo-surface p-4 transition hover:border-[#1cb0f6]/40"
                 >
                   <p className="text-base font-black text-mimo-title">{feat.title}</p>
                   <p className="mt-1 text-xs font-bold text-mimo-muted">{feat.badge}</p>
-                </Link>
+                </OfflinePracticeLink>
               ))}
               <Link
                 href="/offline"

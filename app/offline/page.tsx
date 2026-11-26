@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { OfflinePacksManager } from "@/app/components/OfflinePacksManager";
 import { OfflinePracticeCta } from "@/app/components/OfflinePracticeCta";
+import { OfflinePracticeLink } from "@/app/components/OfflinePracticeLink";
 import { formatMegabytes, type OfflinePackId, type StoredOfflinePack } from "@/lib/offlinePacks";
 import { getAllStoredPacks } from "@/lib/offlineStorage";
 
@@ -39,11 +40,12 @@ export default function OfflineHubPage() {
     0
   );
 
-  const packQuery = wordsPack?.itemCount ? "?source=offline" : "";
+  const usePack = Boolean(wordsPack?.itemCount);
   const quickActivities = [
     {
       title: "Kelime Testi",
-      href: `/quiz${packQuery}`,
+      href: "/quiz",
+      forcePack: usePack,
       meta: wordsPack
         ? `${wordsPack.itemCount} kelime + ses (${formatMegabytes(wordsPack.byteSize)})`
         : "Yazar paketini indirerek aç",
@@ -51,7 +53,8 @@ export default function OfflineHubPage() {
     },
     {
       title: "Hızlı Eşleştir",
-      href: `/quiz/match${packQuery}`,
+      href: "/quiz/match",
+      forcePack: usePack,
       meta: wordsPack
         ? `${wordsPack.itemCount} kelime hazır`
         : "Kelime paketi indirilince zenginleşir",
@@ -59,19 +62,22 @@ export default function OfflineHubPage() {
     },
     {
       title: "Yazım Doğru mu?",
-      href: `/quiz/word-check${packQuery}`,
+      href: "/quiz/word-check",
+      forcePack: usePack,
       meta: wordsPack ? `${wordsPack.itemCount} kelime hazır` : "Çevrimdışı dene",
       tone: "bg-[#e11d48] shadow-[0_3px_0_#be123c]",
     },
     {
       title: "Listen & Type",
-      href: `/det/listen-type${packQuery}`,
+      href: "/det/listen-type",
+      forcePack: usePack,
       meta: "Tarayıcı sesi ile internetsiz dikte",
       tone: "bg-[#0284c7] shadow-[0_3px_0_#0369a1]",
     },
     {
       title: "Read & Complete",
       href: "/det/read-complete",
+      forcePack: false,
       meta: detPack
         ? `${detPack.itemCount} pasaj (${formatMegabytes(detPack.byteSize)})`
         : "Yedek pasajlarla hazır",
@@ -138,9 +144,10 @@ export default function OfflineHubPage() {
 
           <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {quickActivities.map((act) => (
-              <Link
+              <OfflinePracticeLink
                 key={act.href}
                 href={act.href}
+                forcePack={act.forcePack}
                 className="flex items-center justify-between gap-3 rounded-2xl border border-mimo-border bg-mimo-surface p-4 transition hover:border-[#1cb0f6]/40"
               >
                 <div className="min-w-0">
@@ -152,7 +159,7 @@ export default function OfflineHubPage() {
                 >
                   Aç
                 </span>
-              </Link>
+              </OfflinePracticeLink>
             ))}
           </div>
         </section>

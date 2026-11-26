@@ -10,6 +10,7 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from "react";
 import { OfflinePracticeCta } from "@/app/components/OfflinePracticeCta";
+import { OfflinePracticeLink } from "@/app/components/OfflinePracticeLink";
 import {
   formatExactDataSize,
   formatMegabytes,
@@ -855,12 +856,12 @@ export function OfflinePacksManager({
                       )}
                     </div>
                   ) : installed ? (
-                    <Link
-                      href="/quiz?source=offline"
+                    <OfflinePracticeLink
+                      href="/quiz"
                       className="flex w-full items-center justify-center rounded-2xl bg-[#58cc02] px-4 py-2.5 text-xs font-black uppercase tracking-wide text-white shadow-[0_3px_0_#46a302]"
                     >
                       Çevrimdışı pratik →
-                    </Link>
+                    </OfflinePracticeLink>
                   ) : null}
 
                   {online && installed ? (

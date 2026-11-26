@@ -14,8 +14,8 @@ import { WordUploaderAttribution } from "@/app/components/WordUploaderAttributio
 import { DEMO_DUE_WORDS, isDemoMode } from "@/lib/demo";
 import { playFeedback } from "@/lib/feedbackSound";
 import {
-  isBrowserOffline,
   loadOfflinePackWords,
+  wantsForceOfflinePack,
   wordsToDueItems,
 } from "@/lib/offlinePractice";
 import { playWordAudio, primeWordAudio } from "@/lib/speak";
@@ -121,10 +121,7 @@ export default function WordQuizPage() {
       );
       if (!cancelled) setDemo(localDemo);
 
-      const forceOfflinePack =
-        isBrowserOffline() ||
-        (typeof window !== "undefined" &&
-          new URLSearchParams(window.location.search).get("source") === "offline");
+      const forceOfflinePack = wantsForceOfflinePack();
 
       try {
         // Offline / explicit pack practice: never wait on Supabase.

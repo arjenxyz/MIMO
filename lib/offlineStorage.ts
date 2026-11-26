@@ -41,6 +41,11 @@ const OFFLINE_PAGE_URLS = [
   "/reading",
 ];
 
+/** Also warm from pack download / landing so practice shells exist before going offline. */
+export function warmPracticeShellsNow() {
+  return warmOfflineRouteCache();
+}
+
 export type DownloadProgress = AudioDownloadProgress & {
   authorId?: string | null;
 };

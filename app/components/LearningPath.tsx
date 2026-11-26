@@ -10,6 +10,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { OfflinePracticeLink } from "@/app/components/OfflinePracticeLink";
 import { useOnlineStatus } from "@/lib/useOnlineStatus";
 
 /** Activities that need a live network (Gemini / remote APIs). */
@@ -298,12 +299,7 @@ export function LearningPath({
   }, [rail?.d, activeIndex, visibleNodes.length]);
 
   const activeNode = visibleNodes[activeIndex] ?? visibleNodes[0];
-  const withOfflineSource = (href: string) => {
-    if (online) return href;
-    if (href.includes("source=")) return href;
-    return `${href}${href.includes("?") ? "&" : "?"}source=offline`;
-  };
-  const ctaHref = withOfflineSource(activeNode?.href ?? primaryHref);
+  const ctaHref = activeNode?.href ?? primaryHref;
   const ctaLabel = online ? primaryLabel : activeNode ? `${activeNode.title} →` : primaryLabel;
 
   return (
@@ -324,12 +320,13 @@ export function LearningPath({
             </h1>
             <p className="mt-1.5 max-w-md text-sm font-semibold text-mimo-muted">{unitHint}</p>
           </div>
-          <Link
+          <OfflinePracticeLink
             href={ctaHref}
+            forcePack={!online}
             className="inline-flex shrink-0 items-center justify-center rounded-2xl bg-[#58cc02] px-8 py-3.5 text-sm font-black uppercase tracking-wide text-[#14260a] shadow-[0_3px_0_#46a302] transition active:translate-y-0.5 active:shadow-none"
           >
             {ctaLabel}
-          </Link>
+          </OfflinePracticeLink>
         </div>
       </div>
 
@@ -427,11 +424,12 @@ export function LearningPath({
                         className="pointer-events-none absolute left-1/2 top-1/2 z-0 h-[5.4rem] w-[5.4rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-mimo-bg"
                         aria-hidden
                       />
-                      <Link
+                      <OfflinePracticeLink
                         ref={(el) => {
                           nodeRefs.current[index] = el;
                         }}
-                        href={withOfflineSource(node.href)}
+                        href={node.href}
+                        forcePack={!online}
                         aria-current={isActive ? "step" : undefined}
                         aria-label={`${node.title}${isActive ? " — sıradaki" : isDone ? " — tamamlandı" : ""}`}
                         className={[
@@ -450,7 +448,7 @@ export function LearningPath({
                         ) : (
                           <span className="text-xl font-black text-white">{index + 1}</span>
                         )}
-                      </Link>
+                      </OfflinePracticeLink>
                     </div>
 
                     {/* Opaque label plate — rail passes under, text stays readable */}

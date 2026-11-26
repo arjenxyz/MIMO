@@ -52,6 +52,8 @@ const withPWA = withPWAInit({
     // Private/auth HTML+RSC+API stay NetworkOnly (no cross-account leakage).
     runtimeCaching: [
       {
+        // HTML + RSC for public practice shells. ignoreSearch so /quiz?_rsc=…
+        // still hits the cached /quiz document when offline.
         urlPattern: ({ request, url }) => {
           if (request.method !== "GET") return false;
           return isPublicOfflinePath(url.pathname);
@@ -59,9 +61,26 @@ const withPWA = withPWAInit({
         handler: "NetworkFirst",
         options: {
           cacheName: "mimo-public-pages-v1",
-          networkTimeoutSeconds: 2,
+          networkTimeoutSeconds: 1.5,
+          matchOptions: {
+            ignoreSearch: true,
+          },
           expiration: {
             maxEntries: 96,
+            maxAgeSeconds: 30 * 24 * 60 * 60,
+          },
+        },
+      },
+      {
+        // Next static chunks — CacheFirst so practice pages can boot offline.
+        urlPattern: ({ url }) =>
+          url.pathname.startsWith("/_next/static/") ||
+          url.pathname.startsWith("/_next/data/"),
+        handler: "CacheFirst",
+        options: {
+          cacheName: "mimo-next-static-v1",
+          expiration: {
+            maxEntries: 200,
             maxAgeSeconds: 30 * 24 * 60 * 60,
           },
         },
@@ -71,6 +90,7 @@ const withPWA = withPWAInit({
           const { pathname } = url;
           if (request.method !== "GET") return false;
           if (isPublicOfflinePath(pathname)) return false;
+          if (pathname.startsWith("/_next/")) return false;
           if (isPrivatePath(pathname)) return true;
           if (request.mode === "navigate" || request.destination === "document") {
             // Remaining shells (status, messages, …): network only; ~offline catches fail.
