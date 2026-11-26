@@ -31,7 +31,7 @@ function AnimatedCounter({
   const ref = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
-    let start = 0;
+    const start = 0;
     const end = value;
     if (end === 0) return;
     const startTime = performance.now();

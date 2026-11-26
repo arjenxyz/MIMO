@@ -2,9 +2,11 @@ import { format, subDays } from "date-fns";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type {
   DailyQuests,
+  DueGrammarItem,
   DueWordItem,
   Profile,
   Quality,
+  Story,
   Word,
 } from "@/types";
 import { calculateSM2 } from "@/lib/srs";
@@ -514,6 +516,58 @@ export async function updateUserListWord(
   return updated as Word;
 }
 
+export async function getDueGrammar(
+  supabase: SupabaseClient,
+  userId: string
+): Promise<DueGrammarItem[]> {
+  const { data, error } = await supabase
+    .from("user_grammar")
+    .select("*, grammar_rules(*)")
+    .eq("user_id", userId)
+    .lte("next_review", todayISO())
+    .order("next_review", { ascending: true });
+
+  if (error) throw error;
+  return (data ?? []) as DueGrammarItem[];
+}
+
+export async function assignNewGrammar(
+  supabase: SupabaseClient,
+  userId: string,
+  count = 3
+): Promise<void> {
+  const { data: existing, error: existingError } = await supabase
+    .from("user_grammar")
+    .select("grammar_id")
+    .eq("user_id", userId);
+
+  if (existingError) throw existingError;
+  const usedIds = new Set((existing ?? []).map((row) => row.grammar_id));
+
+  const { data: pool, error: poolError } = await supabase
+    .from("grammar_rules")
+    .select("id")
+    .order("id", { ascending: true });
+
+  if (poolError) throw poolError;
+
+  const available = (pool ?? []).filter((rule) => !usedIds.has(rule.id));
+  const shuffled = [...available].sort(() => Math.random() - 0.5).slice(0, count);
+
+  if (shuffled.length === 0) return;
+
+  const { error: insertError } = await supabase.from("user_grammar").insert(
+    shuffled.map((rule) => ({
+      user_id: userId,
+      grammar_id: rule.id,
+      next_review: todayISO(),
+      last_answered: todayISO(),
+    }))
+  );
+
+  if (insertError) throw insertError;
+}
+
 export async function updateWordProgress(
   supabase: SupabaseClient,
   item: DueWordItem,
@@ -536,6 +590,57 @@ export async function updateWordProgress(
 
   if (error) throw error;
   return sm2;
+}
+
+export async function updateGrammarProgress(
+  supabase: SupabaseClient,
+  item: DueGrammarItem,
+  quality: Quality,
+  wasCorrect: boolean
+) {
+  const sm2 = calculateSM2(item.ease_factor, item.repetition, item.interval, quality);
+  const { error } = await supabase
+    .from("user_grammar")
+    .update({
+      ease_factor: sm2.easeFactor,
+      repetition: sm2.repetition,
+      interval: sm2.interval,
+      next_review: sm2.nextReviewDate,
+      correct_count: item.correct_count + (wasCorrect ? 1 : 0),
+      wrong_count: item.wrong_count + (wasCorrect ? 0 : 1),
+      last_answered: todayISO(),
+    })
+    .eq("id", item.id);
+
+  if (error) throw error;
+  return sm2;
+}
+
+export async function getStories(supabase: SupabaseClient): Promise<Story[]> {
+  const { data, error } = await supabase
+    .from("stories")
+    .select("*")
+    .order("level", { ascending: true })
+    .order("id", { ascending: true });
+
+  if (error) throw error;
+  return (data ?? []) as Story[];
+}
+
+export async function saveStoryResult(
+  supabase: SupabaseClient,
+  userId: string,
+  storyId: number,
+  score: number
+) {
+  const { error } = await supabase.from("user_stories").insert({
+    user_id: userId,
+    story_id: storyId,
+    score,
+    completed_at: todayISO(),
+  });
+
+  if (error) throw error;
 }
 
 export async function getDailyQuests(

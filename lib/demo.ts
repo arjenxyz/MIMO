@@ -3,10 +3,12 @@ import type {
   ChallengeSeedWord,
   DailyQuests,
   DETExercise,
+  DueGrammarItem,
   DueWordItem,
   FriendshipRow,
   FriendProfile,
   Profile,
+  Story,
 } from "@/types";
 
 /**
@@ -109,6 +111,117 @@ export const DEMO_DUE_WORDS: DueWordItem[] = [
   demoWord(18, "practice", "pratik yapmak", "Practice every day to improve.", 2, "/ˈpræk.tɪs/"),
   demoWord(19, "language", "dil", "English is a useful language.", 2, "/ˈlæŋ.ɡwɪdʒ/"),
   demoWord(20, "remember", "hatırlamak", "Please remember to lock the door.", 2, "/rɪˈmem.bər/"),
+];
+
+export const DEMO_DUE_GRAMMAR: DueGrammarItem[] = [
+  {
+    id: 1,
+    user_id: DEMO_PROFILE.id,
+    grammar_id: 1,
+    ease_factor: 2.5,
+    repetition: 0,
+    interval: 1,
+    next_review: today(),
+    correct_count: 0,
+    wrong_count: 0,
+    last_answered: today(),
+    grammar_rules: {
+      id: 1,
+      title: "Simple Present",
+      difficulty: 1,
+      question: "She ___ (go) to school every day.",
+      correct_answer: "goes",
+      explanation: "he/she/it öznesinde fiile -s/-es eklenir.",
+      example: "She goes to school every day.",
+    },
+  },
+  {
+    id: 2,
+    user_id: DEMO_PROFILE.id,
+    grammar_id: 2,
+    ease_factor: 2.5,
+    repetition: 0,
+    interval: 1,
+    next_review: today(),
+    correct_count: 0,
+    wrong_count: 0,
+    last_answered: today(),
+    grammar_rules: {
+      id: 2,
+      title: "Present Continuous",
+      difficulty: 1,
+      question: "They ___ (play) football right now.",
+      correct_answer: "are playing",
+      explanation: "am/is/are + fiil-ing.",
+      example: "They are playing football right now.",
+    },
+  },
+  {
+    id: 3,
+    user_id: DEMO_PROFILE.id,
+    grammar_id: 3,
+    ease_factor: 2.5,
+    repetition: 0,
+    interval: 1,
+    next_review: today(),
+    correct_count: 0,
+    wrong_count: 0,
+    last_answered: today(),
+    grammar_rules: {
+      id: 3,
+      title: "Past Simple",
+      difficulty: 1,
+      question: "Yesterday I ___ (visit) my grandmother.",
+      correct_answer: "visited",
+      explanation: "Düzenli fiillerde -ed eklenir.",
+      example: "Yesterday I visited my grandmother.",
+    },
+  },
+];
+
+export const DEMO_STORIES: Story[] = [
+  {
+    id: 1,
+    level: 1,
+    title: "A Day at School",
+    content:
+      "Mina is a student. She wakes up early and eats breakfast. Then she walks to school with her friend Ali. In class they read a short story and write new words in their notebooks.",
+    question1: "Who walks to school with Mina?",
+    question2: "What does Mina eat?",
+    question3: "Where does she go?",
+    answer1: "Ali",
+    answer2: "Breakfast",
+    answer3: "School",
+    image_prompt: null,
+  },
+  {
+    id: 2,
+    level: 2,
+    title: "The Red Apple",
+    content:
+      "Tom is hungry. He sees a red apple on the table and eats it. Then he drinks a glass of water and feels better.",
+    question1: "What color is the apple?",
+    question2: "Who is hungry?",
+    question3: "Where is the apple?",
+    answer1: "Red",
+    answer2: "Tom",
+    answer3: "On the table",
+    image_prompt: null,
+  },
+  {
+    id: 3,
+    level: 2,
+    title: "Rainy Afternoon",
+    content:
+      "Lina looks out the window. It is raining hard. She stays home, makes tea, and reads her favorite book on the sofa.",
+    question1: "What is the weather like?",
+    question2: "What does Lina drink?",
+    question3: "Where does she read?",
+    answer1: "Raining",
+    answer2: "Tea",
+    answer3: "On the sofa",
+    image_prompt: null,
+  },
 ];
 
 /** Offline photo-practice result (no Gemini). */
