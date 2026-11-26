@@ -2,9 +2,16 @@
 
 # dependencies
 /node_modules
+/mobile/node_modules
 /.pnp
 .pnp.js
 .yarn/install-state.gz
+
+# expo / eas
+/mobile/.expo
+/mobile/dist
+/mobile/*.jks
+/mobile/*.keystore
 
 # testing
 /coverage

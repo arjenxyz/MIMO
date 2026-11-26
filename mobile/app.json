@@ -1,0 +1,33 @@
+{
+  "expo": {
+    "name": "MIMO",
+    "slug": "mimo-english",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "scheme": "mimo",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#fff8f1"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "app.mimo.english"
+    },
+    "android": {
+      "package": "app.mimo.english",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "backgroundColor": "#fff8f1",
+        "foregroundImage": "./assets/adaptive-icon.png"
+      },
+      "permissions": ["INTERNET", "ACCESS_NETWORK_STATE"]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": ["expo-splash-screen"]
+  }
+}
