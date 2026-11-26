@@ -582,11 +582,18 @@ export function OfflinePacksManager({
 
   const authors = useMemo(() => {
     const remote = manifest?.wordAuthors ?? [];
-    if (remote.length > 0) return remote;
-    // Manifest failed/slow: still show locally stored author packs.
-    if (!wordsPack?.data?.length) return [];
-    return groupWordsByAuthor(wordsPack.data);
-  }, [manifest, wordsPack]);
+    let list =
+      remote.length > 0
+        ? remote
+        : wordsPack?.data?.length
+          ? groupWordsByAuthor(wordsPack.data)
+          : [];
+    // Offline mode: only packs already on this device — hide catalog / download bait.
+    if (!online) {
+      list = list.filter((a) => localAuthorIds.has(a.authorId));
+    }
+    return list;
+  }, [manifest, wordsPack, online, localAuthorIds]);
   const allAuthorsBytes = useMemo(
     () =>
       authors.reduce((s, a) => {
@@ -654,25 +661,35 @@ export function OfflinePacksManager({
           </div>
 
           <div className="flex shrink-0 flex-col items-stretch gap-2 sm:items-end">
-            <button
-              type="button"
-              disabled={!online || busy || authors.length === 0}
-              onClick={() => void handleDownloadAllAuthors()}
-              className="inline-flex items-center justify-center rounded-2xl bg-[#fd860a] px-5 py-3 text-sm font-black text-white shadow-[0_4px_0_#c2410c] transition hover:brightness-105 active:translate-y-0.5 active:shadow-none disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {busyKey === "all-authors"
-                ? activeProgress || "Aktarılıyor…"
-                : `Tümünü indir (${formatMegabytes(allAuthorsBytes)})`}
-            </button>
-            <div className="flex flex-wrap items-center gap-3 text-xs font-extrabold">
+            {online ? (
               <button
                 type="button"
-                disabled={!online || busy}
-                onClick={() => void loadLocalAndRemote(true)}
-                className="text-mimo-muted underline-offset-2 transition hover:text-[#1cb0f6] hover:underline disabled:opacity-50"
+                data-online-only
+                disabled={busy || authors.length === 0}
+                onClick={() => void handleDownloadAllAuthors()}
+                className="inline-flex items-center justify-center rounded-2xl bg-[#fd860a] px-5 py-3 text-sm font-black text-white shadow-[0_4px_0_#c2410c] transition hover:brightness-105 active:translate-y-0.5 active:shadow-none disabled:cursor-not-allowed disabled:opacity-60"
               >
-                Yenile
+                {busyKey === "all-authors"
+                  ? activeProgress || "Aktarılıyor…"
+                  : `Tümünü indir (${formatMegabytes(allAuthorsBytes)})`}
               </button>
+            ) : (
+              <p className="rounded-2xl border border-[#fd860a]/30 bg-[#fff8f1] px-4 py-3 text-center text-xs font-extrabold text-[#c2410c] dark:bg-[#7c2d12]/30 dark:text-[#fdba74]">
+                İndirme kapalı · sadece cihazdaki paketler
+              </p>
+            )}
+            <div className="flex flex-wrap items-center gap-3 text-xs font-extrabold">
+              {online ? (
+                <button
+                  type="button"
+                  data-online-only
+                  disabled={busy}
+                  onClick={() => void loadLocalAndRemote(true)}
+                  className="text-mimo-muted underline-offset-2 transition hover:text-[#1cb0f6] hover:underline disabled:opacity-50"
+                >
+                  Yenile
+                </button>
+              ) : null}
               {showOfflineWorkspaceLink && (
                 <Link
                   href="/offline"
@@ -706,16 +723,20 @@ export function OfflinePacksManager({
         <div className="flex items-end justify-between gap-3 px-1">
           <div>
             <h4 className="text-sm font-black uppercase tracking-[0.14em] text-[#1cb0f6]">
-              Paylaşılan paketler
+              {online ? "Paylaşılan paketler" : "Cihazındaki paketler"}
             </h4>
             <p className="mt-0.5 text-xs font-bold text-mimo-muted">
               {loadingManifest
                 ? "Cihazdaki paketler…"
                 : authors.length === 0
-                  ? remoteRefreshing
-                    ? "Paketler getiriliyor…"
-                    : "Henüz paylaşılan kelime paketi yok."
-                  : `${authors.length} kişinin paylaştığı paket`}
+                  ? online
+                    ? remoteRefreshing
+                      ? "Paketler getiriliyor…"
+                      : "Henüz paylaşılan kelime paketi yok."
+                    : "Bu cihazda indirilmiş kelime paketi yok."
+                  : online
+                    ? `${authors.length} kişinin paylaştığı paket`
+                    : `${authors.length} paket hazır`}
             </p>
           </div>
         </div>
@@ -789,51 +810,61 @@ export function OfflinePacksManager({
                     </div>
                   )}
 
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      disabled={!online || busy || (installed && !hasUpdate)}
-                      onClick={() => void handleDownloadAuthor(author)}
-                      className={`flex-1 rounded-2xl px-4 py-2.5 text-xs font-black uppercase tracking-wide transition disabled:cursor-not-allowed ${
-                        installed && !hasUpdate && !thisBusy
-                          ? "border border-mimo-border bg-mimo-surface text-[#15803d] opacity-90 dark:text-[#86efac]"
-                          : "bg-[#1cb0f6] text-white shadow-[0_3px_0_#1899d6] active:translate-y-0.5 active:shadow-none disabled:opacity-55"
-                      }`}
-                    >
-                      {thisBusy
-                        ? activeProgress || "İndiriliyor…"
-                        : hasUpdate
-                          ? `Güncelle (${size.mbLabel})`
-                          : installed
-                            ? "En güncel paket yüklü"
-                            : `İndir + ses (${size.mbLabel})`}
-                    </button>
-                    {installed && (
+                  {online ? (
+                    <div className="flex items-center gap-2" data-online-only>
                       <button
                         type="button"
-                        disabled={busy}
-                        onClick={() =>
-                          setPendingDelete({
-                            kind: "author",
-                            authorId: author.authorId,
-                            username: author.username,
-                            avatarUrl: author.avatarUrl,
-                            wordCount: author.itemCount,
-                            audioUrlCount: author.audioUrlCount,
-                            mbLabel: size.mbLabel,
-                          })
-                        }
-                        className="rounded-2xl border border-mimo-border bg-mimo-surface px-3.5 py-2.5 text-xs font-extrabold text-mimo-muted transition hover:text-[#b91c1c]"
+                        disabled={busy || (installed && !hasUpdate)}
+                        onClick={() => void handleDownloadAuthor(author)}
+                        className={`flex-1 rounded-2xl px-4 py-2.5 text-xs font-black uppercase tracking-wide transition disabled:cursor-not-allowed ${
+                          installed && !hasUpdate && !thisBusy
+                            ? "border border-mimo-border bg-mimo-surface text-[#15803d] opacity-90 dark:text-[#86efac]"
+                            : "bg-[#1cb0f6] text-white shadow-[0_3px_0_#1899d6] active:translate-y-0.5 active:shadow-none disabled:opacity-55"
+                        }`}
                       >
-                        {busyKey === `delete-author:${author.authorId}` ? "…" : "Sil"}
+                        {thisBusy
+                          ? activeProgress || "İndiriliyor…"
+                          : hasUpdate
+                            ? `Güncelle (${size.mbLabel})`
+                            : installed
+                              ? "En güncel paket yüklü"
+                              : `İndir + ses (${size.mbLabel})`}
                       </button>
-                    )}
-                  </div>
+                      {installed && (
+                        <button
+                          type="button"
+                          disabled={busy}
+                          onClick={() =>
+                            setPendingDelete({
+                              kind: "author",
+                              authorId: author.authorId,
+                              username: author.username,
+                              avatarUrl: author.avatarUrl,
+                              wordCount: author.itemCount,
+                              audioUrlCount: author.audioUrlCount,
+                              mbLabel: size.mbLabel,
+                            })
+                          }
+                          className="rounded-2xl border border-mimo-border bg-mimo-surface px-3.5 py-2.5 text-xs font-extrabold text-mimo-muted transition hover:text-[#b91c1c]"
+                        >
+                          {busyKey === `delete-author:${author.authorId}` ? "…" : "Sil"}
+                        </button>
+                      )}
+                    </div>
+                  ) : installed ? (
+                    <Link
+                      href="/quiz"
+                      className="flex w-full items-center justify-center rounded-2xl bg-[#58cc02] px-4 py-2.5 text-xs font-black uppercase tracking-wide text-white shadow-[0_3px_0_#46a302]"
+                    >
+                      Pratik yap →
+                    </Link>
+                  ) : null}
 
-                  {installed ? (
+                  {online && installed ? (
                     messagingUnlocked ? (
                       <Link
                         href={`/messages/${author.authorId}`}
+                        data-online-only
                         className="flex w-full items-center justify-center rounded-2xl border border-mimo-border bg-mimo-surface px-4 py-2.5 text-xs font-black uppercase tracking-wide text-[#15803d] transition hover:border-[#58cc02]/45 dark:text-[#86efac]"
                       >
                         Mesajlar &amp; anılar
@@ -841,6 +872,7 @@ export function OfflinePacksManager({
                     ) : (
                       <button
                         type="button"
+                        data-online-only
                         onClick={() => void openMemoriesModal(author)}
                         className="flex w-full items-center justify-center rounded-2xl border border-mimo-border bg-mimo-surface px-4 py-2.5 text-xs font-black uppercase tracking-wide text-[#0369a1] transition hover:border-[#1cb0f6]/45 dark:text-[#7dd3fc]"
                       >
@@ -855,6 +887,7 @@ export function OfflinePacksManager({
         </div>
       </section>
 
+      {(online || detPack) && (
       <section className="rounded-3xl border border-[#fd860a]/25 bg-mimo-card p-5 shadow-sm">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -872,27 +905,38 @@ export function OfflinePacksManager({
           </div>
 
           <div className="flex shrink-0 items-center gap-2">
-            <button
-              type="button"
-              disabled={!online || busy || Boolean(detPack && !detHasUpdate)}
-              onClick={() => void handleDownloadDet()}
-              className={`rounded-2xl px-4 py-2.5 text-xs font-black uppercase tracking-wide transition disabled:cursor-not-allowed ${
-                detPack && !detHasUpdate && busyKey !== "det"
-                  ? "border border-mimo-border bg-mimo-surface text-[#15803d] opacity-90 dark:text-[#86efac]"
-                  : "bg-[#fd860a] text-white shadow-[0_3px_0_#c2410c] active:translate-y-0.5 active:shadow-none disabled:opacity-55"
-              }`}
-            >
-              {busyKey === "det"
-                ? "İndiriliyor…"
-                : detHasUpdate
-                  ? `Güncelle (${detSize.mbLabel})`
-                  : detPack
-                    ? "En güncel paket yüklü"
-                    : `İndir (${detSize.mbLabel})`}
-            </button>
-            {detPack && (
+            {online ? (
               <button
                 type="button"
+                data-online-only
+                disabled={busy || Boolean(detPack && !detHasUpdate)}
+                onClick={() => void handleDownloadDet()}
+                className={`rounded-2xl px-4 py-2.5 text-xs font-black uppercase tracking-wide transition disabled:cursor-not-allowed ${
+                  detPack && !detHasUpdate && busyKey !== "det"
+                    ? "border border-mimo-border bg-mimo-surface text-[#15803d] opacity-90 dark:text-[#86efac]"
+                    : "bg-[#fd860a] text-white shadow-[0_3px_0_#c2410c] active:translate-y-0.5 active:shadow-none disabled:opacity-55"
+                }`}
+              >
+                {busyKey === "det"
+                  ? "İndiriliyor…"
+                  : detHasUpdate
+                    ? `Güncelle (${detSize.mbLabel})`
+                    : detPack
+                      ? "En güncel paket yüklü"
+                      : `İndir (${detSize.mbLabel})`}
+              </button>
+            ) : detPack ? (
+              <Link
+                href="/det/read-complete"
+                className="rounded-2xl bg-[#fd860a] px-4 py-2.5 text-xs font-black uppercase tracking-wide text-white shadow-[0_3px_0_#c2410c]"
+              >
+                Pasaj çöz →
+              </Link>
+            ) : null}
+            {online && detPack && (
+              <button
+                type="button"
+                data-online-only
                 disabled={busy}
                 onClick={() =>
                   setPendingDelete({
@@ -909,8 +953,9 @@ export function OfflinePacksManager({
           </div>
         </div>
       </section>
+      )}
 
-      {memoriesModal ? (
+      {memoriesModal && online ? (
         <div
           className="fixed inset-0 z-[520] flex items-center justify-center bg-black/55 p-4 backdrop-blur-md"
           role="presentation"

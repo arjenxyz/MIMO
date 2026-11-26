@@ -5,10 +5,15 @@ import {
   useCallback,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
   type ReactNode,
 } from "react";
+import { useOnlineStatus } from "@/lib/useOnlineStatus";
+
+/** Activities that need a live network (Gemini / remote APIs). */
+const ONLINE_ONLY_NODE_IDS = new Set(["photo"]);
 
 export type PathIconName =
   | "books"
@@ -206,9 +211,14 @@ export function LearningPath({
   primaryLabel: string;
   greeting: string;
 }) {
+  const online = useOnlineStatus();
+  const visibleNodes = useMemo(
+    () => (online ? nodes : nodes.filter((n) => !ONLINE_ONLY_NODE_IDS.has(n.id))),
+    [nodes, online]
+  );
   const activeIndex = Math.max(
     0,
-    nodes.findIndex((n) => n.state === "active")
+    visibleNodes.findIndex((n) => n.state === "active")
   );
 
   const rootRef = useRef<HTMLDivElement>(null);
@@ -237,7 +247,7 @@ export function LearningPath({
       },
     ];
 
-    for (let i = 0; i < nodes.length; i++) {
+    for (let i = 0; i < visibleNodes.length; i++) {
       const el = nodeRefs.current[i];
       if (!el) continue;
       const er = el.getBoundingClientRect();
@@ -256,11 +266,11 @@ export function LearningPath({
       width: root.offsetWidth,
       height: root.offsetHeight,
     });
-  }, [nodes.length]);
+  }, [visibleNodes.length]);
 
   useLayoutEffect(() => {
     measure();
-  }, [measure, nodes, greeting]);
+  }, [measure, visibleNodes, greeting]);
 
   useEffect(() => {
     const root = rootRef.current;
@@ -279,16 +289,25 @@ export function LearningPath({
     if (!pathEl || !rail?.d) return;
     const total = pathEl.getTotalLength();
     // greeting → node0 → … ; progress through active node center (index+1 in points)
-    const ratios = nodes.map((_, i) => (i + 1) / Math.max(nodes.length, 1));
+    const ratios = visibleNodes.map((_, i) => (i + 1) / Math.max(visibleNodes.length, 1));
     const t = ratios[activeIndex] ?? 1;
     const progressLen = total * Math.min(1, Math.max(0.08, t));
     setRail((prev) =>
       prev ? { ...prev, totalLen: total, progressLen } : prev
     );
-  }, [rail?.d, activeIndex, nodes.length]);
+  }, [rail?.d, activeIndex, visibleNodes.length]);
+
+  const activeNode = visibleNodes[activeIndex] ?? visibleNodes[0];
+  const ctaHref = activeNode?.href ?? primaryHref;
+  const ctaLabel = online ? primaryLabel : activeNode ? `${activeNode.title} →` : primaryLabel;
 
   return (
     <section className="relative min-w-0 overflow-x-clip">
+      {!online ? (
+        <div className="mb-3 rounded-2xl border border-[#fd860a]/35 bg-[#fff8f1] px-4 py-2.5 text-center text-xs font-extrabold text-[#c2410c] dark:bg-[#7c2d12]/30 dark:text-[#fdba74]">
+          Çevrimdışı mod · hesap ve çevrimiçi pratikler gizli
+        </div>
+      ) : null}
       <div className="relative overflow-hidden rounded-2xl border border-mimo-border bg-mimo-card p-5 shadow-sm sm:p-6">
         <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0 flex-1">
@@ -301,10 +320,10 @@ export function LearningPath({
             <p className="mt-1.5 max-w-md text-sm font-semibold text-mimo-muted">{unitHint}</p>
           </div>
           <Link
-            href={primaryHref}
+            href={ctaHref}
             className="inline-flex shrink-0 items-center justify-center rounded-2xl bg-[#58cc02] px-8 py-3.5 text-sm font-black uppercase tracking-wide text-[#14260a] shadow-[0_3px_0_#46a302] transition active:translate-y-0.5 active:shadow-none"
           >
-            {primaryLabel}
+            {ctaLabel}
           </Link>
         </div>
       </div>
@@ -376,7 +395,7 @@ export function LearningPath({
           </div>
 
           <ol className="space-y-12">
-            {nodes.map((node, index) => {
+            {visibleNodes.map((node, index) => {
               const tone = TONE[node.tone];
               const offset = OFFSETS[index % OFFSETS.length];
               const isActive = node.state === "active";

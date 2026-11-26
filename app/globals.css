@@ -47,6 +47,11 @@ body {
   }
 }
 
+/* Hide anything marked for online-only when the device is offline. */
+html[data-mimo-offline="1"] [data-online-only] {
+  display: none !important;
+}
+
 @keyframes mimo-wave {
   0%,
   100% {

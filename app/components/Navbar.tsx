@@ -5,8 +5,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { OnlineOnly } from "@/app/components/OnlineGate";
 import { DEMO_PROFILE, isDemoMode } from "@/lib/demo";
 import { createClient } from "@/lib/supabase/client";
+import { useOnlineStatus } from "@/lib/useOnlineStatus";
 import type { Profile } from "@/types";
 
 const FALLBACK_AVATAR = "/mimo-avatar.png";
@@ -200,6 +202,7 @@ function AccountInfoModal({
 
 export function Navbar() {
   const pathname = usePathname();
+  const online = useOnlineStatus();
   const detailsRef = useRef<HTMLDetailsElement>(null);
   const [demo, setDemo] = useState(detectDemo);
   const [profile, setProfile] = useState<Profile | null>(() =>
@@ -320,22 +323,38 @@ export function Navbar() {
           </Link>
 
           <div className="flex items-center gap-2">
-            <div
-              className="flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 font-black text-[#ea580c]"
-              title="Günlük seri"
-            >
-              <svg
-                width={18}
-                height={18}
-                viewBox="0 0 24 24"
-                fill="currentColor"
-                aria-hidden
-                className="text-[#ea580c]"
+            {!online ? (
+              <span className="rounded-full bg-[#fff3e0] px-2.5 py-1 text-[10px] font-black uppercase tracking-wide text-[#c2410c] dark:bg-[#7c2d12]/40 dark:text-[#fdba74]">
+                Çevrimdışı
+              </span>
+            ) : null}
+
+            <OnlineOnly>
+              <div
+                className="flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 font-black text-[#ea580c]"
+                title="Günlük seri"
+                data-online-only
               >
-                <path d="M12 2c1.5 3.5-.5 5.5-2 7.2C8.2 11 7 12.8 7 15.2 7 18.4 9.2 21 12 21s5-2.6 5-5.8c0-2.8-1.4-4.6-3.2-6.5C12.2 7 11 5.2 12 2z" />
-              </svg>
-              <span className="text-sm tabular-nums">{profile.daily_streak}</span>
-            </div>
+                <svg
+                  width={18}
+                  height={18}
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  aria-hidden
+                  className="text-[#ea580c]"
+                >
+                  <path d="M12 2c1.5 3.5-.5 5.5-2 7.2C8.2 11 7 12.8 7 15.2 7 18.4 9.2 21 12 21s5-2.6 5-5.8c0-2.8-1.4-4.6-3.2-6.5C12.2 7 11 5.2 12 2z" />
+                </svg>
+                <span className="text-sm tabular-nums">{profile.daily_streak}</span>
+              </div>
+            </OnlineOnly>
+
+            <Link
+              href="/offline"
+              className="rounded-xl border border-mimo-border bg-mimo-surface px-2.5 py-1.5 text-xs font-extrabold text-[#0d9488] dark:text-[#5eead4]"
+            >
+              Pratik
+            </Link>
 
             <details ref={detailsRef} className="relative">
               <summary
@@ -348,62 +367,33 @@ export function Navbar() {
                 role="menu"
                 className="absolute right-0 top-12 z-[200] w-56 overflow-hidden rounded-2xl border border-mimo-border bg-mimo-card shadow-lg"
               >
-                <button
-                  type="button"
-                  role="menuitem"
-                  onClick={() => {
-                    detailsRef.current?.removeAttribute("open");
-                    setAccountOpen(true);
-                  }}
-                  className="flex w-full items-center gap-3 border-b border-mimo-border px-4 py-3 text-left transition hover:bg-mimo-surface"
-                >
-                  <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full ring-2 ring-mimo-soft">
-                    <UserAvatar src={avatarUrl} name={displayName} size={36} />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-extrabold text-mimo-title">{displayName}</p>
-                    <p className="truncate text-[11px] font-bold text-mimo-muted">Hesabı görüntüle</p>
-                  </div>
-                </button>
+                <OnlineOnly>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    data-online-only
+                    onClick={() => {
+                      detailsRef.current?.removeAttribute("open");
+                      setAccountOpen(true);
+                    }}
+                    className="flex w-full items-center gap-3 border-b border-mimo-border px-4 py-3 text-left transition hover:bg-mimo-surface"
+                  >
+                    <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full ring-2 ring-mimo-soft">
+                      <UserAvatar src={avatarUrl} name={displayName} size={36} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-extrabold text-mimo-title">{displayName}</p>
+                      <p className="truncate text-[11px] font-bold text-mimo-muted">Hesabı görüntüle</p>
+                    </div>
+                  </button>
+                </OnlineOnly>
                 <Link
-                  href="/settings"
+                  href="/quiz"
                   role="menuitem"
                   className="block border-b border-mimo-border px-4 py-3 text-sm font-extrabold text-mimo-fg hover:bg-mimo-surface"
                   onClick={() => detailsRef.current?.removeAttribute("open")}
                 >
-                  Ayarlar
-                </Link>
-                <Link
-                  href="/messages"
-                  role="menuitem"
-                  className="block border-b border-mimo-border px-4 py-3 text-sm font-extrabold text-[#1cb0f6] hover:bg-mimo-surface"
-                  onClick={() => detailsRef.current?.removeAttribute("open")}
-                >
-                  Mesajlar
-                </Link>
-                <Link
-                  href="/friends"
-                  role="menuitem"
-                  className="block border-b border-mimo-border px-4 py-3 text-sm font-extrabold text-[#7c3aed] hover:bg-mimo-surface"
-                  onClick={() => detailsRef.current?.removeAttribute("open")}
-                >
-                  Arkadaşlar
-                </Link>
-                <Link
-                  href="/words/add"
-                  role="menuitem"
-                  className="block border-b border-mimo-border px-4 py-3 text-sm font-extrabold text-[#0369a1] hover:bg-mimo-surface dark:text-[#38bdf8]"
-                  onClick={() => detailsRef.current?.removeAttribute("open")}
-                >
-                  Kelime ekle
-                </Link>
-                <Link
-                  href="/widget"
-                  role="menuitem"
-                  className="block border-b border-mimo-border px-4 py-3 text-sm font-extrabold text-mimo-fg hover:bg-mimo-surface"
-                  onClick={() => detailsRef.current?.removeAttribute("open")}
-                >
-                  Widget
+                  Kelime testi
                 </Link>
                 <Link
                   href="/offline"
@@ -411,16 +401,64 @@ export function Navbar() {
                   className="block border-b border-mimo-border px-4 py-3 text-sm font-extrabold text-[#0d9488] hover:bg-mimo-surface dark:text-[#5eead4]"
                   onClick={() => detailsRef.current?.removeAttribute("open")}
                 >
-                  Çevrimdışı Paketler
+                  Çevrimdışı alan
                 </Link>
-                <Link
-                  href="/status"
-                  role="menuitem"
-                  className="block border-b border-mimo-border px-4 py-3 text-sm font-extrabold text-mimo-fg hover:bg-mimo-surface"
-                  onClick={() => detailsRef.current?.removeAttribute("open")}
-                >
-                  Sistem durumu
-                </Link>
+                <OnlineOnly>
+                  <Link
+                    href="/settings"
+                    role="menuitem"
+                    data-online-only
+                    className="block border-b border-mimo-border px-4 py-3 text-sm font-extrabold text-mimo-fg hover:bg-mimo-surface"
+                    onClick={() => detailsRef.current?.removeAttribute("open")}
+                  >
+                    Ayarlar
+                  </Link>
+                  <Link
+                    href="/messages"
+                    role="menuitem"
+                    data-online-only
+                    className="block border-b border-mimo-border px-4 py-3 text-sm font-extrabold text-[#1cb0f6] hover:bg-mimo-surface"
+                    onClick={() => detailsRef.current?.removeAttribute("open")}
+                  >
+                    Mesajlar
+                  </Link>
+                  <Link
+                    href="/friends"
+                    role="menuitem"
+                    data-online-only
+                    className="block border-b border-mimo-border px-4 py-3 text-sm font-extrabold text-[#7c3aed] hover:bg-mimo-surface"
+                    onClick={() => detailsRef.current?.removeAttribute("open")}
+                  >
+                    Arkadaşlar
+                  </Link>
+                  <Link
+                    href="/words/add"
+                    role="menuitem"
+                    data-online-only
+                    className="block border-b border-mimo-border px-4 py-3 text-sm font-extrabold text-[#0369a1] hover:bg-mimo-surface dark:text-[#38bdf8]"
+                    onClick={() => detailsRef.current?.removeAttribute("open")}
+                  >
+                    Kelime ekle
+                  </Link>
+                  <Link
+                    href="/widget"
+                    role="menuitem"
+                    data-online-only
+                    className="block border-b border-mimo-border px-4 py-3 text-sm font-extrabold text-mimo-fg hover:bg-mimo-surface"
+                    onClick={() => detailsRef.current?.removeAttribute("open")}
+                  >
+                    Widget
+                  </Link>
+                  <Link
+                    href="/status"
+                    role="menuitem"
+                    data-online-only
+                    className="block border-b border-mimo-border px-4 py-3 text-sm font-extrabold text-mimo-fg hover:bg-mimo-surface"
+                    onClick={() => detailsRef.current?.removeAttribute("open")}
+                  >
+                    Sistem durumu
+                  </Link>
+                </OnlineOnly>
                 <Link
                   href="/about"
                   role="menuitem"
@@ -429,14 +467,17 @@ export function Navbar() {
                 >
                   MIMO
                 </Link>
-                <button
-                  type="button"
-                  role="menuitem"
-                  onClick={signOut}
-                  className="w-full px-4 py-3 text-left text-sm font-extrabold text-[#b91c1c] hover:bg-mimo-surface dark:text-[#f87171]"
-                >
-                  {demo ? "Giriş ekranı" : "Çıkış yap"}
-                </button>
+                <OnlineOnly>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    data-online-only
+                    onClick={signOut}
+                    className="w-full px-4 py-3 text-left text-sm font-extrabold text-[#b91c1c] hover:bg-mimo-surface dark:text-[#f87171]"
+                  >
+                    {demo ? "Giriş ekranı" : "Çıkış yap"}
+                  </button>
+                </OnlineOnly>
               </div>
             </details>
           </div>

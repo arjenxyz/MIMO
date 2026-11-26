@@ -11,9 +11,11 @@ import {
 } from "react";
 import { OfflinePacksManager } from "@/app/components/OfflinePacksManager";
 import { OfflineSmartLink } from "@/app/components/OfflineSmartLink";
+import { OnlineOnly } from "@/app/components/OnlineGate";
 import { useTheme } from "@/app/components/ThemeProvider";
 import { formatMegabytes, type OfflineManifestResponse } from "@/lib/offlinePacks";
 import { fetchOfflineManifest, warmOfflineRouteCache } from "@/lib/offlineStorage";
+import { useOnlineStatus } from "@/lib/useOnlineStatus";
 
 /* ═══════════════════════════════════════════════════════════
    Animated Counter — numbers count up on mount
@@ -322,6 +324,7 @@ export function PublicLandingPage({
   initialWordCount: number;
 }) {
   const { theme, toggleTheme } = useTheme();
+  const online = useOnlineStatus();
   const [navScrolled, setNavScrolled] = useState(false);
   const [manifest, setManifest] = useState<OfflineManifestResponse | null>(null);
   const [openFAQ, setOpenFAQ] = useState<number | null>(null);
@@ -376,6 +379,79 @@ export function PublicLandingPage({
     (idx: number) => setOpenFAQ((prev) => (prev === idx ? null : idx)),
     []
   );
+
+  // Offline mode: hide marketing / account / download surfaces — practice only.
+  if (!online) {
+    return (
+      <div className="relative min-h-[100dvh] overflow-x-clip bg-mimo-bg text-mimo-fg">
+        <header className="sticky top-0 z-50 border-b border-mimo-border bg-mimo-nav/90 backdrop-blur-md">
+          <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-3 px-4">
+            <Link href="/" className="flex items-center gap-2.5">
+              <Image
+                src="/mimo-avatar.png"
+                alt="MIMO"
+                width={36}
+                height={36}
+                className="h-9 w-9 rounded-full object-cover ring-2 ring-[#fd860a]/35"
+              />
+              <span className="text-lg font-black text-mimo-title">MIMO</span>
+            </Link>
+            <div className="flex items-center gap-2">
+              <span className="rounded-full bg-[#fff3e0] px-2.5 py-1 text-xs font-black text-[#c2410c] dark:bg-[#7c2d12]/40 dark:text-[#fdba74]">
+                Çevrimdışı
+              </span>
+              <button
+                type="button"
+                onClick={toggleTheme}
+                aria-label="Tema değiştir"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-2xl border border-mimo-border bg-mimo-surface text-mimo-muted"
+              >
+                {theme === "dark" ? "☀" : "☾"}
+              </button>
+            </div>
+          </div>
+        </header>
+
+        <main className="mx-auto max-w-6xl space-y-8 px-4 py-8">
+          <section className="rounded-3xl border border-[#fd860a]/30 bg-mimo-card p-6 shadow-sm">
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-[#fd860a]">
+              Çevrimdışı mod
+            </p>
+            <h1 className="mt-2 text-2xl font-black text-mimo-title sm:text-3xl">
+              Sadece cihazda hazır olan pratikler
+            </h1>
+            <p className="mt-2 max-w-2xl text-sm font-semibold text-mimo-muted">
+              Giriş, indirme, mesaj ve hesap özellikleri gizli. İnternet gelince tekrar
+              görünür.
+            </p>
+            <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {PUBLIC_FEATURES.map((feat) => (
+                <Link
+                  key={feat.href}
+                  href={feat.href}
+                  className="rounded-2xl border border-mimo-border bg-mimo-surface p-4 transition hover:border-[#1cb0f6]/40"
+                >
+                  <p className="text-base font-black text-mimo-title">{feat.title}</p>
+                  <p className="mt-1 text-xs font-bold text-mimo-muted">{feat.badge}</p>
+                </Link>
+              ))}
+              <Link
+                href="/offline"
+                className="rounded-2xl border border-[#fd860a]/40 bg-[#fff8f1] p-4 transition hover:border-[#fd860a] dark:bg-[#7c2d12]/20"
+              >
+                <p className="text-base font-black text-mimo-title">Çevrimdışı alan</p>
+                <p className="mt-1 text-xs font-bold text-mimo-muted">
+                  Cihazındaki paketler
+                </p>
+              </Link>
+            </div>
+          </section>
+
+          <OfflinePacksManager />
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="relative min-h-[100dvh] overflow-x-clip bg-mimo-bg text-mimo-fg">
@@ -498,17 +574,20 @@ export function PublicLandingPage({
             >
               Çevrimdışı
             </OfflineSmartLink>
-            <Link
-              href="/login"
-              prefetch={false}
-              className="login-cta relative inline-flex h-10 items-center justify-center overflow-hidden rounded-2xl bg-[#1cb0f6] px-4 text-sm font-black text-white shadow-[0_3px_0_#1899d6] transition hover:brightness-105 active:translate-y-0.5 active:shadow-none"
-            >
-              <span className="relative z-10">Giriş Yap</span>
-              <span
-                aria-hidden
-                className="login-cta-sheen absolute inset-y-0 -left-1/3 w-1/3 skew-x-[-18deg] bg-white/25"
-              />
-            </Link>
+            <OnlineOnly>
+              <Link
+                href="/login"
+                prefetch={false}
+                data-online-only
+                className="login-cta relative inline-flex h-10 items-center justify-center overflow-hidden rounded-2xl bg-[#1cb0f6] px-4 text-sm font-black text-white shadow-[0_3px_0_#1899d6] transition hover:brightness-105 active:translate-y-0.5 active:shadow-none"
+              >
+                <span className="relative z-10">Giriş Yap</span>
+                <span
+                  aria-hidden
+                  className="login-cta-sheen absolute inset-y-0 -left-1/3 w-1/3 skew-x-[-18deg] bg-white/25"
+                />
+              </Link>
+            </OnlineOnly>
           </div>
         </div>
       </header>
@@ -806,10 +885,14 @@ export function PublicLandingPage({
             <Link href="/about" className="hover:text-mimo-fg">
               Hakkında
             </Link>
-            <Link href="/status" className="hover:text-mimo-fg">
+            <Link href="/status" className="hover:text-mimo-fg" data-online-only>
               Sistem Durumu
             </Link>
-            <Link href="/login" className="text-[#1cb0f6] hover:underline">
+            <Link
+              href="/login"
+              className="text-[#1cb0f6] hover:underline"
+              data-online-only
+            >
               Giriş Yap
             </Link>
           </div>

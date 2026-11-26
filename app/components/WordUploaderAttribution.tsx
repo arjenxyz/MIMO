@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { OnlineOnly } from "@/app/components/OnlineGate";
 import { createClient } from "@/lib/supabase/client";
 import type { FriendshipRow, Word } from "@/types";
 
@@ -285,11 +286,16 @@ export function UploaderProfileCard({
           global sisteme yükledi.
         </p>
 
-        {friendError ? (
-          <p className="mt-3 text-xs font-bold text-[#b91c1c]">{friendError}</p>
-        ) : null}
+        <OnlineOnly>
+          {friendError ? (
+            <p className="mt-3 text-xs font-bold text-[#b91c1c]" data-online-only>
+              {friendError}
+            </p>
+          ) : null}
+        </OnlineOnly>
 
-        <div className="mt-5 space-y-2">
+        <div className="mt-5 space-y-2" data-online-only>
+          <OnlineOnly>
           {!isSelf && relation.kind !== "guest" ? (
             messagingUnlocked ? (
               <Link
@@ -352,6 +358,7 @@ export function UploaderProfileCard({
           {relation.kind === "loading" ? (
             <p className="py-2 text-sm font-bold text-mimo-muted">…</p>
           ) : null}
+          </OnlineOnly>
           <button
             type="button"
             onClick={onClose}

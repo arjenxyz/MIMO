@@ -6,6 +6,7 @@ import { AuthSessionGuard } from "@/app/components/AuthSessionGuard";
 import { ClearStaleAppShellCache } from "@/app/components/ClearStaleAppShellCache";
 import { FeedbackSoundBoot } from "@/app/components/FeedbackSoundBoot";
 import { OfflineAutoSync } from "@/app/components/OfflineAutoSync";
+import { OfflineDocumentSync } from "@/app/components/OnlineGate";
 import { ThemeProvider } from "@/app/components/ThemeProvider";
 import { UnregisterDevServiceWorker } from "@/app/components/UnregisterDevServiceWorker";
 import { THEME_BOOT_SCRIPT } from "@/lib/theme";
@@ -72,6 +73,7 @@ export default function RootLayout({
         <ThemeProvider>
           <UnregisterDevServiceWorker />
           <ClearStaleAppShellCache />
+          <OfflineDocumentSync />
           <AuthSessionGuard />
           <OfflineAutoSync />
           <FeedbackSoundBoot />
