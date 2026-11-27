@@ -708,18 +708,8 @@ export function PublicLandingPage({
                 className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_70%_20%,rgba(253,134,10,0.22),transparent_55%),radial-gradient(ellipse_at_20%_80%,rgba(28,176,246,0.16),transparent_50%)]"
               />
 
-              <div className="relative px-5 pt-5">
-                <div className="flex items-center justify-between gap-3">
-                  <span className="inline-flex items-center gap-1.5 text-[11px] font-black uppercase tracking-[0.14em] text-[#15803d] dark:text-[#86efac]">
-                    <span className="h-1.5 w-1.5 rounded-full bg-[#58cc02]" />
-                    Ücretsiz
-                  </span>
-                  <span className="text-[11px] font-bold text-mimo-muted">
-                    Hesap şart değil
-                  </span>
-                </div>
-
-                <div className="relative mt-4 min-h-[17.5rem] sm:min-h-[19rem]">
+              <div className="relative px-5 pb-2 pt-5">
+                <div className="relative min-h-[17.5rem] sm:min-h-[19rem]">
                   <p className="login-rise absolute left-0 right-0 top-0 z-10 mx-auto max-w-[15.5rem] rounded-2xl border border-[#fd860a]/35 bg-mimo-card/95 px-3.5 py-2.5 text-center text-[13px] font-black leading-snug text-mimo-title backdrop-blur-sm sm:max-w-[17rem] sm:text-sm">
                     Bugün birkaç kelime daha pekiştirelim mi?
                     <span
@@ -739,39 +729,6 @@ export function PublicLandingPage({
                     />
                   </div>
                 </div>
-              </div>
-
-              <div className="relative grid grid-cols-2 gap-px border-t border-mimo-border bg-mimo-border">
-                <OfflineSmartLink
-                  href="/quiz/match"
-                  onOfflineBlocked={showOfflineBlocked}
-                  className="group bg-mimo-card px-4 py-3.5 transition hover:bg-[#ecfce5]/70 dark:hover:bg-[#14532d]/25"
-                >
-                  <p className="text-[10px] font-black uppercase tracking-[0.12em] text-[#58cc02]">
-                    Kısa tekrar
-                  </p>
-                  <p className="mt-1 flex items-center justify-between gap-2 text-sm font-black text-mimo-title">
-                    Eşleştirme
-                    <span className="text-[#58cc02] transition group-hover:translate-x-0.5">
-                      →
-                    </span>
-                  </p>
-                </OfflineSmartLink>
-                <OfflineSmartLink
-                  href="/det/listen-type"
-                  onOfflineBlocked={showOfflineBlocked}
-                  className="group bg-mimo-card px-4 py-3.5 transition hover:bg-[#e8f6fe]/80 dark:hover:bg-[#0c4a6e]/25"
-                >
-                  <p className="text-[10px] font-black uppercase tracking-[0.12em] text-[#1cb0f6]">
-                    Dinleme
-                  </p>
-                  <p className="mt-1 flex items-center justify-between gap-2 text-sm font-black text-mimo-title">
-                    Listen &amp; Type
-                    <span className="text-[#1cb0f6] transition group-hover:translate-x-0.5">
-                      →
-                    </span>
-                  </p>
-                </OfflineSmartLink>
               </div>
             </div>
           </div>
