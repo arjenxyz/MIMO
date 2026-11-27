@@ -613,7 +613,7 @@ export function PublicLandingPage({
           ══════════════════════════════════════════════════════ */}
       <section className="relative z-10 mx-auto max-w-6xl px-4 pb-12 pt-8 sm:pt-14">
         <div className="grid items-center gap-10 lg:grid-cols-12">
-          <div className="login-rise lg:col-span-7">
+          <div className={`login-rise ${isNativeApp ? "" : "lg:col-span-7"}`}>
             <div className="inline-flex flex-wrap items-center gap-2 rounded-full border border-[#fd860a]/30 bg-mimo-card px-3.5 py-1.5 text-xs font-black text-[#ea580c] shadow-sm">
               <span>✦ ÜCRETSİZ PRATİK</span>
               <span className="text-mimo-border">•</span>
@@ -700,19 +700,21 @@ export function PublicLandingPage({
             </div>
           </div>
 
-          {/* ── Mascot ── */}
-          <div className="lg:col-span-5">
-            <div className="mx-auto flex w-full max-w-md items-center justify-center">
-              <Image
-                src="/mimo.png"
-                alt="Mimo maskotu"
-                width={520}
-                height={520}
-                priority
-                className="h-auto w-[82%] max-w-[18rem] select-none sm:w-[86%]"
-              />
+          {/* Desktop-only mascot — hidden on mobile / APK WebView */}
+          {!isNativeApp ? (
+            <div className="hidden lg:col-span-5 lg:block">
+              <div className="mx-auto flex w-full max-w-md items-center justify-center">
+                <Image
+                  src="/mimo.png"
+                  alt="Mimo maskotu"
+                  width={520}
+                  height={520}
+                  priority
+                  className="h-auto w-[82%] max-w-[18rem] select-none sm:w-[86%]"
+                />
+              </div>
             </div>
-          </div>
+          ) : null}
         </div>
       </section>
 
