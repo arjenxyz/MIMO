@@ -296,63 +296,6 @@ const FEATURE_TONE: Record<
   },
 };
 
-const MASCOT_LINES = [
-  "Bugün birkaç kelime daha pekiştirelim mi?",
-  "Kısa bir tur — seri bozulmasın.",
-  "Dinle, yaz, eşleştir. Hadi başlayalım!",
-  "Hazırlık temposu: günde birkaç dakika yeter.",
-  "Paket indirdiysen internet olmasa da devam.",
-  "Bir kelime daha — hafıza burada büyür.",
-];
-
-function MascotSpeech() {
-  const [index, setIndex] = useState(0);
-  const [visible, setVisible] = useState(true);
-
-  useEffect(() => {
-    const id = window.setInterval(() => {
-      setVisible(false);
-      window.setTimeout(() => {
-        setIndex((prev) => (prev + 1) % MASCOT_LINES.length);
-        setVisible(true);
-      }, 280);
-    }, 4200);
-    return () => window.clearInterval(id);
-  }, []);
-
-  return (
-    <div className="pointer-events-none absolute left-1/2 top-[6%] z-10 w-[min(88%,17rem)] -translate-x-1/2 sm:top-[8%]">
-      <div
-        className={`mimo-speech relative rounded-[1.35rem] bg-mimo-card px-3.5 py-2.5 text-center shadow-[0_10px_24px_-12px_rgba(15,23,42,0.35)] ring-1 ring-[#fd860a]/40 transition-all duration-300 ${
-          visible ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0"
-        }`}
-      >
-        <p
-          key={index}
-          className="text-[13px] font-black leading-snug text-mimo-title sm:text-sm"
-          aria-live="polite"
-        >
-          {MASCOT_LINES[index]}
-        </p>
-        <svg
-          aria-hidden
-          className="absolute -bottom-2 left-1/2 h-3 w-5 -translate-x-1/2 text-mimo-card"
-          viewBox="0 0 20 12"
-          fill="currentColor"
-        >
-          <path d="M0 0h20L10 12z" />
-          <path
-            d="M1.2 0h17.6L10 10.4 1.2 0Z"
-            fill="none"
-            stroke="rgba(253,134,10,0.4)"
-            strokeWidth="1"
-          />
-        </svg>
-      </div>
-    </div>
-  );
-}
-
 const FAQ_ITEMS = [
   {
     q: "Ücretsiz mi? Hesap açmam şart mı?",
@@ -757,29 +700,17 @@ export function PublicLandingPage({
             </div>
           </div>
 
-          {/* ── Mascot stage ── */}
+          {/* ── Mascot ── */}
           <div className="lg:col-span-5">
-            <div className="relative mx-auto w-full max-w-md overflow-hidden rounded-[2rem] border border-mimo-border bg-mimo-card shadow-[0_18px_40px_-24px_rgba(15,23,42,0.35)]">
-              <div
-                aria-hidden
-                className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_70%_20%,rgba(253,134,10,0.22),transparent_55%),radial-gradient(ellipse_at_20%_80%,rgba(28,176,246,0.16),transparent_50%)]"
+            <div className="mx-auto flex w-full max-w-md items-center justify-center">
+              <Image
+                src="/mimo.png"
+                alt="Mimo maskotu"
+                width={520}
+                height={520}
+                priority
+                className="h-auto w-[82%] max-w-[18rem] select-none sm:w-[86%]"
               />
-
-              <div className="relative px-4 pb-1 pt-4 sm:px-5 sm:pt-5">
-                <div className="relative min-h-[18rem] sm:min-h-[20rem]">
-                  <MascotSpeech />
-                  <div className="login-float absolute inset-x-0 bottom-0 flex justify-center">
-                    <Image
-                      src="/mimo.png"
-                      alt="Mimo maskotu"
-                      width={520}
-                      height={520}
-                      priority
-                      className="h-auto w-[82%] max-w-[18rem] select-none drop-shadow-[0_16px_28px_rgba(253,134,10,0.28)] sm:w-[86%]"
-                    />
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         </div>
