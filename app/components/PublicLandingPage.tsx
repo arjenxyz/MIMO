@@ -700,57 +700,76 @@ export function PublicLandingPage({
             </div>
           </div>
 
-          {/* ── Mascot Card ── */}
+          {/* ── Mascot stage ── */}
           <div className="lg:col-span-5">
-            <div className="relative mx-auto max-w-md rounded-[2.25rem] border border-mimo-border bg-mimo-card p-6 shadow-xl">
-              <div className="flex items-center justify-between gap-2">
-                <span className="rounded-full bg-[#ecfce5] px-2.5 py-1 text-[11px] font-black text-[#15803d] sm:px-3 sm:text-xs dark:bg-[#14532d]/40 dark:text-[#86efac]">
-                  Ücretsiz
-                </span>
-                <span className="text-[11px] font-extrabold text-mimo-muted sm:text-xs">
-                  Hesapsız da olur
-                </span>
+            <div className="relative mx-auto w-full max-w-md overflow-hidden rounded-[2rem] border border-mimo-border bg-mimo-card shadow-[0_18px_40px_-24px_rgba(15,23,42,0.35)]">
+              <div
+                aria-hidden
+                className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_70%_20%,rgba(253,134,10,0.22),transparent_55%),radial-gradient(ellipse_at_20%_80%,rgba(28,176,246,0.16),transparent_50%)]"
+              />
+
+              <div className="relative px-5 pt-5">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="inline-flex items-center gap-1.5 text-[11px] font-black uppercase tracking-[0.14em] text-[#15803d] dark:text-[#86efac]">
+                    <span className="h-1.5 w-1.5 rounded-full bg-[#58cc02]" />
+                    Ücretsiz
+                  </span>
+                  <span className="text-[11px] font-bold text-mimo-muted">
+                    Hesap şart değil
+                  </span>
+                </div>
+
+                <div className="relative mt-4 min-h-[17.5rem] sm:min-h-[19rem]">
+                  <p className="login-rise absolute left-0 right-0 top-0 z-10 mx-auto max-w-[15.5rem] rounded-2xl border border-[#fd860a]/35 bg-mimo-card/95 px-3.5 py-2.5 text-center text-[13px] font-black leading-snug text-mimo-title backdrop-blur-sm sm:max-w-[17rem] sm:text-sm">
+                    Bugün birkaç kelime daha pekiştirelim mi?
+                    <span
+                      aria-hidden
+                      className="absolute -bottom-1.5 left-1/2 h-3 w-3 -translate-x-1/2 rotate-45 border-b border-r border-[#fd860a]/35 bg-mimo-card/95"
+                    />
+                  </p>
+
+                  <div className="login-float absolute inset-x-0 bottom-0 flex justify-center pt-10">
+                    <Image
+                      src="/mimo.png"
+                      alt="Mimo maskotu"
+                      width={520}
+                      height={520}
+                      priority
+                      className="h-auto w-[78%] max-w-[17rem] select-none drop-shadow-[0_16px_28px_rgba(253,134,10,0.28)] sm:w-[82%]"
+                    />
+                  </div>
+                </div>
               </div>
 
-              <div className="mt-4 rounded-3xl bg-[#fff8f1] p-3 text-center sm:p-4 dark:bg-[#152229]">
-                <div className="mb-3 inline-block rounded-2xl border border-[#fd860a]/30 bg-mimo-card px-3 py-2 text-xs font-extrabold text-mimo-title shadow-sm sm:px-4 sm:text-sm">
-                  &ldquo;Bugün birkaç kelime daha pekiştirelim mi?&rdquo;
-                </div>
-                <div className="login-float mx-auto w-56 sm:w-64">
-                  <Image
-                    src="/mimo.png"
-                    alt="Mimo maskotu"
-                    width={520}
-                    height={520}
-                    priority
-                    className="h-auto w-full select-none rounded-3xl"
-                  />
-                </div>
-              </div>
-
-              <div className="mt-4 grid grid-cols-2 gap-2.5">
+              <div className="relative grid grid-cols-2 gap-px border-t border-mimo-border bg-mimo-border">
                 <OfflineSmartLink
                   href="/quiz/match"
                   onOfflineBlocked={showOfflineBlocked}
-                  className="rounded-2xl border border-mimo-border bg-mimo-surface px-3.5 py-2.5 text-left transition hover:border-[#58cc02]/50"
+                  className="group bg-mimo-card px-4 py-3.5 transition hover:bg-[#ecfce5]/70 dark:hover:bg-[#14532d]/25"
                 >
-                  <p className="text-xs font-black text-[#15803d] dark:text-[#86efac]">
+                  <p className="text-[10px] font-black uppercase tracking-[0.12em] text-[#58cc02]">
                     Kısa tekrar
                   </p>
-                  <p className="mt-0.5 text-sm font-extrabold text-mimo-title">
-                    Eşleştirme →
+                  <p className="mt-1 flex items-center justify-between gap-2 text-sm font-black text-mimo-title">
+                    Eşleştirme
+                    <span className="text-[#58cc02] transition group-hover:translate-x-0.5">
+                      →
+                    </span>
                   </p>
                 </OfflineSmartLink>
                 <OfflineSmartLink
                   href="/det/listen-type"
                   onOfflineBlocked={showOfflineBlocked}
-                  className="rounded-2xl border border-mimo-border bg-mimo-surface px-3.5 py-2.5 text-left transition hover:border-[#0d9488]/50"
+                  className="group bg-mimo-card px-4 py-3.5 transition hover:bg-[#e8f6fe]/80 dark:hover:bg-[#0c4a6e]/25"
                 >
-                  <p className="text-xs font-black text-[#0f766e] dark:text-[#5eead4]">
+                  <p className="text-[10px] font-black uppercase tracking-[0.12em] text-[#1cb0f6]">
                     Dinleme
                   </p>
-                  <p className="mt-0.5 text-sm font-extrabold text-mimo-title">
-                    Listen &amp; Type →
+                  <p className="mt-1 flex items-center justify-between gap-2 text-sm font-black text-mimo-title">
+                    Listen &amp; Type
+                    <span className="text-[#1cb0f6] transition group-hover:translate-x-0.5">
+                      →
+                    </span>
                   </p>
                 </OfflineSmartLink>
               </div>
