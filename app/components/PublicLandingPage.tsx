@@ -9,6 +9,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { ArjensanMark } from "@/app/components/ArjensanMark";
 import { OfflinePacksManager } from "@/app/components/OfflinePacksManager";
 import { OfflinePracticeCta } from "@/app/components/OfflinePracticeCta";
 import { OfflinePracticeLink } from "@/app/components/OfflinePracticeLink";
@@ -889,38 +890,56 @@ export function PublicLandingPage({
       {/* ══════════════════════════════════════════════════════
           Footer
           ══════════════════════════════════════════════════════ */}
-      <footer className="border-t border-mimo-border bg-mimo-card/60">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-4 py-6 text-xs font-bold text-mimo-muted sm:flex-row">
-          <div className="flex items-center gap-2">
-            <Image
-              src="/mimo-avatar.png"
-              alt=""
-              width={24}
-              height={24}
-              className="h-6 w-6 rounded-full object-cover"
-            />
-            <span>MIMO · Hazırlık öğrencileri için İngilizce pratik</span>
-          </div>
-          <div className="flex flex-wrap items-center gap-4">
-            <Link href="/nasil-kullanilir" className="hover:text-mimo-fg">
-              Nasıl kullanılır
-            </Link>
-            <Link href="/offline" className="hover:text-mimo-fg">
-              Çevrimdışı Çalışma
-            </Link>
-            <Link href="/about" className="hover:text-mimo-fg">
-              Hakkında
-            </Link>
-            <Link href="/status" className="hover:text-mimo-fg" data-online-only>
-              Sistem Durumu
-            </Link>
-            <Link
-              href="/login"
-              className="text-[#1cb0f6] hover:underline"
-              data-online-only
+      <footer className="border-t border-mimo-border bg-mimo-card/70">
+        <div className="mx-auto flex max-w-6xl flex-col gap-5 px-4 py-7">
+          <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="flex max-w-sm flex-col items-center gap-2 text-center sm:items-start sm:text-left">
+              <div className="flex items-center gap-2.5">
+                <Image
+                  src="/mimo-avatar.png"
+                  alt=""
+                  width={28}
+                  height={28}
+                  className="h-7 w-7 rounded-full object-cover ring-2 ring-[#fd860a]/30"
+                />
+                <span className="text-sm font-black text-mimo-title">MIMO</span>
+              </div>
+              <p className="text-xs font-semibold leading-relaxed text-mimo-muted">
+                Hazırlık öğrencileri için İngilizce pratik
+              </p>
+            </div>
+
+            <nav
+              aria-label="Alt menü"
+              className="grid w-full max-w-md grid-cols-2 gap-x-4 gap-y-2.5 text-center text-xs font-extrabold text-mimo-muted sm:w-auto sm:text-right"
             >
-              Giriş Yap
-            </Link>
+              <Link href="/nasil-kullanilir" className="hover:text-mimo-fg">
+                Nasıl kullanılır
+              </Link>
+              <Link href="/offline" className="hover:text-mimo-fg">
+                Çevrimdışı
+              </Link>
+              <Link href="/about" className="hover:text-mimo-fg">
+                Hakkında
+              </Link>
+              <Link href="/status" className="hover:text-mimo-fg" data-online-only>
+                Sistem durumu
+              </Link>
+              <Link
+                href="/login"
+                className="col-span-2 text-[#1cb0f6] hover:underline sm:col-span-1 sm:col-start-2"
+                data-online-only
+              >
+                Giriş yap
+              </Link>
+            </nav>
+          </div>
+
+          <div className="flex flex-col items-center justify-between gap-3 border-t border-mimo-border pt-4 sm:flex-row">
+            <p className="text-[11px] font-semibold text-mimo-muted">
+              © {new Date().getFullYear()} MIMO
+            </p>
+            <ArjensanMark />
           </div>
         </div>
       </footer>
